@@ -306,7 +306,7 @@ class ALM_Devis {
                         <input class="input_required" type="password" name="existing_account_password">
                     </div>
                 <?php endif; ?>
-
+                <input type="hidden" name="logged" value="<?php if ( is_user_logged_in() ) echo '1'; ?>">
                 <input type="hidden" name="goal" value="devis_en_ligne">
 
                 <button type="submit" id="send-button" class="button button-primary">Envoyer la demande de devis</button>
@@ -352,9 +352,10 @@ class ALM_Devis {
                             $('#dnom_sos').hide();
                         }
                     });
-                    $('button[type="submit"]').prop('disabled', true);
+                   
 
                     function checkNewAccountFields() {
+
                         let choice_login = $('input[name="choice_login"]:checked').val();
                         let register = (choice_login=="nouveau")?true:false;
                         let sign_in = (choice_login=="existant")?true:false;
@@ -414,16 +415,22 @@ class ALM_Devis {
                         $('button[type="submit"]').prop('disabled', !(allFilled && emailsMatch && passwordsMatch));
                     }
 
-                    // Vérification à chaque saisie
-                    $('#login_nouveau .input_required, #password_1, #password_2, input[name="new_account_confirm_email"]').on('input', function(){
-                        checkNewAccountFields();
-                    });
-                    $('#login_existant .input_required').on('input', function(){
-                        checkNewAccountFields();
-                    });
-                    $('input[name="choice_login"]').on('change', function(){
-                        checkNewAccountFields();
-                    });
+                    var logged = $('input[name="logged"]').val();
+                    console.log("logged",logged)
+                    if(!logged){
+                        // Vérification à chaque saisie
+                        $('button[type="submit"]').prop('disabled', true);
+                        $('#login_nouveau .input_required, #password_1, #password_2, input[name="new_account_confirm_email"]').on('input', function(){
+                            checkNewAccountFields();
+                        });
+                        $('#login_existant .input_required').on('input', function(){
+                            checkNewAccountFields();
+                        });
+                        $('input[name="choice_login"]').on('change', function(){
+                            checkNewAccountFields();
+                        });
+                    }
+                   
 
 
                     $('.optionRemise').on('change', function() {
