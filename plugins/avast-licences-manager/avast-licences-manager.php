@@ -17,6 +17,7 @@ require_once ALM_PATH . 'includes/class-gestion-de-comptes.php';
 require_once ALM_PATH . 'includes/class-commandes-panier.php';
 require_once ALM_PATH . 'includes/class-remise-commerciale.php';
 require_once ALM_PATH . 'includes/class-devis.php';
+require_once ALM_PATH . 'includes/class-revendeur.php';
 
 
 // Activation / Deactivation hooks
@@ -29,4 +30,5 @@ add_action('plugins_loaded', function() {
     new ALM_Commandes_Panier();
     new ALM_Remise_Commerciale();
     new ALM_Devis();
+    new ALM_Revendeur();
 });
