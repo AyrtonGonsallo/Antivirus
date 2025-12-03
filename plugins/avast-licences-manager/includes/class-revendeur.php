@@ -162,47 +162,77 @@ class ALM_Revendeur {
                             <span>
                                 Le document envoyé doit impérativement être fourni au format pdf.
                             </span>
-                        </div>
+                        </div><br><br>
 
-                        Document obligatoire justifiant de l'identité de votre entreprise ou de votre structure commerciale.<br>
+                        Document obligatoire justifiant de l'identité de votre entreprise ou de votre structure commerciale.<br><br>
                         Pour la France:<br>
-                        extrait K-bis datant de moins de 6 mois<br>
+                        extrait K-bis datant de moins de 6 mois<br><br>
                         Pour les autres pays:<br>
-                        Justificatif d'immatriculation au registre des entreprises, ou tout autre document pouvant nous permettre de valider l'identité de votre structure commerciale. Ce document devra être daté de moins de 6 mois.<br>
+                        Justificatif d'immatriculation au registre des entreprises, ou tout autre document pouvant nous permettre de valider l'identité de votre structure commerciale. Ce document devra être daté de moins de 6 mois.<br><br>
                         Vous pouvez enregistrer votre demande maintenant et fournir ulterieurement votre justificatif. Votre compte revendeur ne pourra cependant être activé qu'après réception et validation de votre justificatif par notre équipe.<br>
-
-        <div id="boxtva" name="boxtva" style="display: block;">            
-            <hr>
-            <b>Régime de TVA applicable :</b>
-            <p>
-            </p><table width="100%" cellpadding="5" cellspacing="0" class="box_corps">
-                <tbody>
-                    <tr id="tr_ttc">
-                        <td align="left">
-                            <label><input type="radio" id="regime_2" checked="" name="new_revendeur_account_regime_tva" value="2" style="width: auto" onclick="CheckTvaRequired(this.form,0)">
+                    <br>
+                    <div id="boxtva" name="boxtva" style="display: block;">            
+                        <b>Régime de TVA applicable :</b>
+                        <br>
+                       
+                        
+                        <label >
+                            <input type="radio" id="regime_2" checked="" name="new_revendeur_account_regime_tva" value="2" style="width: auto" >
                             <b>Facturation TTC faisant ressortir la TVA</b> (pays de l'union)<p>
-                            Facturation avec TVA de 20%</p></label>
-                        </td>
-                    </tr>
-                    <tr id="tr_ht" style="display: none;">
-                        <td align="left">
-                            <label><input type="radio" id="regime_1" name="regime_tva" value="1" style="width: auto" onclick="CheckTvaRequired(this.form,1)">
+                            Facturation avec TVA de 20%</p>
+                        </label>
+                        <br>
+                    
+                        <label >
+                            <input type="radio" id="regime_1" name="new_revendeur_account_regime_tva" value="1" style="width: auto" >
                             <b>Facturation HT</b> (pour les pays de l'union Européenne, hors France)<p>
-                            Merci de justifier ci dessous d'un numéro de TVA Intra valide :</p><p>
-                            N° TVA intracommunautaire:
-                         <select title="Prefixe TVA" id="prefixe_tva" name="prefixe_tva" onchange="IsRequiredOk(this)" onclick="this.form.elements['regime_tva'][1].checked =true;IsRequiredOk(this);" alt="Prefixe TVA"><option selected="" value="" alt="Prefixe TVA">--</option><option value="AT" alt="Prefixe TVA">AT</option><option value="BE" alt="Prefixe TVA">BE</option><option value="BG" alt="Prefixe TVA">BG</option><option value="CY" alt="Prefixe TVA">CY</option><option value="CZ" alt="Prefixe TVA">CZ</option><option value="DE" alt="Prefixe TVA">DE</option><option value="DK" alt="Prefixe TVA">DK</option><option value="EE" alt="Prefixe TVA">EE</option><option value="EL" alt="Prefixe TVA">EL</option><option value="ES" alt="Prefixe TVA">ES</option><option value="FI" alt="Prefixe TVA">FI</option><option value="FR" alt="Prefixe TVA">FR</option><option value="GB" alt="Prefixe TVA">GB</option><option value="HU" alt="Prefixe TVA">HU</option><option value="IE" alt="Prefixe TVA">IE</option><option value="IT" alt="Prefixe TVA">IT</option><option value="LT" alt="Prefixe TVA">LT</option><option value="LU" alt="Prefixe TVA">LU</option><option value="LV" alt="Prefixe TVA">LV</option><option value="MT" alt="Prefixe TVA">MT</option><option value="NL" alt="Prefixe TVA">NL</option><option value="PL" alt="Prefixe TVA">PL</option><option value="PT" alt="Prefixe TVA">PT</option><option value="RO" alt="Prefixe TVA">RO</option><option value="SE" alt="Prefixe TVA">SE</option><option value="SI" alt="Prefixe TVA">SI</option><option value="SK" alt="Prefixe TVA">SK</option></select> - <input onclick="CheckTvaRequired(this.form,1);this.form.elements['regime_tva'][1].checked =true;IsRequiredOk(this)" style="width: auto" type="text" name="tva_intra" value="" size="25" onblur="IsRequiredOk(this)">
-                            </p></label>
-                        </td>
-                    </tr>
-                <tr id="tr_ht_bis" style="display: none;">
-                    <td colspan="2">Obligatoire pour facturation Hors TVA pour les sociétés situées dans un pays de l'Union Européenne et hors de France.</td>
-                </tr>
-                <tr id="tr_franchise">
-                    <td align="left"><b>Franchise de TVA</b><p>
-Contactez-nous pour que nous puissions paramétrer spécifiquement votre compte, sur présentation d'un justificatif de situation, et vous permettre de passer vos commandes avec le taux de TVA qui vous est applicable.</p></td>
-                </tr>
-            </tbody></table>
-        </div>
+                            Merci de justifier ci dessous d'un numéro de TVA Intra valide :</p>
+                            <p>
+                            <div id="tva_regime_1_box">
+                                N° TVA intracommunautaire:
+                                <select title="Prefixe TVA" id="prefixe_tva" name="new_revendeur_account_prefixe_tva" alt="Prefixe TVA">
+                                    <option selected="" value="" alt="Prefixe TVA">--</option>
+                                    <option value="AT" alt="Prefixe TVA">AT</option>
+                                    <option value="BE" alt="Prefixe TVA">BE</option>
+                                    <option value="BG" alt="Prefixe TVA">BG</option>
+                                    <option value="CY" alt="Prefixe TVA">CY</option>
+                                    <option value="CZ" alt="Prefixe TVA">CZ</option>
+                                    <option value="DE" alt="Prefixe TVA">DE</option>
+                                    <option value="DK" alt="Prefixe TVA">DK</option>
+                                    <option value="EE" alt="Prefixe TVA">EE</option>
+                                    <option value="EL" alt="Prefixe TVA">EL</option>
+                                    <option value="ES" alt="Prefixe TVA">ES</option>
+                                    <option value="FI" alt="Prefixe TVA">FI</option>
+                                    <option value="FR" alt="Prefixe TVA">FR</option>
+                                    <option value="GB" alt="Prefixe TVA">GB</option>
+                                    <option value="HU" alt="Prefixe TVA">HU</option>
+                                    <option value="IE" alt="Prefixe TVA">IE</option>
+                                    <option value="IT" alt="Prefixe TVA">IT</option>
+                                    <option value="LT" alt="Prefixe TVA">LT</option>
+                                    <option value="LU" alt="Prefixe TVA">LU</option>
+                                    <option value="LV" alt="Prefixe TVA">LV</option>
+                                    <option value="MT" alt="Prefixe TVA">MT</option>
+                                    <option value="NL" alt="Prefixe TVA">NL</option>
+                                    <option value="PL" alt="Prefixe TVA">PL</option>
+                                    <option value="PT" alt="Prefixe TVA">PT</option>
+                                    <option value="RO" alt="Prefixe TVA">RO</option>
+                                    <option value="SE" alt="Prefixe TVA">SE</option>
+                                    <option value="SI" alt="Prefixe TVA">SI</option>
+                                    <option value="SK" alt="Prefixe TVA">SK</option>
+                                </select> - 
+                                <input  style="width: auto" type="text" name="new_revendeur_account_tva_intra" value="" size="25" onblur="IsRequiredOk(this)">
+                            </div>
+                            </p>
+                        </label>
+                        <br>
+                
+                        Obligatoire pour facturation Hors TVA pour les sociétés situées dans un pays de l'Union Européenne et hors de France.</td>
+                        <br>
+                
+                        <b>Franchise de TVA</b><p>
+                        Contactez-nous pour que nous puissions paramétrer spécifiquement votre compte, sur présentation d'un justificatif de situation, et vous permettre de passer vos commandes avec le taux de TVA qui vous est applicable.</p></td>
+                
+                    </div>
 
 
 
@@ -251,6 +281,18 @@ Contactez-nous pour que nous puissions paramétrer spécifiquement votre compte,
                 jQuery(document).ready(function($) {
 
                     
+                    $('#tva_regime_1_box').hide();
+
+                     $('input[name="new_revendeur_account_regime_tva"]').on('change', function() {
+
+                        if ($('#regime_1').is(':checked')) {
+                            $('#tva_regime_1_box').show();
+                        }
+
+                        if ($('#regime_2').is(':checked')) {
+                            $('#tva_regime_1_box').hide();
+                        }
+                    });
                    
 
                     function checkNewAccountFields() {
@@ -419,6 +461,9 @@ Contactez-nous pour que nous puissions paramétrer spécifiquement votre compte,
         $new_revendeur_account_pays = sanitize_text_field($_POST['new_revendeur_account_pays'] ?? '');
         $new_revendeur_account_agree_cgr = isset($_POST['new_revendeur_account_agree_cgr']) ? 1 : 0;
         $new_revendeur_account_divulgation = isset($_POST['new_revendeur_account_divulgation']) ? 1 : 0;
+        $new_revendeur_account_tva_intra = sanitize_text_field($_POST['new_revendeur_account_tva_intra'] ?? '');
+        $new_revendeur_account_regime_tva = sanitize_text_field($_POST['new_revendeur_account_regime_tva'] ?? '');
+        $new_revendeur_account_prefixe_tva = sanitize_text_field($_POST['new_revendeur_account_prefixe_tva'] ?? '');
 
         
 
@@ -446,6 +491,9 @@ Contactez-nous pour que nous puissions paramétrer spécifiquement votre compte,
                 update_field('account_agree_cgr', $new_revendeur_account_agree_cgr, $demande_id);
                 update_field('account_email', $new_revendeur_account_email, $demande_id);
                 update_field('account_mot_de_passe', $new_revendeur_account_password_1, $demande_id);
+                update_field('account_tva_intra', $new_revendeur_account_tva_intra, $demande_id);
+                update_field('account_regime_tva', $new_revendeur_account_regime_tva, $demande_id);
+                update_field('account_prefixe_tva', $new_revendeur_account_prefixe_tva, $demande_id);
 
                 
                 if (isset($_FILES["new_revendeur_account_justificatif_immatriculation"]) && !empty($_FILES["new_revendeur_account_justificatif_immatriculation"]['name'])) {

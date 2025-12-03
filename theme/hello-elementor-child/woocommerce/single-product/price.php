@@ -23,4 +23,64 @@ global $product;
 
 ?>
 
-<p class="<?php echo esc_attr( apply_filters( 'woocommerce_product_price_class', 'price' ) ); ?>"><?php echo $product->get_price_html(); ?></p>
+<p class="<?php echo esc_attr( apply_filters( 'woocommerce_product_price_class', 'price' ) ); ?>">
+	
+<?php //echo $product->get_price_html(); ?>
+
+<?php
+if ( $product->is_type('simple') ) {
+    echo ''; // simple → rien
+}
+
+elseif ( $product->is_type('variable') ) {
+    //echo '👉 Ceci est un PRODUIT PARENT VARIABLE<br>';
+
+    $regular_price = $product->get_variation_regular_price( 'min', true );
+    $sale_price    = $product->get_variation_sale_price( 'min', true );
+
+    if ( $sale_price < $regular_price ) {
+        echo '<span class="regular-price">' . wc_price($regular_price) . '</span><br> ';
+        echo '<span class="sale-price">' . wc_price($sale_price) . '</span>';
+    } else {
+        echo wc_price($regular_price);
+    }
+}
+
+elseif ( $product->is_type('variation') ) {
+    echo '👉 Ceci est une VARIATION (enfant)<br>';
+
+    $regular_price = $product->get_regular_price();
+    $sale_price    = $product->get_sale_price();
+
+    if ( $sale_price && $sale_price < $regular_price ) {
+        echo '<span style="text-decoration:line-through;color:#888;">' . wc_price($regular_price) . '</span> ';
+        echo '<span style="color:#d00;font-weight:bold;">' . wc_price($sale_price) . '</span>';
+    } else {
+        echo wc_price($regular_price);
+    }
+}
+?>
+
+</p>
+
+
+
+<style>
+	.regular-price{
+		color: #FF1212;
+		font-family: "Raleway", Raleway;
+		font-size: 30px;
+		font-weight: 400;
+		text-transform: capitalize;
+		font-style: normal;
+		line-height: 1.1em;
+		letter-spacing: 0px;
+		text-decoration:line-through;
+	}
+	.sale-price{
+		color: var(--e-global-color-accent);
+		font-family: "Raleway", Raleway;
+		font-size: 84px;
+		font-weight: 800;
+	}
+</style>
