@@ -53,6 +53,9 @@ if (isset($_GET['client_added']) && $_GET['client_added'] == 'true') {
         <?php foreach ($devis_liste as $devis) : 
             $date_de_creation   = get_field('date_de_creation', $devis->ID);
             $date_expiration  = get_field('date_expiration', $devis->ID);
+            $recapitulatif_pdf  = get_field('recapitulatif_pdf', $devis->ID);
+            $lien_fichier = $recapitulatif_pdf["link"];
+          // var_dump($recapitulatif_pdf);
             $status           = get_field('status', $devis->ID)["label"];
             $type_de_devis        = get_field('type_de_devis', $devis->ID)["label"];
             //var_dump($type_de_devis);
@@ -67,7 +70,10 @@ if (isset($_GET['client_added']) && $_GET['client_added'] == 'true') {
             <td><?php echo esc_html($type_de_devis); ?></td>
             <td> 
                 <a href="<?php echo esc_url(get_permalink($devis->ID)); ?>" class="devis-btn tbn-see">voir</a> 
-                
+                <?php
+                if($lien_fichier){ ?>
+                    <a href="<?php echo $lien_fichier; ?>" target="_blank" class="devis-btn tbn-see">Télécharger</a> 
+                <?php }?>
             </td>
         </tr>
         <?php endforeach; ?>

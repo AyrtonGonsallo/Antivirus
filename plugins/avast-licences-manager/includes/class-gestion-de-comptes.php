@@ -47,18 +47,12 @@ class ALM_Gestion_De_Comptes {
    
 
     public function save_account_fields($user_id) {
-         $role = isset($_POST['role']) ? sanitize_text_field($_POST['role']) : '';
-
-        if ($role) {
-            // Changer le rôle WordPress de l'utilisateur
-            $user = new WP_User($user_id);
-            $user->set_role($role);
-        }
+         
         update_user_meta($user_id, 'denomination', sanitize_text_field($_POST['denomination']));
         update_user_meta($user_id, 'ville', sanitize_text_field($_POST['ville']));
         update_user_meta($user_id, 'code_postal', sanitize_text_field($_POST['code_postal']));
         update_user_meta($user_id, 'pays', sanitize_text_field($_POST['pays']));
-
+        update_user_meta($user_id, 'civilite', sanitize_text_field($_POST['civilite']));
         update_user_meta($user_id, 'billing_address_1', sanitize_text_field($_POST['billing_address_1']));
         update_user_meta($user_id, 'billing_phone', sanitize_text_field($_POST['billing_phone']));
         update_user_meta($user_id, 'optin_promos', isset($_POST['optin_promos']) ? 'yes' : 'no');

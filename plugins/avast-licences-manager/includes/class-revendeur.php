@@ -405,7 +405,7 @@ class ALM_Revendeur {
 
     function alm_handle_revendeur_form() {
         if ( $_SERVER['REQUEST_METHOD'] !== 'POST' ) return;
-        if ( $_POST['goal'] !== 'devenir_revendeur' ) return;
+        if ( isset($_POST['goal']) &&  $_POST['goal'] !== 'devenir_revendeur' ) return;
         
         /*
 

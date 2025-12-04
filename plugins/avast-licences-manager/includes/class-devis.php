@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/class-devis-pdf-generator.php';
+require_once __DIR__ . '/class-devis-email-sender.php';
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -53,16 +54,10 @@ class ALM_Devis {
             wp_safe_redirect(admin_url("edit.php?post_type=devis-en-ligne&pdf=ok"));
             exit;
         });
-        add_action('admin_post_envoyer_mail_devis', function() {
+        add_action('admin_post_envoyer_mail_devis', [$this, 'envoyer_email_avec_devis']);
 
-            $id = intval($_GET['id']);
+      
 
-            // Ici tu envoies ton email
-            // send_devis_pdf_email($id);
-
-            wp_safe_redirect( admin_url("edit.php?post_type=devis-en-ligne&mail=ok") );
-            exit;
-        });
 
 
     }
@@ -166,8 +161,10 @@ class ALM_Devis {
         switch ( $column ) {
 
             case 'status':
-                echo esc_html( get_field('status', $post_id)["label"] ?: '—' );
+                $status = get_field('status', $post_id);
+                echo esc_html( $status['label'] ?? '—' );
                 break;
+
 
             case 'utilisateur':
                 $user = get_field('utilisateur', $post_id);
@@ -181,18 +178,57 @@ class ALM_Devis {
                 break;
 
             case 'type_de_devis':
-                echo esc_html( get_field('type_de_devis', $post_id)["label"] ?: '—' );
+                $type = get_field('type_de_devis', $post_id);
+                echo esc_html( $type['label'] ?? '—' );
                 break;
 
+
             case 'actions':
+                $recapitulatif_pdf  = get_field('recapitulatif_pdf', $post_id);
+                $lien_fichier = $recapitulatif_pdf["link"];
                 $pdf_url   = admin_url("admin-post.php?action=generer_pdf_devis&id=$post_id");
                 $mail_url  = admin_url("admin-post.php?action=envoyer_mail_devis&id=$post_id");
 
-                echo '<a class="button button-primary" href="'.esc_url($pdf_url).'">PDF</a> ';
+                echo '<div style="display:flex; gap:8px; flex-wrap:wrap;">';
+
+                echo '<a class="button button-primary" href="'.esc_url($pdf_url).'">Générer le pdf</a>';
+
+                if ($lien_fichier) {
+                    echo '<a class="button" href="'.esc_url($lien_fichier).'" target="_blank">Télécharger le pdf</a>';
+                }
+
                 echo '<a class="button" href="'.esc_url($mail_url).'">Envoyer Mail</a>';
+
+                echo '</div>';
+
+                
                 break;
         }
 
+    }
+
+    function envoyer_email_avec_devis() {
+        if (!current_user_can('manage_options')) {
+                wp_die("Permissions insuffisantes.");
+            }
+
+        if (!isset($_GET['id'])) {
+            wp_die("ID manquant.");
+        }
+
+        $id = intval($_GET['id']);
+
+        // Générer le PDF et l'enregistrer dans le champ ACF
+        $sent = DevisEmailSender::send_email($id);
+        
+
+        // 5️⃣ Redirection avec info
+        if ($sent) {
+            wp_safe_redirect(admin_url("edit.php?post_type=devis-en-ligne&mail=ok"));
+        } else {
+            wp_safe_redirect(admin_url("edit.php?post_type=devis-en-ligne&mail=error"));
+        }
+        exit;
     }
 
 
@@ -311,9 +347,9 @@ class ALM_Devis {
 
                 <div class="">
                     <label for="comment" class="" style="margin-bottom: 12px;">
-                        Ajouter un commentaire à ma demande :							
+                        Ajouter un commentaire à ma demande :<span class="required">*</span>							
                     </label>
-                    <textarea class="" name="comment" id="comment" rows="4"></textarea>				
+                    <textarea class="" name="comment" id="comment" rows="4" required></textarea>				
                 </div>
 
                 <div class="div-form2">
@@ -491,6 +527,18 @@ class ALM_Devis {
                     });
                    
 
+                    function checkofflogfields() {
+                        let offlogfieldsFilled = true;
+                        if($('#comment').val().trim() === '') {
+                            offlogfieldsFilled = false;
+                            return false; // stop each
+                        }
+                        $('button[type="submit"]').prop('disabled', !(offlogfieldsFilled ));
+                        if(!offlogfieldsFilled) msg += 'Les champs par défaut doivent êtres saisis.<br>';
+                        $('#error-msg').html(msg);
+                        console.log("offlogfieldsFilled",offlogfieldsFilled)
+                    }
+
                     function checkNewAccountFields() {
 
                         let choice_login = $('input[name="choice_login"]:checked').val();
@@ -555,6 +603,7 @@ class ALM_Devis {
                     var logged = $('input[name="logged"]').val();
                     console.log("logged",logged)
                     if(!logged){
+                        console.log("remplir info connexion")
                         // Vérification à chaque saisie
                         $('button[type="submit"]').prop('disabled', true);
                         $('#login_nouveau .input_required, #password_1, #password_2, input[name="new_account_confirm_email"]').on('input', function(){
@@ -566,6 +615,13 @@ class ALM_Devis {
                         $('input[name="choice_login"]').on('change', function(){
                             checkNewAccountFields();
                         });
+                    }else{
+                        console.log("remplir champs standards")
+                        $('button[type="submit"]').prop('disabled', true);
+                        $('input[name="choice_login"]').on('change', function(){
+                            checkofflogfields();
+                        });
+
                     }
                    
 
@@ -632,7 +688,7 @@ class ALM_Devis {
                     gap: 11px;
                     max-width:400px;
                 }
-                .btn-remise:disabled {
+                #send-button:disabled {
                     background-color: #999 !important;
                     border-color: #777 !important;
                     cursor: not-allowed;
@@ -676,7 +732,8 @@ class ALM_Devis {
 
     function alm_handle_devis_form() {
         if ( $_SERVER['REQUEST_METHOD'] !== 'POST' ) return;
-        if ( $_POST['goal'] !== 'devis_en_ligne' ) return;
+        if ( !isset($_POST['goal']) ) return;
+        if ( isset($_POST['goal']) && $_POST['goal'] !== 'devis_en_ligne' ) return;
         //var_dump($_POST); 
        // return;
         /*

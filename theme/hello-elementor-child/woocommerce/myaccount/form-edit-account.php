@@ -33,7 +33,7 @@ do_action( 'woocommerce_before_edit_account_form' );
 		$user = wp_get_current_user();
 		$billing_address = get_user_meta($user_id, 'billing_address_1', true);
 		$billing_phone   = get_user_meta($user_id, 'billing_phone', true);
-		
+		$civilite   = get_user_meta($user_id, 'civilite', true);
 		$optin_promos    = get_user_meta($user_id, 'optin_promos', true);
 		$optin_expiration = get_user_meta($user_id, 'optin_expiration', true);
 
@@ -122,11 +122,21 @@ do_action( 'woocommerce_before_edit_account_form' );
 		}
 	?>
   	<p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
-        <label for="role">Type de compte <span class="required">*</span></label>
-        <select name="role" id="role" required>
+        <label for="role">Type de compte</label>
+        <select  id="role" required disabled>
 			<option value="">Sélectionnez...</option>
 			<option value="customer_particulier" <?php selected($role,'customer_particulier'); ?>>Particulier</option>
 			<option value="customer_revendeur" <?php selected($role,'customer_revendeur'); ?>>Revendeur</option>
+		</select>
+    </p>
+
+	<p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
+        <label for="civilite">Civilité <span class="required">*</span></label>
+        <select name="civilite" id="civilite" required >
+			<option value="">Sélectionnez...</option>
+			<option value="Monsieur" <?php selected($civilite,'Monsieur'); ?>>Monsieur</option>
+			<option value="Madame" <?php selected($civilite,'Madame'); ?>>Madame</option>
+			<option value="Mademoiseille" <?php selected($civilite,'Mademoiseille'); ?>>Mademoiseille</option>
 		</select>
     </p>
 
