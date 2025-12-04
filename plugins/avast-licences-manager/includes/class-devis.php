@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/class-devis-pdf-generator.php';
+
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 class ALM_Devis {
@@ -16,78 +18,183 @@ class ALM_Devis {
         add_shortcode('alm_devis_form', [$this, 'alm_render_devis_form']);
         add_action('init', [$this, 'alm_handle_devis_form']);
 
+        //convertir le devis en panier
+        add_action( 'woocommerce_before_calculate_totals', function($cart) {
+
+            if ( is_admin() && !defined('DOING_AJAX') ) 
+                return;
+
+            foreach ( $cart->get_cart() as $item ) {
+                if ( isset($item['prix_force']) ) {
+                    $item['data']->set_price( $item['prix_force'] );
+                }
+            }
+        });
+
+        // 1. Ajouter les colonnes
+        add_filter( 'manage_devis-en-ligne_posts_columns', [$this, 'alm_devis_en_ligne_posts_columns'], 10, 1);
+        add_action( 'manage_devis-en-ligne_posts_custom_column', [$this, 'alm_devis_en_ligne_posts_datas'], 10, 2);
+        add_action('admin_post_generer_pdf_devis', function() {
+
+            if (!current_user_can('manage_options')) {
+                wp_die("Permissions insuffisantes.");
+            }
+
+            if (!isset($_GET['id'])) {
+                wp_die("ID manquant.");
+            }
+
+            $id = intval($_GET['id']);
+
+            // Générer le PDF et l'enregistrer dans le champ ACF
+            DevisPDFGenerator::generate_pdf($id);
+
+            // Rediriger avec un message
+            wp_safe_redirect(admin_url("edit.php?post_type=devis-en-ligne&pdf=ok"));
+            exit;
+        });
+        add_action('admin_post_envoyer_mail_devis', function() {
+
+            $id = intval($_GET['id']);
+
+            // Ici tu envoies ton email
+            // send_devis_pdf_email($id);
+
+            wp_safe_redirect( admin_url("edit.php?post_type=devis-en-ligne&mail=ok") );
+            exit;
+        });
+
+
     }
 
 
     function alm_get_products_grouped() {
-    $categories = get_terms([
-        'taxonomy' => 'product_cat',
-        'hide_empty' => true
-    ]);
-
-    $output = '';
-
-    foreach ($categories as $cat) {
-        $products = wc_get_products([
-            'status' => 'publish',
-            'limit'  => -1,
-            'category' => [$cat->slug],
-            'type'   => 'variable'
+        $categories = get_terms([
+            'taxonomy' => 'product_cat',
+            'hide_empty' => true
         ]);
 
-        $variations = [];
+        $output = '';
 
-        foreach ($products as $parent) {
-            $children_ids = $parent->get_children();  // IDs des variations
+        foreach ($categories as $cat) {
+            $products = wc_get_products([
+                'status' => 'publish',
+                'limit'  => -1,
+                'category' => [$cat->slug],
+                'type'   => 'variable'
+            ]);
 
-            foreach ($children_ids as $child_id) {
-                $child = wc_get_product($child_id);
-                if ($child && $child->is_type('variation')) {
-                    $variations[] = $child;  // On stocke seulement les enfants
+            $variations = [];
+
+            foreach ($products as $parent) {
+                $children_ids = $parent->get_children();  // IDs des variations
+
+                foreach ($children_ids as $child_id) {
+                    $child = wc_get_product($child_id);
+                    if ($child && $child->is_type('variation')) {
+                        $variations[] = $child;  // On stocke seulement les enfants
+                    }
                 }
             }
-        }
 
 
-        $output .= '<h3 class="alm-cat-title">' . $cat->name . '</h3>';
-        $output .= '<table class="alm-table"><tr>
-                        <th>Image</th>
-                        <th>Produit</th>
-                        <th>Quantité</th>
-                    </tr>';
+            $output .= '<h3 class="alm-cat-title">' . $cat->name . '</h3>';
+            $output .= '<table class="alm-table"><tr>
+                            <th>Image</th>
+                            <th>Produit</th>
+                            <th>Quantité</th>
+                        </tr>';
 
-        foreach ($variations as $prod) {
+            foreach ($variations as $prod) {
 
-            $image = wp_get_attachment_image_src( $prod->get_image_id(), 'thumbnail' );
-            $imgURL = $image ? $image[0] : '';
-            $regular = (float) $prod->get_regular_price();
-            $sale    = (float) $prod->get_sale_price();
-            $promo_display = "";
+                $image = wp_get_attachment_image_src( $prod->get_image_id(), 'thumbnail' );
+                $imgURL = $image ? $image[0] : '';
+                $regular = (float) $prod->get_regular_price();
+                $sale    = (float) $prod->get_sale_price();
+                $promo_display = "";
 
-            if ($sale && $regular && $sale < $regular) {
-                $discount = round((($regular - $sale) / $regular) * 100);
-                $promo_display = " <span style='color:green;font-weight:bold;'>Promo -$discount% *</span>";
+                if ($sale && $regular && $sale < $regular) {
+                    $discount = round((($regular - $sale) / $regular) * 100);
+                    $promo_display = " <span style='color:green;font-weight:bold;'>Promo -$discount% *</span>";
+                }
+
+
+                $output .= '<tr>
+                    <td><img src="' . $imgURL . '" style="max-width:50px;"></td>
+                    <td>' . $prod->get_name() . '<br>'.$promo_display.'</td>
+                    <td>
+                        <input type="number" 
+                            min="0" 
+                            name="prod_qty[' . $prod->get_id() . ']" 
+                            value="0" 
+                            class="alm-qty">
+                    </td>
+                </tr>';
             }
 
-
-            $output .= '<tr>
-                <td><img src="' . $imgURL . '" style="max-width:50px;"></td>
-                <td>' . $prod->get_name() . '<br>'.$promo_display.'</td>
-                <td>
-                    <input type="number" 
-                           min="0" 
-                           name="prod_qty[' . $prod->get_id() . ']" 
-                           value="0" 
-                           class="alm-qty">
-                </td>
-            </tr>';
+            $output .= '</table><br>';
         }
 
-        $output .= '</table><br>';
+        return $output;
     }
 
-    return $output;
-}
+
+
+    function alm_devis_en_ligne_posts_columns($columns) {
+
+        $new = [];
+
+        // On garde le titre avant d’insérer nos colonnes
+        foreach( $columns as $key => $label ) {
+
+            $new[$key] = $label;
+
+            if ($key === 'title') {
+                $new['status']        = 'Status';
+                $new['utilisateur']   = 'Utilisateur';
+                $new['type_de_devis'] = 'Type de devis';
+                $new['actions']       = 'Actions';
+            }
+        }
+
+        return $new;
+    }
+
+    // 2. Remplir les colonnes
+    function alm_devis_en_ligne_posts_datas( $column, $post_id ) {
+
+        switch ( $column ) {
+
+            case 'status':
+                echo esc_html( get_field('status', $post_id)["label"] ?: '—' );
+                break;
+
+            case 'utilisateur':
+                $user = get_field('utilisateur', $post_id);
+                if ($user) {
+                    $prenom = get_user_meta($user->ID, 'first_name', true);
+                    $nom = get_user_meta($user->ID, 'last_name', true);
+                    echo $user ? esc_html($nom." ".$prenom) : '—';
+                } else {
+                    echo '—';
+                }
+                break;
+
+            case 'type_de_devis':
+                echo esc_html( get_field('type_de_devis', $post_id)["label"] ?: '—' );
+                break;
+
+            case 'actions':
+                $pdf_url   = admin_url("admin-post.php?action=generer_pdf_devis&id=$post_id");
+                $mail_url  = admin_url("admin-post.php?action=envoyer_mail_devis&id=$post_id");
+
+                echo '<a class="button button-primary" href="'.esc_url($pdf_url).'">PDF</a> ';
+                echo '<a class="button" href="'.esc_url($mail_url).'">Envoyer Mail</a>';
+                break;
+        }
+
+    }
+
 
 
     function alm_render_devis_form() {
@@ -109,21 +216,22 @@ class ALM_Devis {
         ?>   
           
             <form method="post" id="alm-devis-form" class="alm-devis-form" enctype="multipart/form-data">
-                <div class="line"></div>
+                
+            
                 <h2>Choix du produit Avast</h2>
-                <div class="">
+                <div class="flx-radio-devis">
                     <span class="">
-                        <input type="radio" value="idkn" id="idknow" name="choixavis" checked required="required" > 
+                        <input type="radio" style="margin-right: 16px;" value="idkn" id="idknow" name="choixavis" checked required="required" > 
                         <label for="idknow">Je ne sais pas quelle version choisir</label>
                     </span>
                     <span class="">
-                        <input type="radio" value="ikn" id="iknow" name="choixavis" required="required" > 
+                        <input type="radio" style="margin-right: 16px;" value="ikn" id="iknow" name="choixavis" required="required" > 
                         <label for="iknow">Je sais ce dont j’ai besoin</label>
                     </span>
                 </div>
                 <div id="idknowForm"> 
                     <div class="">
-                        <label for="compt2save" class="">
+                        <label for="compt2save" class="" style="margin-bottom: 12px;">
                             Indiquez simplement les ordinateurs à protéger :							
                         </label>
                         <textarea class="" name="compt2save" id="compt2save" rows="4"></textarea>				
@@ -134,25 +242,27 @@ class ALM_Devis {
                     <?php echo $this->alm_get_products_grouped(); ?>
                 </div>
 
-                <div class="line"></div>
+               
 
+            <div class="duree-devis-form">
+                <h2>Durée</h2><br>
+                <div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 15px; align-items: center; align-content: center;">
+                   <input type="radio" name="alm_software_duration" id="duration_1" value="1-year" required checked>
+                   <label for="duration_1">1 an</label><br>
 
-                <label><strong>Durée :</strong></label><br>
+                   <input type="radio" name="alm_software_duration" id="duration_2" value="2-years">
+                   <label for="duration_2">2 ans</label><br>
 
-                <input type="radio" name="alm_software_duration" id="duration_1" value="1-year" required checked>
-                <label for="duration_1">1 an</label><br>
-
-                <input type="radio" name="alm_software_duration" id="duration_2" value="2-years">
-                <label for="duration_2">2 ans</label><br>
-
-                <input type="radio" name="alm_software_duration" id="duration_3" value="3-years">
-                <label for="duration_3">3 ans</label><br>
-
+                   <input type="radio" name="alm_software_duration" id="duration_3" value="3-years">
+                   <label for="duration_3">3 ans</label><br>
+                </div>
+                <div style="display: flex; align-items: flex-start;margin-top:15px;">
                 <input type="radio" name="alm_software_duration" id="duration_many" value="many-years">
                 <label for="duration_many">
                     Je souhaite obtenir plusieurs devis pour 1, 2 et 3 ans et réaliser ainsi <b>jusqu'à 67% d'économie.</b>
                 </label>
-
+                </div>
+            </div>
                 
 
                 <div class="div-remise">
@@ -199,26 +309,23 @@ class ALM_Devis {
                 </div>
 
 
-                
-                <br><br>
-
                 <div class="">
-                    <label for="comment" class="">
+                    <label for="comment" class="" style="margin-bottom: 12px;">
                         Ajouter un commentaire à ma demande :							
                     </label>
                     <textarea class="" name="comment" id="comment" rows="4"></textarea>				
                 </div>
 
-                <div class="line"></div>
-
+                <div class="div-form2">
+                <h2>Recevoir mon devis par email</h2><br>
                 <?php if ( !is_user_logged_in() ) : ?>
-                    <div class="radio">
+                    <div class="radio" style="display: flex; flex-direction: row; gap: 40px;">
                         <label>
-                            <input type="radio" name="choice_login" value="nouveau" checked>
+                            <input style="margin-right:20px;" type="radio" name="choice_login" value="nouveau" checked>
                             Je suis un nouveau client
                         </label>
                         <label>
-                            <input type="radio" name="choice_login" value="existant" >
+                            <input style="margin-right:20px;" type="radio" name="choice_login" value="existant" >
                             Je suis déjà client
                         </label>
                     </div>
@@ -226,7 +333,7 @@ class ALM_Devis {
                     <!-- Zone pour nouveau client -->
                     
 
-
+<br>
                     <div id="login_nouveau" style="display: block;"><!--<form action="devis.php?dest=devis#btm" method="post" name="frm_signup" onsubmit="return(Control_SignUp_Client(this,'AJOUT'))">-->
                         <?php 
                             $pays_liste = [
@@ -237,20 +344,23 @@ class ALM_Devis {
                                 'DE' => 'Allemagne',
                             ]; 
                             ?>
-                            <div class="radio">
+                            <div class="radio" style="display: flex; flex-direction: row; gap: 40px;">
                                 <label>
-                                    <input type="radio" checked="" name="new_account_type_compte" value="PAR">
+                                    <input style="margin-right:20px;" type="radio" checked="" name="new_account_type_compte" value="PAR">
                                     Particulier 
                                 </label>
                                 <label>
-                                    <input type="radio" name="new_account_type_compte" value="PRO" >
+                                    <input style="margin-right:20px;" type="radio" name="new_account_type_compte" value="PRO" >
                                     Professionnel, Association ou Institution
                                 </label>
                             </div>
+                            <br> <br>
                             <div id="dnom_sos">
                                 <label>Dénomination sociale : </label>
                                 <input  type="text" title="Dénomination sociale" alt="text" name="new_account_societe" size="40" value="" >
                             </div>
+                            <div class="count-clmn" style="">
+                            <div>
                             <label>Genre : <span class="required">*</span></label>
                             <select title="Genre" id="genre" class="input_required" name="new_account_genre"  alt="Genre">
                                 <option value="m" alt="Genre">Monsieur</option>
@@ -260,18 +370,32 @@ class ALM_Devis {
                                     ----------
                                 </option>
                             </select>
+                            </div>
+                            <div>
                             <label>Nom : <span class="required">*</span></label>
                             <input class="input_required" type="text" title="Nom" alt="text" name="new_account_nom" size="30" value="" >
+                            </div>
+                            <div>
                             <label>Prénom : <span class="required">*</span></label>
                             <input class="input_required" type="text" title="prenom" alt="text" name="new_account_prenom" size="30" value="" >
+                            </div>
+                            <div>
                             <label>Téléphone : <span class="required">*</span></label>
                             <input class="input_required" type="text" title="telephone" alt="text" name="new_account_telephone" size="30" value="" >
+                            </div>
+                            <div>
                             <label>Adresse : <span class="required">*</span></label>
                             <input class="input_required" type="text" title="adresse" alt="text" name="new_account_adresse" size="30" value="" >
+                            </div>
+                            <div>
                             <label>Ville : <span class="required">*</span></label>
                             <input class="input_required" type="text" title="ville" alt="text" name="new_account_ville" size="30" value="" >
+                            </div>
+                            <div>
                             <label>Code postal : <span class="required">*</span></label>
                             <input class="input_required" type="text" title="code_postal" alt="text" name="new_account_code_postal" size="30" value="" >
+                            </div>
+                            <div>
                             <label>Pays : <span class="required">*</span></label>
                             <select name="new_account_pays" id="pays" required class="">
                                 <?php foreach ( $pays_liste as $code => $nom ) : ?>
@@ -280,21 +404,33 @@ class ALM_Devis {
                                     </option>
                                 <?php endforeach; ?>
                             </select>
-                            <label>
-                                <input type="hidden" name="new_account_charte" value="Acceptation de la charte de confidentialité">
-                                <input type="checkbox" checked name="new_account_divulgation" title="Acceptation de la charte de confidentialité" value="1" class="input_ok"  alt="checkbox" >Je comprends que mes informations ne seront pas divulguées à des tiers, conformément à <a href="charte.php" target="_blank">la charte de confidentialité</a> de ce site.
-                            </label><br>   
-
-                            <b>Mes identifiants de connexion :</b>      <br>      
+                            </div>
+                            
+                            <div>
+                            <!-- <b>Mes identifiants de connexion :</b>   <br> -->  
                             <label>Adresse Email : <span class="required">*</span></label>
                             <input class="input_required" type="text" title="Adresse Email" alt="email" name="new_account_email" size="40" value="" >
+                            </div>
+                            <div>
                             <label>Confirmer Email : <span class="required">*</span></label>
                             <input class="input_required" type="text" title="Confirmer Email" alt="email" name="new_account_confirm_email" size="40" value="" >
+                            </div>
+                            <div>
                             <label>Mot de passe : <span class="required">*</span></label> 
                             <input id="password_1" class="input_required" type="password" title="Mot de passe" name="new_account_password_1" size="20" value="">     
+                            </div>
+                            <div>
                             <label>Confirmer Mot de passe : <span class="required">*</span></label> 
                             <input id="password_2" class="input_required" type="password" title="Confirmer Mot de passe" name="new_account_password_2" size="20" value="">      
-                        
+                            </div>
+                        </div>
+                        <br>
+                        <div>
+                            <label style="line-height: 1.5;">
+                                <input type="hidden" name="new_account_charte" value="Acceptation de la charte de confidentialité">
+                                <input style="margin-right:15px;" type="checkbox" checked name="new_account_divulgation" title="Acceptation de la charte de confidentialité" value="1" class="input_ok"  alt="checkbox" >Je comprends que mes informations ne seront pas divulguées à des tiers, conformément à <a href="charte.php" target="_blank">la charte de confidentialité</a> de ce site.
+                            </label><br>   
+                            </div><br><br>
                     </div>
 
                     <!-- Zone pour client existant -->
@@ -309,7 +445,8 @@ class ALM_Devis {
                 <input type="hidden" name="logged" value="<?php if ( is_user_logged_in() ) echo '1'; ?>">
                 <input type="hidden" name="goal" value="devis_en_ligne">
 
-                <button type="submit" id="send-button" class="button button-primary">Envoyer la demande de devis</button>
+                <button type="submit" id="send-button" class="elementor-element elementor-align-center elementor-widget elementor-widget-button">Envoyer la demande de devis</button>
+                </div>
             </form>
             <div id="error-msg" class="error-msg" style='text-align: center;color: #d30b00ff;'></div>
 
@@ -508,11 +645,7 @@ class ALM_Devis {
                     color: red;
                     font-size: 34px;
                 }
-                #alm-devis-form .line {
-                    margin: 10px 5%;
-                    border-radius: 10px;
-                    border: 1px solid #23232342;
-                }
+            
                 #alm-devis-form > button[disabled] {
                     background-color: #ccc;       /* gris clair */
                     color: #666;                  /* texte plus pâle */
@@ -733,10 +866,15 @@ class ALM_Devis {
 
         // 2) Champs standard
         update_post_meta($post_id, 'date_de_creation', current_time('mysql'));
+        $expiration_timestamp = strtotime('+1 month', current_time('timestamp'));
+        $expiration_mysql = date('Y-m-d H:i:s', $expiration_timestamp);
+
+        update_post_meta($post_id, 'date_expiration', $expiration_mysql);
         update_post_meta($post_id, 'option', $choix_av);  
         update_post_meta($post_id, 'software_duration', $duration);
-        update_field('status', 'en_attente', $remise_id);
-        update_post_meta($post_id, 'comment', $comment);
+        update_post_meta($post_id,'status', 'en_attente');
+        update_post_meta($post_id, 'note_client', $comment);
+        update_post_meta($post_id, 'type_de_devis', "client");
         update_post_meta($post_id, 'utilisateur', $user_id);
 
         // 3) choix → "je ne sais pas quelle version"

@@ -4,6 +4,20 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class ALM_Gestion_De_Comptes {
 
     public function __construct() {
+        /*
+            add_action('init', [$this, 'register_clients_endpoint']);
+            → Déclare un nouvel endpoint URL pour le compte client (ex: /mon-compte/clients)
+
+            add_filter('query_vars', [$this, 'add_clients_query_var'], 0);
+            → Ajoute la variable clients à WordPress pour qu’elle soit reconnue dans l’URL.
+
+            add_filter('woocommerce_account_menu_items', [$this, 'add_clients_menu_link']);
+            → Ajoute un nouveau lien dans le menu du compte WooCommerce (ex: “Mes clients”).
+
+            add_action('woocommerce_account_clients_endpoint', [$this, 'render_clients_page']);
+            → Affiche la page correspondante quand l’URL /mon-compte/clients est visitée.
+        */
+            
         // Hooks WooCommerce
         add_action('woocommerce_save_account_details', [$this, 'save_account_fields']);
 
@@ -18,8 +32,15 @@ class ALM_Gestion_De_Comptes {
         add_filter('woocommerce_account_menu_items', [$this, 'add_clients_menu_link']);
         add_action('woocommerce_account_clients_endpoint', [$this, 'render_clients_page']);
 
+        add_action('init', [$this, 'register_mes_devis_endpoint']);
+        add_filter('query_vars', [$this, 'add_mes_devis_query_var']);
+        add_filter('woocommerce_account_menu_items', [$this, 'add_devis_menu_link']);
+        add_action('woocommerce_account_mes-devis_endpoint', [$this, 'render_devis_page']);
+        
+
         // Nouveau : gestion formulaire client revendeur
         add_action('template_redirect', [$this, 'handle_client_submission']);
+
 
     }
 
@@ -159,6 +180,17 @@ class ALM_Gestion_De_Comptes {
         return $vars;
     }
 
+    /* creer la page mes devis */
+    public function register_mes_devis_endpoint() {
+        add_rewrite_endpoint('mes-devis', EP_ROOT | EP_PAGES);
+    }
+
+    /* creer la page mes devis */
+    public function add_mes_devis_query_var($vars) {
+        $vars[] = 'mes-devis';
+        return $vars;
+    }
+
     /**
      * Ajouter le lien “Mes Clients” dans le menu Mon Compte
      * Seulement pour le rôle customer_revendeur
@@ -176,11 +208,50 @@ class ALM_Gestion_De_Comptes {
         return $items;
     }
 
+/**
+     * Ajouter le lien “Mes Devis” dans le menu Mon Compte
+     * Seulement pour les rôles customer_revendeur,customer_particulier
+     */
+    public function add_devis_menu_link($items) {
+        $user = wp_get_current_user();
+
+        if (in_array('customer_revendeur', $user->roles) || in_array('customer_particulier', $user->roles)) {
+
+            // Insérer avant "clients" ou autre
+            $new = [];
+
+            foreach($items as $key => $label) {
+                if ($key === 'clients') { 
+                    $new['mes-devis'] = __('Mes Devis', 'alm'); 
+                }
+                $new[$key] = $label;
+            }
+
+            return $new;
+        }
+
+        return $items;
+    }
+
+
     /**
      * Rend la page via un template dédié dans le plugin
      */
     public function render_clients_page() {
         $template = plugin_dir_path(dirname(__FILE__)) . 'templates/account-clients.php';
+        if (file_exists($template)) {
+            include $template;
+        } else {
+            echo "<p>Template introuvable.</p>";
+        }
+    }
+
+
+    /**
+     * Rend la page via un template dédié dans le plugin
+     */
+    public function render_devis_page() {
+        $template = plugin_dir_path(dirname(__FILE__)) . 'templates/account-devis.php';
         if (file_exists($template)) {
             include $template;
         } else {

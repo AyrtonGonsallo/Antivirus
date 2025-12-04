@@ -71,11 +71,18 @@ class ALM_Commandes_Panier {
 
                 // conserver les méta si besoin
                 $cart_item_data = [];
-                if (!empty($cart_item['alm_client'])) $cart_item_data['alm_client'] = $cart_item['alm_client'];
+
+                // recopier alm_client si existe
+                if (!empty($cart_item['alm_client'])) 
+                    $cart_item_data['alm_client'] = $cart_item['alm_client'];
+
+                // recopier prix_force si existe
+                if (!empty($cart_item['prix_force'])) 
+                    $cart_item_data['prix_force'] = $cart_item['prix_force'];
 
                 WC()->cart->remove_cart_item($cart_item_key);
 
-                WC()->cart->add_to_cart(
+                $new_key = WC()->cart->add_to_cart(
                     $product_id,
                     $qty,
                     $variation_id,
@@ -85,14 +92,17 @@ class ALM_Commandes_Panier {
                     ]),
                     $cart_item_data
                 );
+                if ( isset($_POST['alm_client'][$cart_item_key]) ) {
+                    if ($new_key) {
+                        if (isset($_POST['alm_client'][$cart_item_key])) {
+                            WC()->cart->cart_contents[$new_key]['alm_client'] = intval($_POST['alm_client'][$cart_item_key]);
+                        }
+                    }
+                }
             }
 
             
-            // Client perso
-            if ( isset($_POST['alm_client'][$cart_item_key]) ) {
-                $client_id = intval($_POST['alm_client'][$cart_item_key]);
-                WC()->cart->cart_contents[$cart_item_key]['alm_client'] = $client_id;
-            }
+          
             
         }
 

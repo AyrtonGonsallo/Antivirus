@@ -28,37 +28,39 @@ global $product;
 <?php //echo $product->get_price_html(); ?>
 
 <?php
-if ( $product->is_type('simple') ) {
-    echo ''; // simple → rien
-}
 
-elseif ( $product->is_type('variable') ) {
-    //echo '👉 Ceci est un PRODUIT PARENT VARIABLE<br>';
 
-    $regular_price = $product->get_variation_regular_price( 'min', true );
-    $sale_price    = $product->get_variation_sale_price( 'min', true );
-
-    if ( $sale_price < $regular_price ) {
-        echo '<span class="regular-price">' . wc_price($regular_price) . '</span><br> ';
-        echo '<span class="sale-price">' . wc_price($sale_price) . '</span>';
-    } else {
-        echo wc_price($regular_price);
+if ( is_singular('product') ) {
+        
+    if ( $product->is_type('simple') ) {
+        echo ''; // simple → rien
     }
-}
 
-elseif ( $product->is_type('variation') ) {
-    echo '👉 Ceci est une VARIATION (enfant)<br>';
+    elseif ( $product->is_type('variable') ) {
 
-    $regular_price = $product->get_regular_price();
-    $sale_price    = $product->get_sale_price();
-
-    if ( $sale_price && $sale_price < $regular_price ) {
-        echo '<span style="text-decoration:line-through;color:#888;">' . wc_price($regular_price) . '</span> ';
-        echo '<span style="color:#d00;font-weight:bold;">' . wc_price($sale_price) . '</span>';
-    } else {
-        echo wc_price($regular_price);
+        echo '';
     }
+
+    elseif ( $product->is_type('variation') ) {
+
+        $regular_price = $product->get_regular_price();
+        $sale_price    = $product->get_sale_price();
+
+        if ( $sale_price && $sale_price < $regular_price ) {
+            
+            echo '<span style="text-decoration:line-through;color:#888;">' . wc_price($regular_price) . '</span> ';
+            echo '<span style="color:#d00;font-weight:bold;">' . wc_price($sale_price) . '</span>';
+            
+            //echo $product->get_price_html();
+        } else {
+            echo wc_price($regular_price);
+        }
+    }
+} else {
+    echo $product->get_price_html();
 }
+
+
 ?>
 
 </p>

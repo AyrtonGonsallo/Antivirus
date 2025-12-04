@@ -472,8 +472,65 @@ function shortcode_menu_entreprise($atts) {
 add_shortcode('menu_entreprise', 'shortcode_menu_entreprise');
 
 add_filter( 'wp_calculate_image_srcset', '__return_false' );
+/******************************************************************************************/
+add_action('wp_footer', function () {
+?>
+<script>
+jQuery(function($){
 
+    function replaceWithOriginalSize(){
 
+        // Toutes les images WooCommerce dans panier + checkout + widget
+        const selectors = `
+            .woocommerce-cart img,
+            .woocommerce-checkout img,
+            .wc-block-components-order-summary-item__image img,
+            .widget_shopping_cart img,
+            .shop_table img
+        `;
+
+        $(selectors).each(function(){
+
+            let img = $(this);
+            let src = img.attr('src');
+
+            if (!src) return;
+
+            // Supprime -100x100, -300x300, etc.
+            let cleanSrc = src.replace(/-\d+x\d+(?=\.(jpg|jpeg|png|webp))/i, '');
+
+            // Si l’URL change → remplace l'image
+            if (cleanSrc !== src) {
+                img.attr('src', cleanSrc);
+            }
+
+            // Applique le style uniformisé et propre
+            img.css({
+                'width': '48px',
+                'height': '48px',
+                'object-fit': 'contain',
+                'display': 'block'
+            });
+        });
+    }
+
+    // Exécution initiale
+    setTimeout(replaceWithOriginalSize, 300);
+    setTimeout(replaceWithOriginalSize, 800);
+
+    // Re-exécuter après AJAX WooCommerce (changement qty, remove item…)
+    $(document).on('updated_wc_div updated_cart_totals updated_cart_widget', function () {
+        replaceWithOriginalSize();
+    });
+
+    // MutationObserver pour les blocs Checkout (WooCommerce Blocks)
+    const observer = new MutationObserver(() => replaceWithOriginalSize());
+    observer.observe(document.body, { childList: true, subtree: true });
+
+});
+</script>
+<?php
+});
 
 
 
