@@ -30,6 +30,35 @@ class DevisEmailSender {
         $note_client     =    get_field('note_client', $post_id);
         $software_duration     =    get_field('software_duration', $post_id)["label"];
         $produits_de_la_commande     =    get_field('produits_de_la_commande', $post_id);
+         $today = current_time('d/m/Y g:i a'); // même format que date_de_creation
+
+        $args = [
+            'post_type' => 'remise',
+            'post_status' => 'publish',
+            'numberposts' => -1,
+            'meta_query' => [
+                [
+                    'key' => 'utilisateur',
+                    'value' => $user_id,
+                    'compare' => '='
+                ],
+                [
+                    'key' => 'statut',
+                    'value' => 'validee',
+                    'compare' => '='
+                ],
+                [
+                    'key' => 'date_dexpiration',
+                    'value' => $today,
+                    'compare' => '>=',
+                    'type' => 'DATETIME'
+                ]
+            ]
+        ];
+
+       
+
+        $remises = get_posts($args);
         $total_produits=0;
         $devis_content_html = "";
         if ($produits_de_la_commande) {
@@ -40,7 +69,7 @@ class DevisEmailSender {
 
                 if (is_array($produit_relation) && isset($produit_relation[0])) {
                     $produit_post = $produit_relation[0];
-                    $product_id = $produit_post_id;
+                    $product_id = $produit_post->ID;
                     $product_obj = wc_get_product($product_id);
 
                     if ($product_obj) {
@@ -61,10 +90,55 @@ class DevisEmailSender {
                 </div>";
             }
         }
-        $devis_content_html .= "
-                <div>
-                    total = $total_produits  €
-                </div>";
+      
+
+                // Calcul des remises
+                    $total_discount_amount = 0;
+                    if (!empty($remises)) {
+                        foreach ($remises as $remise) {
+                            $percent = floatval(get_field('pourcentage', $remise));
+                            $total_discount_amount += ($percent / 100) * $total_produits;
+                        }
+                    }
+
+                    // Sous-total (produits - remises)
+                    $sous_total = $total_produits - $total_discount_amount;
+                    $tva = $sous_total * 0.2; // TVA 20%
+                    $total_ttc = $sous_total + $tva;
+
+                    // Ligne Total HT
+                    $devis_content_html .= '<div style="display:flex;width:50%;padding:6px 0;justify-content: space-between;">';
+                    $devis_content_html .= '<div style="padding:0px 6px;"> Total HT</div>';
+                    $devis_content_html .= '<div>'.$total_produits.' €</div>';
+                    $devis_content_html .= '</div>';
+
+                    
+
+                    // Ligne Remises
+                    if ($total_discount_amount > 0) {
+                        $devis_content_html .= '<div style="display:flex;width: 50%;padding:6px 0;justify-content: space-between;">';
+                        $devis_content_html .= '<div style="padding:0px 6px;">Remises commerciales</div>';
+                        $devis_content_html .= '<div>-'.$total_discount_amount.' €</div>';
+                        $devis_content_html .= '</div>';
+                    }
+
+                    // Ligne Sous-total HT
+                    $devis_content_html .= '<div style="display:flex;width: 50%;padding:6px 0;justify-content: space-between;">';
+                    $devis_content_html .= '<div style="padding:0px 6px;">Sous-total HT</div>';
+                    $devis_content_html .= '<div>'.$sous_total.' €</div>';
+                    $devis_content_html .= '</div>';
+
+                    // Ligne TVA
+                    $devis_content_html .= '<div style="display:flex;width: 50%;padding:6px 0;justify-content: space-between;">';
+                    $devis_content_html .= '<div style="padding:0px 6px;">TVA 20%</div>';
+                    $devis_content_html .= '<div>'.$tva.' €</div>';
+                    $devis_content_html .= '</div>';
+
+                    // Ligne Total TTC
+                    $devis_content_html .= '<div style="display:flex;width:50%;padding:6px 0;justify-content:space-between;">';
+                    $devis_content_html .= '<div style="padding:0px 6px;">Total TTC</div>';
+                    $devis_content_html .= '<div style="font-weight:bold;">'.$total_ttc.' €</div>';
+                    $devis_content_html .= '</div>';
 
 
         // 2️⃣ Construire le contenu de l'email
