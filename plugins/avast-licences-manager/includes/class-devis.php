@@ -355,8 +355,9 @@ class ALM_Devis {
                 </div>
 
                 <div class="div-form2">
-                <h2>Recevoir mon devis par email</h2><br>
+                
                 <?php if ( !is_user_logged_in() ) : ?>
+                    <h2>Recevoir mon devis par email</h2><br>
                     <div class="radio" style="display: flex; flex-direction: row; gap: 40px;">
                         <label>
                             <input style="margin-right:20px;" type="radio" name="choice_login" value="nouveau" checked>
