@@ -261,17 +261,25 @@ function shortcode_upsell_produit() {
 
 					
 				<ul class="products elementor-grid columns-4">
-                    <?php foreach ($upsell_ids as $id): ?>
-                        <?php $p = wc_get_product($id); if (!$p) continue; ?>
+                    <?php 
+                    $old_global_product = $product;
+                    foreach ($upsell_ids as $id): ?>
+                        <?php $p = wc_get_product($id); 
+                        if (!$p) continue; 
+                        global $product;
+                        $product = $p; // important !
+                        ?>
                         <li class="product">
                             <a href="<?php echo get_permalink($id); ?>">
                                 <?php echo $p->get_image('medium_large'); ?>
                                 <h3 style="font-size: 22px;font-weight: 700;"><?php echo $p->get_name(); ?></h3>
                                 <span class="price"><?php echo $p->get_price_html(); ?></span>
                             </a>
-                            <?php woocommerce_template_loop_add_to_cart(['product' => $p]); ?>
+                            <?php woocommerce_template_loop_add_to_cart(); ?>
                         </li>
-                    <?php endforeach; ?>
+                    <?php endforeach; 
+                        $product = $old_global_product;
+                    ?>
                    	</ul>
 
 	</section>
@@ -322,11 +330,14 @@ function shortcode_cross_sell() {
 					
 				<ul class="products elementor-grid columns-4">
 
-			 <?php foreach ($cross_sell_ids as $id): ?>
+			 <?php $old_global_product = $product;
+              foreach ($cross_sell_ids as $id): ?>
                         <li class="product type-product post-2743 status-publish first instock product_cat-entreprise has-post-thumbnail shipping-taxable product-type-simple">
                             <?php
                             $p = wc_get_product($id);
                             if (!$p) continue;
+                            global $product;
+                            $product = $p; // important !
                             ?>
                             <a href="<?php echo get_permalink($id); ?>">
                                 <?php echo $p->get_image('medium_large'); ?>
@@ -335,7 +346,9 @@ function shortcode_cross_sell() {
                             </a>
                             <?php woocommerce_template_loop_add_to_cart(['product' => $p]); ?>
                         </li>
-                    <?php endforeach; ?>
+                    <?php endforeach; 
+                    $product = $old_global_product;
+                    ?>
 				
 			
 		</ul>

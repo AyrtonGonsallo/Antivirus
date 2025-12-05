@@ -215,7 +215,7 @@ class ALM_Gestion_De_Comptes {
             $new = [];
 
             foreach($items as $key => $label) {
-                if ($key === 'clients') { 
+                if ($key === 'customer-logout') { 
                     $new['mes-devis'] = __('Mes Devis', 'alm'); 
                 }
                 $new[$key] = $label;

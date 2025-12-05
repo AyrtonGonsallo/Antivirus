@@ -10,8 +10,6 @@ class ALM_Devis {
 
          // Lors du UPDATE CART → on ajoute les données
        // add_action('addify_rfq_after_update_quote_item', [$this, 'sauver_champs_perso_devis'], 10, 2);
-       // add_action('wp_ajax_update_quote_items',  [$this, 'alm_save_alm_duree_before_quote_update'], 4, 0);
-        //add_action('wp_ajax_nopriv_update_quote_items', [$this, 'alm_save_alm_duree_before_quote_update'], 5, 0);
 
         //add_filter( 'woocommerce_add_cart_item_data', [$this, 'alm_save_custom_fields_to_cart'], 5, 2);
         //add_action( 'woocommerce_add_to_cart',  [$this, 'alm_force_quantity_after_add_to_cart'], 10, 3);
@@ -219,7 +217,7 @@ class ALM_Devis {
         $id = intval($_GET['id']);
 
         // Générer le PDF et l'enregistrer dans le champ ACF
-        $sent = DevisEmailSender::send_email($id);
+        $sent = DevisEmailSender::send_email_devis_final($id);
         
 
         // 5️⃣ Redirection avec info
@@ -238,9 +236,13 @@ class ALM_Devis {
 
         <?php
             if(isset($_GET["status_demande"]) ){
-                if(($_GET["status_demande"])=="success" ){
+                if(($_GET["status_demande"])=="success_and_email" ){
+                    echo "<div class='msg-box success' style='border: solid 1px;text-align: center;color: white;padding: 4px 10px;background: #00d369;'>Demande de devis envoyée avec succès vous devrez recevoir un mail.</div>";
+                }else if(($_GET["status_demande"])=="success_without_email"){
                     echo "<div class='msg-box success' style='border: solid 1px;text-align: center;color: white;padding: 4px 10px;background: #00d369;'>Demande de devis envoyée avec succès.</div>";
-                }else{
+
+                }
+                else{
                     echo "<div class='msg-box failure' style='border: solid 1px;text-align: center;color: white;padding: 4px 10px;background: #d30b00ff;'>Échec de la demande.</div>";
                 }
                 
@@ -528,15 +530,17 @@ class ALM_Devis {
                    
 
                     function checkofflogfields() {
+                        
                         let offlogfieldsFilled = true;
+                        let msg = '';
                         if($('#comment').val().trim() === '') {
                             offlogfieldsFilled = false;
-                            return false; // stop each
                         }
+                        //console.log("check",$('#comment').val().trim())
                         $('button[type="submit"]').prop('disabled', !(offlogfieldsFilled ));
                         if(!offlogfieldsFilled) msg += 'Les champs par défaut doivent êtres saisis.<br>';
                         $('#error-msg').html(msg);
-                        console.log("offlogfieldsFilled",offlogfieldsFilled)
+                        //console.log("offlogfieldsFilled",offlogfieldsFilled)
                     }
 
                     function checkNewAccountFields() {
@@ -547,6 +551,7 @@ class ALM_Devis {
                         let allFilled = true;
                         let emailsMatch = true;
                         let passwordsMatch = true;
+                        
 
                         console.log("choice_login",choice_login)
                         console.log("register",register)
@@ -618,7 +623,7 @@ class ALM_Devis {
                     }else{
                         console.log("remplir champs standards")
                         $('button[type="submit"]').prop('disabled', true);
-                        $('input[name="choice_login"]').on('change', function(){
+                        $('#comment').on('input', function() {
                             checkofflogfields();
                         });
 
@@ -730,7 +735,7 @@ class ALM_Devis {
     }
 
 
-    function alm_handle_devis_form() {
+     function alm_handle_devis_form() {
         if ( $_SERVER['REQUEST_METHOD'] !== 'POST' ) return;
         if ( !isset($_POST['goal']) ) return;
         if ( isset($_POST['goal']) && $_POST['goal'] !== 'devis_en_ligne' ) return;
@@ -922,41 +927,43 @@ class ALM_Devis {
         }
 
         // 2) Champs standard
-        update_post_meta($post_id, 'date_de_creation', current_time('mysql'));
         $expiration_timestamp = strtotime('+1 month', current_time('timestamp'));
         $expiration_mysql = date('Y-m-d H:i:s', $expiration_timestamp);
 
-        update_post_meta($post_id, 'date_expiration', $expiration_mysql);
-        update_post_meta($post_id, 'option', $choix_av);  
-        update_post_meta($post_id, 'software_duration', $duration);
-        update_post_meta($post_id,'status', 'en_attente');
-        update_post_meta($post_id, 'note_client', $comment);
-        update_post_meta($post_id, 'type_de_devis', "client");
-        update_post_meta($post_id, 'utilisateur', $user_id);
+        update_field('date_de_creation', current_time('mysql'), $post_id);
+        update_field('date_expiration', $expiration_mysql, $post_id);
+        update_field('option', $choix_av, $post_id);
+        update_field('software_duration', $duration, $post_id);
+        update_field('status', 'en_attente', $post_id);
+        update_field('note_client', $comment, $post_id);
+        update_field('field_692eaafe3985a', $comment, $post_id);
+        update_field('type_de_devis', 'client', $post_id);
+        update_field('utilisateur', $user_id, $post_id);
+         update_field('field_692eab163985b', $user_id, $post_id);
 
         // 3) choix → "je ne sais pas quelle version"
         if ( $choix_av === 'idkn' ) {
-            update_post_meta($post_id, 'compt2save', $compt2save);
+            update_field('compt2save', $compt2save, $post_id);
         }
 
         // 4) choix → "je sais ce dont j’ai besoin" (RÉPÉTEUR ACF)
         if ( $choix_av === 'ikn' && !empty($prod_qty)) {
 
-            // reset le repeater
-            delete_post_meta($post_id, 'produits_de_la_commande');
+            // reset propre ACF
+            delete_field('produits_de_la_commande', $post_id);
 
             foreach ($prod_qty as $product_id => $qty) {
                 $qty = intval($qty);
                 if ($qty > 0) {
 
-                    // crée une rangée dans le répéteur ACF
                     add_row('produits_de_la_commande', [
-                        'produit'  => $product_id,   // relation vers objet produit 
+                        'produit'  => $product_id,
                         'quantite' => $qty,
                     ], $post_id);
                 }
             }
         }
+
 
 
         // 5) remises
@@ -1029,9 +1036,18 @@ class ALM_Devis {
             wc_add_notice("Vos demandes de remise ont été envoyées avec succès.", "success");
         }
 
-        // 6) fin → redirection
-        wp_redirect(home_url('/devis/?status_demande=success'));
+
+        $sent = DevisEmailSender::send_email_devis_created($post_id);
+
+        if ($sent) {
+            // Mail envoyé avec succès
+            wp_redirect(home_url('/devis/?status_demande=success_and_email'));
+        } else {
+            // Échec de l'envoi
+            wp_redirect(home_url('/devis/?status_demande=success_without_email'));
+        }
         exit;
+        
 
     }
 
@@ -1061,46 +1077,6 @@ class ALM_Devis {
 
         return $cart_item_data;
     }
-
-    function alm_save_alm_duree_before_quote_update() {
-
-    // sécurité : pas de sortie
-    ob_start();
-
-    // sécurisation session
-    $quotes = WC()->session->get('quotes');
-
-    if (!is_array($quotes)) {
-        WC()->session->set('quotes', []);
-        return;
-    }
-
-    // récupération des données formulaire
-    if ( isset( $_POST['form_data'] ) ) {
-        if ( isset( $_POST['form_data'] ) ) {
-			parse_str( sanitize_meta( '', wp_unslash( $_POST['form_data'] ), '' ), $form_data );
-		} else {
-			$form_data = '';
-		}
-    }
-
-    // ajout du champ
-    foreach ($quotes as $quote_item_key => $quote_item) {
-        
-        if (isset($form_data['alm_duree'][$quote_item_key])) {
-            
-            $quotes[$quote_item_key]['alm_duree'] =
-                sanitize_text_field($form_data['alm_duree'][$quote_item_key]);
-        }
-        $quotes[ $quote_item_key ]['alm_duree'] = ( $form_data['alm_duree'][ $quote_item_key ] );
-    }
-
-    // resauvegarde
-    WC()->session->set('quotes', $quotes);
-
-    // vide le buffer — pour éviter toute sortie
-    ob_end_clean();
-}
 
 
 

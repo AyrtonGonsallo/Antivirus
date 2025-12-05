@@ -132,15 +132,15 @@ class ALM_Revendeur {
                 break;
 
             case 'actions':
+                $status_value = get_field('status', $post_id)['value'];
                 $valider_url   = admin_url("admin-post.php?action=valider_compte_revendeur&id=$post_id");
-
-                echo '<div style="display:flex; gap:8px; flex-wrap:wrap;">';
-
-                echo '<a class="button button-primary" href="'.esc_url($valider_url).'">Valider</a>';
-
-               
-
-                echo '</div>';
+                //echo $status_value;
+                if($status_value=="en_attente"){
+                    echo '<div style="display:flex; gap:8px; flex-wrap:wrap;">';
+                    echo '<a class="button button-primary" href="'.esc_url($valider_url).'">Valider</a>';
+                    echo '</div>';
+                }
+                
 
                 
                 break;
