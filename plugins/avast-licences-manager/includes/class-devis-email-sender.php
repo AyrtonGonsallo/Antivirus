@@ -59,6 +59,32 @@ class DevisEmailSender {
        
 
         $remises = get_posts($args);
+        $percent_tva = 20;
+        // 1. On récupère le pays du client via ACF
+        $user_country = get_user_meta($user_id, 'pays', true);
+        if (!$user_country) return;
+
+        // 2. On récupère le taux dans le CPT taux_tva
+        $args = [
+            'post_type' => 'tva_par_pays',
+            'meta_query' => [
+                [
+                    'key' => 'code_pays',
+                    'value' => $user_country,
+                    'compare' => '='
+                ]
+            ],
+            'posts_per_page' => 1,
+        ];
+
+        $tva_posts = get_posts($args);
+        if (!empty($tva_posts)){
+             $tva_post_id = $tva_posts[0]->ID;
+
+            // 3. On récupère le taux %
+            $percent_tva = get_field('pourcentage', $tva_post_id); // ex: 20
+            
+        }
         $total_produits=0;
         $devis_content_html = "";
         if ($produits_de_la_commande) {
@@ -103,13 +129,13 @@ class DevisEmailSender {
 
                     // Sous-total (produits - remises)
                     $sous_total = $total_produits - $total_discount_amount;
-                    $tva = $sous_total * 0.2; // TVA 20%
+                    $tva = ($sous_total * $percent_tva) / 100; // TVA 20%
                     $total_ttc = $sous_total + $tva;
 
                     // Ligne Total HT
                     $devis_content_html .= '<div style="display:flex;width:50%;padding:6px 0;justify-content: space-between;">';
                     $devis_content_html .= '<div style="padding:0px 6px;"> Total HT</div>';
-                    $devis_content_html .= '<div>'.$total_produits.' €</div>';
+                    $devis_content_html .= '<div>'.number_format($total_produits, 2, ',', ' ').' €</div>';
                     $devis_content_html .= '</div>';
 
                     
@@ -118,26 +144,26 @@ class DevisEmailSender {
                     if ($total_discount_amount > 0) {
                         $devis_content_html .= '<div style="display:flex;width: 50%;padding:6px 0;justify-content: space-between;">';
                         $devis_content_html .= '<div style="padding:0px 6px;">Remises commerciales</div>';
-                        $devis_content_html .= '<div>-'.$total_discount_amount.' €</div>';
+                        $devis_content_html .= '<div>-'.number_format($total_discount_amount, 2, ',', ' ').' €</div>';
                         $devis_content_html .= '</div>';
                     }
 
                     // Ligne Sous-total HT
                     $devis_content_html .= '<div style="display:flex;width: 50%;padding:6px 0;justify-content: space-between;">';
                     $devis_content_html .= '<div style="padding:0px 6px;">Sous-total HT</div>';
-                    $devis_content_html .= '<div>'.$sous_total.' €</div>';
+                    $devis_content_html .= '<div>'.number_format($sous_total, 2, ',', ' ').' €</div>';
                     $devis_content_html .= '</div>';
 
                     // Ligne TVA
                     $devis_content_html .= '<div style="display:flex;width: 50%;padding:6px 0;justify-content: space-between;">';
-                    $devis_content_html .= '<div style="padding:0px 6px;">TVA 20%</div>';
-                    $devis_content_html .= '<div>'.$tva.' €</div>';
+                    $devis_content_html .= '<div style="padding:0px 6px;">TVA '.$percent_tva.'%</div>';
+                    $devis_content_html .= '<div>'.number_format($tva, 2, ',', ' ').' €</div>';
                     $devis_content_html .= '</div>';
 
                     // Ligne Total TTC
                     $devis_content_html .= '<div style="display:flex;width:50%;padding:6px 0;justify-content:space-between;">';
                     $devis_content_html .= '<div style="padding:0px 6px;">Total TTC</div>';
-                    $devis_content_html .= '<div style="font-weight:bold;">'.$total_ttc.' €</div>';
+                    $devis_content_html .= '<div style="font-weight:bold;">'.number_format($total_ttc, 2, ',', ' ').' €</div>';
                     $devis_content_html .= '</div>';
 
         $lien_logo_png = site_url().'/wp-content/uploads/2025/11/avast-logo.png';

@@ -257,32 +257,71 @@ function shortcode_upsell_produit() {
 				</div>
 				<div class="elementor-element elementor-element-8da8c26 elementor-grid-mobile-1 elementor-product-loop-item--align-center elementor-widget-mobile__width-inherit elementor-product-loop-item--align-center prod-shop elementor-grid-4 elementor-grid-tablet-3 elementor-products-grid elementor-wc-products elementor-widget elementor-widget-woocommerce-product-related" data-id="8da8c26" data-element_type="widget" data-widget_type="woocommerce-product-related.default">
 					
-	<section class="related products">
+	            <section class="related products">
 
 					
-				<ul class="products elementor-grid columns-4">
+                    <ul class="products elementor-grid columns-4">
                     <?php 
                     $old_global_product = $product;
-                    foreach ($upsell_ids as $id): ?>
-                        <?php $p = wc_get_product($id); 
-                        if (!$p) continue; 
-                        global $product;
-                        $product = $p; // important !
-                        ?>
-                        <li class="product">
-                            <a href="<?php echo get_permalink($id); ?>">
-                                <?php echo $p->get_image('medium_large'); ?>
-                                <h3 style="font-size: 22px;font-weight: 700;"><?php echo $p->get_name(); ?></h3>
-                                <span class="price"><?php echo $p->get_price_html(); ?></span>
-                            </a>
-                            <?php woocommerce_template_loop_add_to_cart(); ?>
-                        </li>
-                    <?php endforeach; 
-                        $product = $old_global_product;
-                    ?>
-                   	</ul>
 
-	</section>
+                    foreach ($upsell_ids as $id):
+
+                        $p = wc_get_product($id);
+                        if (!$p) continue;
+
+                        // --- SI PRODUIT VARIABLE : récupérer ses variations enfants ---
+                        if ($p->is_type('variable')) {
+
+                            $children = $p->get_children(); // IDs des variations
+
+                            foreach ($children as $child_id) {
+                                $child = wc_get_product($child_id);
+                                if (!$child || !$child->is_type('variation')) continue;
+
+                                global $product;
+                                $product = $child; // obligatoire pour le bouton add-to-cart
+                                ?>
+                                
+                                <li class="product">
+                                    <a href="<?php echo get_permalink($child_id); ?>">
+                                        <?php echo $child->get_image('medium_large'); ?>
+                                        <h3 style="font-size: 22px;font-weight: 700;"><?php echo $child->get_name(); ?></h3>
+                                        <span class="price"><?php echo $child->get_price_html(); ?></span>
+                                    </a>
+                                    <?php woocommerce_template_loop_add_to_cart(); ?>
+                                </li>
+
+                                <?php
+                            }
+                            continue;
+                        }
+
+                        // --- SI PRODUIT FILS DIRECT ---
+                        if ($p->is_type('variation')) {
+                            global $product;
+                            $product = $p;
+                            ?>
+
+                            <li class="product">
+                                <a href="<?php echo get_permalink($id); ?>">
+                                    <?php echo $p->get_image('medium_large'); ?>
+                                    <h3 style="font-size: 22px;font-weight: 700;"><?php echo $p->get_name(); ?></h3>
+                                    <span class="price"><?php echo $p->get_price_html(); ?></span>
+                                </a>
+                                <?php woocommerce_template_loop_add_to_cart(); ?>
+                            </li>
+
+                            <?php
+                        }
+
+                    endforeach;
+
+                    $product = $old_global_product;
+                    ?>
+                    </ul>
+
+
+	            </section>
 					</div>
 					</div>
 				</div>
@@ -328,17 +367,46 @@ function shortcode_cross_sell() {
 	<section class="related products">
 
 					
-				<ul class="products elementor-grid columns-4">
+			<ul class="products elementor-grid columns-4">
 
-			 <?php $old_global_product = $product;
-              foreach ($cross_sell_ids as $id): ?>
-                        <li class="product type-product post-2743 status-publish first instock product_cat-entreprise has-post-thumbnail shipping-taxable product-type-simple">
-                            <?php
-                            $p = wc_get_product($id);
-                            if (!$p) continue;
+			    <?php 
+                $old_global_product = $product;
+
+                foreach ($cross_sell_ids as $id):
+
+                    $p = wc_get_product($id);
+                    if (!$p) continue;
+
+                    // 1) SI PRODUIT VARIABLE → récupérer tous ses fils
+                    if ($p->is_type('variable')) {
+                        $child_ids = $p->get_children(); // toutes les variations (IDs)
+
+                        foreach ($child_ids as $child_id) {
+                            $child = wc_get_product($child_id);
+                            if (!$child || !$child->is_type('variation')) continue;
+
                             global $product;
-                            $product = $p; // important !
+                            $product = $child;
                             ?>
+                            <li class="product type-product">
+                                <a href="<?php echo get_permalink($child_id); ?>">
+                                    <?php echo $child->get_image('medium_large'); ?>
+                                    <h3 style="font-size: 22px;font-weight: 700;"><?php echo $child->get_name(); ?></h3>
+                                    <span class="price"><?php echo $child->get_price_html(); ?></span>
+                                </a>
+                                <?php woocommerce_template_loop_add_to_cart(['product' => $child]); ?>
+                            </li>
+                            <?php
+                        }
+                        continue; // évite d’afficher aussi le parent
+                    }
+
+                    // 2) SI PRODUIT FILS DIRECT → l’afficher
+                    if ($p->is_type('variation')) {
+                        global $product;
+                        $product = $p;
+                        ?>
+                        <li class="product type-product">
                             <a href="<?php echo get_permalink($id); ?>">
                                 <?php echo $p->get_image('medium_large'); ?>
                                 <h3 style="font-size: 22px;font-weight: 700;"><?php echo $p->get_name(); ?></h3>
@@ -346,9 +414,16 @@ function shortcode_cross_sell() {
                             </a>
                             <?php woocommerce_template_loop_add_to_cart(['product' => $p]); ?>
                         </li>
-                    <?php endforeach; 
-                    $product = $old_global_product;
-                    ?>
+                        <?php
+                        continue;
+                    }
+
+                    // Sinon (simple product) → ignorer
+                endforeach;
+
+                $product = $old_global_product;
+                ?>
+
 				
 			
 		</ul>

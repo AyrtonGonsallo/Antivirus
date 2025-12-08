@@ -15,7 +15,10 @@ $attribute_keys = array_keys( $attributes );
 $user_id        = get_current_user_id();
 function pcsToPoste($str) {
     if (strpos($str, "Nombre de pcs") !== false) {
-        return "poste(s)";
+        return "Poste(s)";
+    }
+	else if (strpos($str, "Durée") !== false) {
+        return $str;
     }
     return "";
 }
@@ -38,6 +41,9 @@ do_action( 'woocommerce_before_add_to_cart_form' ); ?>
 						<tbody>
 						<?php foreach ( $attributes as $attribute_name => $options ) { ?>
 							<tr>
+								<td class="label"><label
+										for="<?php echo esc_attr( sanitize_title( $attribute_name ) ); ?>"><?php echo esc_html( pcsToPoste(wc_attribute_label( $attribute_name )) ); ?></label>
+								</td>
 								<td class="value">
 									<?php
 									$selected = isset( $_REQUEST[ 'attribute_' . $attribute_name ] ) ? urldecode( sanitize_text_field( wp_unslash( $_REQUEST[ 'attribute_' . $attribute_name ] ) ) ) : $product->get_variation_default_attribute( $attribute_name );
@@ -52,9 +58,7 @@ do_action( 'woocommerce_before_add_to_cart_form' ); ?>
 									//echo end( $attribute_keys ) === $attribute_name ? wp_kses_post( apply_filters( 'woocommerce_reset_variations_link', '<a class="reset_variations" href="#">' . __( 'Clear', 'flexible-subscriptions' ) . '</a>' ) ) : '';
 									?>
 								</td>
-								<td class="label"><label
-										for="<?php echo esc_attr( sanitize_title( $attribute_name ) ); ?>"><?php echo esc_html( pcsToPoste(wc_attribute_label( $attribute_name )) ); ?></label>
-								</td>
+								
 								
 							</tr>
 						<?php } ?>

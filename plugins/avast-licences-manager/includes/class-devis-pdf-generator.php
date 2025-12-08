@@ -66,6 +66,36 @@ class DevisPDFGenerator {
        
 
         $remises = get_posts($args);
+
+        $percent_tva = 20;
+        // 1. On récupère le pays du client via ACF
+        $user_country = get_user_meta($user_id, 'pays', true);
+        if (!$user_country) return;
+
+        // 2. On récupère le taux dans le CPT taux_tva
+        $args = [
+            'post_type' => 'tva_par_pays',
+            'meta_query' => [
+                [
+                    'key' => 'code_pays',
+                    'value' => $user_country,
+                    'compare' => '='
+                ]
+            ],
+            'posts_per_page' => 1,
+        ];
+
+        $tva_posts = get_posts($args);
+        if (!empty($tva_posts)){
+             $tva_post_id = $tva_posts[0]->ID;
+
+            // 3. On récupère le taux %
+            $percent_tva = get_field('pourcentage', $tva_post_id); // ex: 20
+            
+        }
+
+       
+    
         
 
         /*
@@ -289,7 +319,7 @@ class DevisPDFGenerator {
                             $nom = '
                             <div class= style="white-space:nowrap;">
                                 <img src="'.esc_url($product_img_url).'" width="50" height="50" style="vertical-align:middle; border-radius:4px; margin-right:10px;">
-                                <a href="'.get_permalink($product_id).'" class="product-link"><span style="vertical-align:middle;">'.esc_html($product_name).'</span></a>
+                                <a href="'.get_permalink($product_id).'" class="product-link"><span style="vertical-align:middle;">'.wp_kses_post($product_name).'</span></a>
                             </div>';
 
                             $html .= "
@@ -407,13 +437,14 @@ class DevisPDFGenerator {
 
                     // Sous-total (produits - remises)
                     $sous_total = $total_produits - $total_discount_amount;
-                    $tva = $sous_total * 0.2; // TVA 20%
+                    $tva = ($sous_total * $percent_tva) / 100; // TVA 20%
+                    
                     $total_ttc = $sous_total + $tva;
 
                     // Ligne Total HT
                     $html .= '<tr>';
                     $html .= '<td colspan="4" style="text-align:right;"> Total HT</td>';
-                    $html .= '<td>'.$total_produits.' €</td>';
+                    $html .= '<td>'.number_format($total_produits, 2, ',', ' ').' €</td>';
                     $html .= '</tr>';
 
                     
@@ -422,26 +453,26 @@ class DevisPDFGenerator {
                     if ($total_discount_amount > 0) {
                         $html .= '<tr>';
                         $html .= '<td colspan="4" style="text-align:right;">Remises commerciales</td>';
-                        $html .= '<td>-'.$total_discount_amount.' €</td>';
+                        $html .= '<td>-'.number_format($total_discount_amount, 2, ',', ' ').' €</td>';
                         $html .= '</tr>';
                     }
 
                     // Ligne Sous-total HT
                     $html .= '<tr>';
                     $html .= '<td colspan="4" style="text-align:right;">Sous-total HT</td>';
-                    $html .= '<td>'.$sous_total.' €</td>';
+                    $html .= '<td>'.number_format($sous_total, 2, ',', ' ').' €</td>';
                     $html .= '</tr>';
 
                     // Ligne TVA
                     $html .= '<tr>';
-                    $html .= '<td colspan="4" style="text-align:right;">TVA 20%</td>';
-                    $html .= '<td>'.$tva.' €</td>';
+                    $html .= '<td colspan="4" style="text-align:right;">TVA '.$percent_tva.'%</td>';
+                    $html .= '<td>'.number_format($tva, 2, ',', ' ').' €</td>';
                     $html .= '</tr>';
 
                     // Ligne Total TTC
                     $html .= '<tr>';
                     $html .= '<td colspan="4" style="text-align:right; font-weight:bold;">Total TTC</td>';
-                    $html .= '<td style="font-weight:bold;">'.$total_ttc.' €</td>';
+                    $html .= '<td style="font-weight:bold;">'.number_format($total_ttc, 2, ',', ' ').' €</td>';
                     $html .= '</tr>';
 
 

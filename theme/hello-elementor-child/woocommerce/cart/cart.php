@@ -37,7 +37,7 @@ do_action( 'woocommerce_before_cart' ); ?>
 				<th class="product-thumbnail"><span class="screen-reader-text"><?php esc_html_e( 'Thumbnail image', 'woocommerce' ); ?></span></th>
 				<th scope="col" class="product-name"><?php esc_html_e( 'Product', 'woocommerce' ); ?></th>
 				<th scope="col" class="software_duration"><?php esc_html_e( 'Durée', 'woocommerce' ); ?></th>
-				<th scope="col" class="number_of_computers"><?php esc_html_e( 'Nombre de pcs', 'woocommerce' ); ?></th>
+				<th scope="col" class="number_of_computers"><?php esc_html_e( 'PC', 'woocommerce' ); ?></th>
 				
 				<th scope="col" class="product-price"><?php esc_html_e( 'Price', 'woocommerce' ); ?></th>
 				<th scope="col" class="product-quantity"><?php esc_html_e( 'Quantity', 'woocommerce' ); ?></th>
@@ -143,7 +143,7 @@ do_action( 'woocommerce_before_cart' ); ?>
 						?>
 						</td>
 
-						<td class="product-software_duration" data-title="software_duration">
+						<td class="product-software_duration product-name" data-title="software_duration">
     
 							
 							<?php 
@@ -168,7 +168,7 @@ do_action( 'woocommerce_before_cart' ); ?>
 										$options = $attr->get_options(); // liste de term IDs
 										$selected = $current_attr['pa_software_duration'] ?? '';
 										
-										echo '<select name="alm_Software_duration[' . $cart_item_key . ']">';
+										echo '<select name="alm_Software_duration[' . $cart_item_key . ']" class="automatic-sent">';
 
 										foreach ($options as $term_id) {
 
@@ -197,7 +197,7 @@ do_action( 'woocommerce_before_cart' ); ?>
 
 						</td>
 
-						<td class="product-number_of_computers" data-title="number_of_computers">
+						<td class="product-number_of_computers product-name" data-title="number_of_computers">
     
 							
 							<?php 
@@ -213,7 +213,7 @@ do_action( 'woocommerce_before_cart' ); ?>
 
 				
 									// ===============================
-									// SELECT Number of computers
+									// SELECT Number of computers il les prends dans les valeurs de l'attribut nombre de pcs et pas dans les stocks
 									// ===============================
 
 									if (isset($attributes['pa_number_of_computers'])) {
@@ -221,8 +221,8 @@ do_action( 'woocommerce_before_cart' ); ?>
 										$attr = $attributes['pa_number_of_computers'];
 										$options = $attr->get_options();
 										$selected = $current_attr['pa_number_of_computers'] ?? '';
-
-										echo '<select name="alm_Number_of_computers[' . $cart_item_key . ']">';
+										//var_dump($options);
+										echo '<select name="alm_Number_of_computers[' . $cart_item_key . ']" class="automatic-sent">';
 
 										foreach ($options as $term_id) {
 
@@ -301,8 +301,8 @@ do_action( 'woocommerce_before_cart' ); ?>
 								$clients = get_users($args);
 								$selected_client = isset($cart_item['alm_client']) ? $cart_item['alm_client'] : '';
 							?>
-							<td class="product-client">
-								<select name="alm_client[<?php echo $cart_item_key; ?>]" required>
+							<td class="product-client product-name">
+								<select name="alm_client[<?php echo $cart_item_key; ?>]" required class="automatic-sent">
 									<!-- Option par défaut -->
 									<option value="" disabled <?php selected( empty($selected_client) ); ?>>Sélectionnez un client</option>
 
@@ -364,3 +364,20 @@ do_action( 'woocommerce_before_cart' ); ?>
 </div>
 
 <?php do_action( 'woocommerce_after_cart' ); ?>
+
+
+<script>
+jQuery(document).ready(function($) {
+
+    // Au changement d'un select personnalisé
+    $(document).on('change', 'select.automatic-sent', function () {
+
+        // Activer le bouton (WooCommerce le désactive souvent)
+        //$('button[name="update_cart"]').prop('disabled', false);
+
+        // Déclencher le clic automatiquement
+        $('button[name="update_cart"]').trigger('click');
+    });
+
+});
+	</script>

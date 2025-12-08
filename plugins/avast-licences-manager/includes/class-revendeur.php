@@ -1,5 +1,4 @@
 <?php
-require_once __DIR__ . '/class-revendeur-email-sender.php';
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 class ALM_Revendeur {
@@ -11,10 +10,6 @@ class ALM_Revendeur {
         add_shortcode('alm_revendeur_form', [$this, 'alm_render_revendeur_form']);
         add_action('init', [$this, 'alm_handle_revendeur_form']);
 
-         add_filter( 'manage_demande_revendeur_posts_columns', [$this, 'alm_demande_revendeur_posts_columns'], 10, 1);
-        add_action( 'manage_demande_revendeur_posts_custom_column', [$this, 'alm_demande_revendeur_posts_datas'], 10, 2);
-
-        add_action('admin_post_valider_compte_revendeur', [$this, 'valider_compte_revendeur']);
     }
 
 
@@ -89,113 +84,33 @@ class ALM_Revendeur {
 }
 
 
-
-    function alm_demande_revendeur_posts_columns($columns) {
-
-        $new = [];
-
-        // On garde le titre avant d’insérer nos colonnes
-        foreach( $columns as $key => $label ) {
-
-            $new[$key] = $label;
-
-            if ($key === 'title') {
-                $new['status']        = 'Status';
-                $new['account_nom']   = 'Nom';
-                $new['account_prenom'] = 'Prénom';
-                $new['actions']       = 'Actions';
-            }
-        }
-
-        return $new;
-    }
-
-    // 2. Remplir les colonnes
-    function alm_demande_revendeur_posts_datas( $column, $post_id ) {
-
-        switch ( $column ) {
-
-            case 'status':
-                $status = get_field('status', $post_id);
-               echo esc_html( $status['label'] ?? '—' );
-                break;
-
-
-            case 'account_nom':
-                $account_nom = get_field('account_nom', $post_id);
-                echo  esc_html($account_nom) ;
-                break;
-
-            case 'account_prenom':
-                $account_prenom = get_field('account_prenom', $post_id);
-                echo  esc_html($account_prenom) ;
-                break;
-
-            case 'actions':
-                $status_value = get_field('status', $post_id)['value'];
-                $valider_url   = admin_url("admin-post.php?action=valider_compte_revendeur&id=$post_id");
-                //echo $status_value;
-                if($status_value=="en_attente"){
-                    echo '<div style="display:flex; gap:8px; flex-wrap:wrap;">';
-                    echo '<a class="button button-primary" href="'.esc_url($valider_url).'">Valider</a>';
-                    echo '</div>';
-                }
-                
-
-                
-                break;
-        }
-
-    }
-
-    
-    function valider_compte_revendeur() {
-        if (!current_user_can('manage_options')) {
-                wp_die("Permissions insuffisantes.");
-            }
-
-        if (!isset($_GET['id'])) {
-            wp_die("ID manquant.");
-        }
-
-        $id = intval($_GET['id']);
-
-        // Générer le PDF et l'enregistrer dans le champ ACF
-        $sent = RevendeurEmailSender::create_account_and_send_email($id);
-        
-
-        // 5️⃣ Redirection avec info
-        if ($sent) {
-            update_field('status', "acceptee", $id);
-            wp_safe_redirect(admin_url("edit.php?post_type=demande_revendeur&mail=ok"));
-        } else {
-            wp_safe_redirect(admin_url("edit.php?post_type=demande_revendeur&mail=error"));
-        }
-        exit;
-    }
-
-
     function alm_render_revendeur_form() {
         ob_start(); ?>
 
         <?php
-            if(isset($_GET["status_demande"]) ){
-                if(($_GET["status_demande"])=="success" ){
-                    echo "<div class='msg-box success' style='border: solid 1px;text-align: center;color: white;padding: 4px 10px;background: #00d369;'>Demande de création de compte revendeur envoyée avec succès.</div>";
-                }else{
-                    echo "<div class='msg-box failure' style='border: solid 1px;text-align: center;color: white;padding: 4px 10px;background: #d30b00ff;'>Échec de la demande.</div>";
-                }
+            if(isset($_GET["status_demande"]) ){?>
+            <div id="auto-popup" role="alert" aria-hidden="true" style="display:none;">
+                <div class="auto-popup-inner">
+                    <a href="#" class="auto-popup-close">&times;</a>
+                    <div class="auto-popup-content">
+                        <?php if(($_GET["status_demande"])=="success" ){
+                            echo "<div class='msg-box success' style='font-weight: bolder;text-align: center;padding: 4px 10px;color: #00d369;'>Demande de création de compte revendeur envoyée avec succès.</div>";
+                        }else{
+                            echo "<div class='msg-box failure' style='font-weight: bolder;text-align: center;padding: 4px 10px;color: #d30b00ff;'>Échec de la demande.</div>";
+                        }?>
+                    </div>
+                </div>
+            </div>
+               
                 
-            }
+        <?php }?>
 
-        ?>
+
         <?php
             if(!isset($_GET["status_demande"]) || (isset($_GET["status_demande"]) && !(($_GET["status_demande"])=="success")) ){
         ?>   
           
             <form method="post" id="alm-revendeur-form" class="alm-revendeur-form" enctype="multipart/form-data">
-                <div class="line"></div>
-                <h2>Ouvrir votre compte revendeur Avast</h2>
                 
                     
 
@@ -210,11 +125,12 @@ class ALM_Revendeur {
                                 'DE' => 'Allemagne',
                             ]; 
                             ?>
-                            
+                            <div class="count-clmn" style="margin-bottom:20px;">
                             <div id="dnom_sos">
                                 <label>Dénomination sociale : </label>
                                 <input  type="text" title="Dénomination sociale" alt="text" name="new_revendeur_account_societe" size="40" value="" >
                             </div>
+                            <div>
                             <label>Genre : <span class="required">*</span></label>
                             <select title="Genre" id="genre" class="input_required" name="new_revendeur_account_genre"  alt="Genre">
                                 <option value="m" alt="Genre">Monsieur</option>
@@ -224,18 +140,32 @@ class ALM_Revendeur {
                                     ----------
                                 </option>
                             </select>
+                           </div>
+                           <div>
                             <label>Nom : <span class="required">*</span></label>
                             <input class="input_required" type="text" title="Nom" alt="text" name="new_revendeur_account_nom" size="30" value="" >
+                        </div>
+                        <div>
                             <label>Prénom : <span class="required">*</span></label>
                             <input class="input_required" type="text" title="prenom" alt="text" name="new_revendeur_account_prenom" size="30" value="" >
+                            </div>
+                            <div>
                             <label>Téléphone : <span class="required">*</span></label>
                             <input class="input_required" type="text" title="telephone" alt="text" name="new_revendeur_account_telephone" size="30" value="" >
+                            </div>
+                        <div>
                             <label>Adresse : <span class="required">*</span></label>
                             <input class="input_required" type="text" title="adresse" alt="text" name="new_revendeur_account_adresse" size="30" value="" >
+                            </div>
+                        <div>
                             <label>Ville : <span class="required">*</span></label>
                             <input class="input_required" type="text" title="ville" alt="text" name="new_revendeur_account_ville" size="30" value="" >
+                            </div>
+                        <div>
                             <label>Code postal : <span class="required">*</span></label>
                             <input class="input_required" type="text" title="code_postal" alt="text" name="new_revendeur_account_code_postal" size="30" value="" >
+                            </div>
+                        <div>
                             <label>Pays : <span class="required">*</span></label>
                             <select name="new_revendeur_account_pays" id="pays" required class="">
                                 <?php foreach ( $pays_liste as $code => $nom ) : ?>
@@ -244,42 +174,46 @@ class ALM_Revendeur {
                                     </option>
                                 <?php endforeach; ?>
                             </select>
-
+                            </div>
+                            <div>
                         <label>
                             Justificatif d'immatriculation : <span class="required">*</span>
                         </label>
                         <div class="upload" >
-                            <input type="file" name="new_revendeur_account_justificatif_immatriculation" accept="application/pdf/*">
-                            <span>
+                            <input type="file" name="new_revendeur_account_justificatif_immatriculation" accept="application/pdf/*">  
+                        </div>
+                        </div>
+                        <span>
                                 Le document envoyé doit impérativement être fourni au format pdf.
-                            </span>
-                        </div><br><br>
-
+                         </span>
+                        <br>
                         Document obligatoire justifiant de l'identité de votre entreprise ou de votre structure commerciale.<br><br>
-                        Pour la France:<br>
+                        </div>
+                        <br>
+                        Pour la France :<br>
                         extrait K-bis datant de moins de 6 mois<br><br>
-                        Pour les autres pays:<br>
+                        Pour les autres pays :<br>
                         Justificatif d'immatriculation au registre des entreprises, ou tout autre document pouvant nous permettre de valider l'identité de votre structure commerciale. Ce document devra être daté de moins de 6 mois.<br><br>
                         Vous pouvez enregistrer votre demande maintenant et fournir ulterieurement votre justificatif. Votre compte revendeur ne pourra cependant être activé qu'après réception et validation de votre justificatif par notre équipe.<br>
                     <br>
                     <div id="boxtva" name="boxtva" style="display: block;">            
                         <b>Régime de TVA applicable :</b>
-                        <br>
+                        <br><br>
                        
                         
-                        <label >
+                        <div style="width: 100%; display: flex; align-items: flex-start; gap: 7px;">
                             <input type="radio" id="regime_2" checked="" name="new_revendeur_account_regime_tva" value="2" style="width: auto" >
-                            <b>Facturation TTC faisant ressortir la TVA</b> (pays de l'union)<p>
-                            Facturation avec TVA de 20%</p>
-                        </label>
+                            <label style="line-height: 1.5;"><b>Facturation TTC faisant ressortir la TVA</b> (pays de l'union) Facturation avec TVA de 20%</label>
+                                </div>
                         <br>
                     
-                        <label >
+                        <div style="">
+                            <div style="display: flex;align-items: flex-start;justify-content: flex-start;gap: 7px;">
                             <input type="radio" id="regime_1" name="new_revendeur_account_regime_tva" value="1" style="width: auto" >
-                            <b>Facturation HT</b> (pour les pays de l'union Européenne, hors France)<p>
-                            Merci de justifier ci dessous d'un numéro de TVA Intra valide :</p>
-                            <p>
+                            <label style="line-height: 1.5;"><b>Facturation HT</b> (pour les pays de l'union Européenne, hors France) Merci de justifier ci dessous d'un numéro de TVA Intra valide :</label>
+                            </div>
                             <div id="tva_regime_1_box">
+                                <div id="tva_regime_1_box2">
                                 N° TVA intracommunautaire:
                                 <select title="Prefixe TVA" id="prefixe_tva" name="new_revendeur_account_prefixe_tva" alt="Prefixe TVA">
                                     <option selected="" value="" alt="Prefixe TVA">--</option>
@@ -310,14 +244,16 @@ class ALM_Revendeur {
                                     <option value="SE" alt="Prefixe TVA">SE</option>
                                     <option value="SI" alt="Prefixe TVA">SI</option>
                                     <option value="SK" alt="Prefixe TVA">SK</option>
-                                </select> - 
+                                </select>
                                 <input  style="width: auto" type="text" name="new_revendeur_account_tva_intra" value="" size="25" onblur="IsRequiredOk(this)">
+                                </div>
+                                <br>
+                                <span style="font-size:11px;position: relative;top: -24px;"> 
+                                    Obligatoire pour facturation Hors TVA pour les sociétés situées dans un pays de l'Union Européenne et hors de France.
+                                </span>
                             </div>
-                            </p>
-                        </label>
-                        <br>
-                
-                        Obligatoire pour facturation Hors TVA pour les sociétés situées dans un pays de l'Union Européenne et hors de France.</td>
+                           
+                                </div>
                         <br>
                 
                         <b>Franchise de TVA</b><p>
@@ -328,28 +264,36 @@ class ALM_Revendeur {
 
 
 
+                    <br>  <br>
 
-
-                         <b>Mes identifiants de connexion :</b>      <br>      
+                         <b>Mes identifiants de connexion :</b>      <br>  <br>
+                         <div class="count-clmn" style="">
+                            <div>    
                             <label>Adresse Email : <span class="required">*</span></label>
                             <input class="input_required" type="text" title="Adresse Email" alt="email" name="new_revendeur_account_email" size="40" value="" >
+                            </div>
+                            <div>
                             <label>Confirmer Email : <span class="required">*</span></label>
                             <input class="input_required" type="text" title="Confirmer Email" alt="email" name="new_revendeur_account_confirm_email" size="40" value="" >
+                            </div>
+                            <div>
                             <label>Mot de passe : <span class="required">*</span></label> 
                             <input id="password_1" class="input_required" type="password" title="Mot de passe" name="new_revendeur_account_password_1" size="20" value="">     
+                            </div>
+                            <div>
                             <label>Confirmer Mot de passe : <span class="required">*</span></label> 
                             <input id="password_2" class="input_required" type="password" title="Confirmer Mot de passe" name="new_revendeur_account_password_2" size="20" value="">      
-                        
+                            </div>
+                            </div>
 
 
 
-
-                            <label>
+                            <label  style="line-height: 1.5; margin-block:20px 15px;">
                                 <input type="hidden" name="new_revendeur_account_charte" value="Acceptation de la charte de confidentialité">
-                                <input type="checkbox" checked name="new_revendeur_account_divulgation" title="Acceptation de la charte de confidentialité" value="1" class="input_ok"  alt="checkbox" >
+                                <input type="checkbox" style="line-height: 1.5;" checked name="new_revendeur_account_divulgation" title="Acceptation de la charte de confidentialité" value="1" class="input_ok"  alt="checkbox" >
                                 Je comprends que mes informations ne seront pas divulguées à des tiers, conformément à <a href="charte.php" target="_blank">la charte de confidentialité</a> de ce site.
-                            </label><br>  
-                            <label>
+                            </label> 
+                            <label  style="line-height: 1.5;">
                                 <input type="checkbox" name="new_revendeur_account_agree_cgr" value="1">
                                 Je reconnais avoir pris connaissance et accepter pleinement les Conditions Générales Revendeur, <a href="#" onclick="openWin(&quot;cgr.php&quot;);">disponibles ici</a>.
                             </label>
@@ -363,10 +307,11 @@ class ALM_Revendeur {
 
                 <input type="hidden" name="goal" value="devenir_revendeur">
 
-                <button type="submit" id="send-button" class="button button-primary">Confirmer ma demande d'ouverture de compte revendeur</button>
+                <button type="submit" id="send-button" style="margin-top:15px;" class="elementor-element elementor-align-center elementor-widget elementor-widget-button">Confirmer ma demande d'ouverture de compte revendeur</button>
             </form>
-            <div id="error-msg" class="error-msg" style='text-align: center;color: #d30b00ff;'></div>
+            <div id="error-msg" class="error-msg" style='text-align: center;color: #d30b00ff;margin-top: 20px;font-size: 15px;'></div>
 
+        <?php   }?>
 
             <script>
                 jQuery(document).ready(function($) {
@@ -433,7 +378,27 @@ class ALM_Revendeur {
                     $('#revendeur_form .input_required, #password_1, #password_2, input[name="new_revendeur_account_confirm_email"]').on('input', function(){
                         checkNewAccountFields();
                     });
-               
+
+
+                    const $popup = $('#auto-popup');
+
+                    // Si la popup est présente dans le DOM → on l'affiche
+                    if ($popup.length) {
+                        console.log("afficher popup")
+                        $popup.fadeIn(200);
+
+                        // la cacher dans 5 secondes
+                        setTimeout(function(){
+                            $popup.fadeOut(300);
+                        }, 15000);
+
+                        // bouton fermer
+                        $popup.on('click', '.auto-popup-close', function(){
+                            $popup.fadeOut(200);
+                        });
+                    }else{
+                        console.log("non afficher popup")
+                    }
                 
                 });
 
@@ -461,17 +426,13 @@ class ALM_Revendeur {
                     color: red;
                     font-size: 34px;
                 }
-                #alm-revendeur-form .line {
-                    margin: 10px 5%;
-                    border-radius: 10px;
-                    border: 1px solid #23232342;
-                }
                 #alm-revendeur-form > button[disabled] {
                     background-color: #ccc;       /* gris clair */
                     color: #666;                  /* texte plus pâle */
                     cursor: not-allowed;          /* curseur interdit */
                     opacity: 0.6;                 /* un peu transparent */
-                    pointer-events: none;         /* désactive tout clic */
+                    pointer-events: none;   
+                    border:none;      /* désactive tout clic */
                 }
 
                 /* Optionnel : bouton activé */
@@ -482,12 +443,61 @@ class ALM_Revendeur {
                     transition: background-color 0.3s, opacity 0.3s;
                 }
 
+                /* CSS : popup centrée, simple et responsive */
+                #auto-popup{
+                position: fixed;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 99999;
+                display: none;
+                width: calc(100% - 40px);
+                max-width: 520px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+                border-radius: 10px;
+                background: transparent;
+                pointer-events: none; /* évite d'intercepter les clics en dehors de la box */
+                }
+
+                #auto-popup .auto-popup-inner{
+                pointer-events: auto; /* permet l'interaction à l'intérieur */
+                background: #ffffff;
+                padding: 18px 18px 14px 18px;
+                border-radius: 8px;
+                text-align: center;
+                font-family: Arial, sans-serif;
+                color: #222;
+                }
+
+                .auto-popup-close{
+                position: absolute;
+                right: 8px;
+                top: 6px;
+                background: transparent;
+                border: none;
+                font-size: 30px;
+                line-height: 1;
+                color: #666;
+                cursor: pointer;
+                }
+
+                .auto-popup-content{
+                font-size: 15px;
+                line-height: 1.4;
+                }
+
+                /* petite animation d'entrée */
+                .auto-popup-show {
+                animation: popup-in 280ms ease-out;
+                }
+                @keyframes popup-in {
+                from { transform: translate(-50%, -45%) scale(0.98); opacity: 0; }
+                to   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+                }
+
                 
             </style>
-        <?php      
-            }
-
-        ?>
+       
 
         <?php
         return ob_get_clean();
@@ -496,8 +506,7 @@ class ALM_Revendeur {
 
     function alm_handle_revendeur_form() {
         if ( $_SERVER['REQUEST_METHOD'] !== 'POST' ) return;
-        if ( !isset($_POST['goal']) ) return;
-        if ( isset($_POST['goal']) &&  $_POST['goal'] !== 'devenir_revendeur' ) return;
+        if ( $_POST['goal'] !== 'devenir_revendeur' ) return;
         
         /*
 
@@ -570,7 +579,6 @@ class ALM_Revendeur {
                 if ( is_wp_error($demande_id) ) return;
 
                 // 2️⃣ Champs ACF
-                update_field('status', "en_attente", $demande_id);
                 update_field('account_nom', $new_revendeur_account_nom, $demande_id);
                 update_field('account_prenom', $new_revendeur_account_prenom, $demande_id);
                 update_field('account_societe', $new_revendeur_account_societe, $demande_id);

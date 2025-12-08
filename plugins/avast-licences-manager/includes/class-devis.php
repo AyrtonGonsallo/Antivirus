@@ -193,9 +193,10 @@ class ALM_Devis {
 
                 if ($lien_fichier) {
                     echo '<a class="button" href="'.esc_url($lien_fichier).'" target="_blank">Télécharger le pdf</a>';
+                    echo '<a class="button" href="'.esc_url($mail_url).'">Envoyer Mail</a>';
                 }
 
-                echo '<a class="button" href="'.esc_url($mail_url).'">Envoyer Mail</a>';
+                
 
                 echo '</div>';
 
@@ -235,20 +236,23 @@ class ALM_Devis {
         ob_start(); ?>
 
         <?php
-            if(isset($_GET["status_demande"]) ){
-                if(($_GET["status_demande"])=="success_and_email" ){
-                    echo "<div class='msg-box success' style='border: solid 1px;text-align: center;color: white;padding: 4px 10px;background: #00d369;'>Demande de devis envoyée avec succès vous devrez recevoir un mail.</div>";
-                }else if(($_GET["status_demande"])=="success_without_email"){
-                    echo "<div class='msg-box success' style='border: solid 1px;text-align: center;color: white;padding: 4px 10px;background: #00d369;'>Demande de devis envoyée avec succès.</div>";
-
-                }
-                else{
-                    echo "<div class='msg-box failure' style='border: solid 1px;text-align: center;color: white;padding: 4px 10px;background: #d30b00ff;'>Échec de la demande.</div>";
-                }
-                
-            }
-
-        ?>
+            if(isset($_GET["status_demande"]) ){?>
+            <div id="auto-popup" role="alert" aria-hidden="true" style="display:none;">
+                <div class="auto-popup-inner">
+                    <a href="#" class="auto-popup-close">&times;</a>
+                    <div class="auto-popup-content">
+                        <?php if(($_GET["status_demande"])=="success_and_email" ){
+                            echo "<div class='msg-box success' style='text-align: center;font-weight: bolder;padding: 4px 10px;color: #00d369;'>Demande de devis envoyée avec succès vous devrez recevoir un mail.</div>";
+                        }else if(($_GET["status_demande"])=="success_without_email"){
+                            echo "<div class='msg-box success' style='text-align: center;font-weight: bolder;padding: 4px 10px;color: #00d369;'>Demande de devis envoyée avec succès.</div>";
+                        }
+                        else{
+                            echo "<div class='msg-box failure' style='text-align: center;font-weight: bolder;padding: 4px 10px;color: #d30b00ff;'>Échec de la demande.</div>";
+                        }?>
+                    </div>
+                </div>
+            </div>
+        <?php }?>
         <?php
             if(!isset($_GET["status_demande"]) || (isset($_GET["status_demande"]) && !(($_GET["status_demande"])=="success")) ){
         ?>   
@@ -372,7 +376,7 @@ class ALM_Devis {
                     <!-- Zone pour nouveau client -->
                     
 
-<br>
+                    <br>
                     <div id="login_nouveau" style="display: block;"><!--<form action="devis.php?dest=devis#btm" method="post" name="frm_signup" onsubmit="return(Control_SignUp_Client(this,'AJOUT'))">-->
                         <?php 
                             $pays_liste = [
@@ -489,7 +493,7 @@ class ALM_Devis {
             </form>
             <div id="error-msg" class="error-msg" style='text-align: center;color: #d30b00ff;'></div>
 
-
+        <?php  }?>
             <script>
                 jQuery(document).ready(function($) {
 
@@ -634,51 +638,69 @@ class ALM_Devis {
 
                     $('.optionRemise').on('change', function() {
 
-                    const $this = $(this);
-                    const group = parseInt($this.data('group'));
+                        const $this = $(this);
+                        const group = parseInt($this.data('group'));
 
-                    // logique de combinaison
-                    if (group === 1) {
-                        // Option 1 seule → décocher toutes les autres
-                        $('.optionRemise').not($this).prop('checked', false);
-                    } else if (group === 2) {
-                        // Option 2 peut être combinée avec 3 ou 4 → décocher 1
-                        $('.optionRemise').each(function() {
-                            if (parseInt($(this).data('group')) === 1) $(this).prop('checked', false);
-                        });
-                    } else if (group === 3) {
-                        // décocher 1 et 4
-                        $('.optionRemise').each(function() {
-                            const g = parseInt($(this).data('group'));
-                            if (g === 1 || g === 4) $(this).prop('checked', false);
-                        });
-                    } else if (group === 4) {
-                        // décocher 1 et 3
-                        $('.optionRemise').each(function() {
-                            const g = parseInt($(this).data('group'));
-                            if (g === 1 || g === 3) $(this).prop('checked', false);
-                        });
-                    }
+                        // logique de combinaison
+                        if (group === 1) {
+                            // Option 1 seule → décocher toutes les autres
+                            $('.optionRemise').not($this).prop('checked', false);
+                        } else if (group === 2) {
+                            // Option 2 peut être combinée avec 3 ou 4 → décocher 1
+                            $('.optionRemise').each(function() {
+                                if (parseInt($(this).data('group')) === 1) $(this).prop('checked', false);
+                            });
+                        } else if (group === 3) {
+                            // décocher 1 et 4
+                            $('.optionRemise').each(function() {
+                                const g = parseInt($(this).data('group'));
+                                if (g === 1 || g === 4) $(this).prop('checked', false);
+                            });
+                        } else if (group === 4) {
+                            // décocher 1 et 3
+                            $('.optionRemise').each(function() {
+                                const g = parseInt($(this).data('group'));
+                                if (g === 1 || g === 3) $(this).prop('checked', false);
+                            });
+                        }
 
-                    // afficher tous les uploads correspondant aux cases cochées
-                    $('.upload').addClass('hidden');
-                    $('.optionRemise:checked').each(function() {
-                        const fileId = $(this).data('file');
-                        $('#' + fileId).removeClass('hidden');
-                    });
+                        // afficher tous les uploads correspondant aux cases cochées
+                        $('.upload').addClass('hidden');
+                        $('.optionRemise:checked').each(function() {
+                            const fileId = $(this).data('file');
+                            $('#' + fileId).removeClass('hidden');
+                        });
 
-                    // reconstruire hidden
-                    let values = [];
-                    $('.optionRemise:checked').each(function() {
-                        values.push($(this).data('value'));
-                    });
-                    $('#remise_type').val(values.join(', '));
-                    console.log("remises courantes",values.length,values.join(', '))
-                   
+                        // reconstruire hidden
+                        let values = [];
+                        $('.optionRemise:checked').each(function() {
+                            values.push($(this).data('value'));
+                        });
+                        $('#remise_type').val(values.join(', '));
+                        console.log("remises courantes",values.length,values.join(', '))
                     
-                });
+                        
+                    });
 
-                
+                    const $popup = $('#auto-popup');
+
+                    // Si la popup est présente dans le DOM → on l'affiche
+                    if ($popup.length) {
+                        console.log("afficher popup")
+                        $popup.fadeIn(200);
+
+                        // la cacher dans 5 secondes
+                        setTimeout(function(){
+                            $popup.fadeOut(300);
+                        }, 15000);
+
+                        // bouton fermer
+                        $popup.on('click', '.auto-popup-close', function(){
+                            $popup.fadeOut(200);
+                        });
+                    }else{
+                        console.log("non afficher popup")
+                    }
 
                 
                 });
@@ -713,7 +735,8 @@ class ALM_Devis {
                     color: #666;                  /* texte plus pâle */
                     cursor: not-allowed;          /* curseur interdit */
                     opacity: 0.6;                 /* un peu transparent */
-                    pointer-events: none;         /* désactive tout clic */
+                    pointer-events: none;  
+                    border:none       /* désactive tout clic */
                 }
 
                 /* Optionnel : bouton activé */
@@ -724,12 +747,61 @@ class ALM_Devis {
                     transition: background-color 0.3s, opacity 0.3s;
                 }
 
+                /* CSS : popup centrée, simple et responsive */
+                #auto-popup{
+                position: fixed;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 99999;
+                display: none;
+                width: calc(100% - 40px);
+                max-width: 520px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+                border-radius: 10px;
+                background: transparent;
+                pointer-events: none; /* évite d'intercepter les clics en dehors de la box */
+                }
+
+                #auto-popup .auto-popup-inner{
+                pointer-events: auto; /* permet l'interaction à l'intérieur */
+                background: #ffffff;
+                padding: 18px 18px 14px 18px;
+                border-radius: 8px;
+                text-align: center;
+                font-family: Arial, sans-serif;
+                color: #222;
+                }
+
+                .auto-popup-close{
+                position: absolute;
+                right: 8px;
+                top: 6px;
+                background: transparent;
+                border: none;
+                font-size: 30px;
+                line-height: 1;
+                color: #666;
+                cursor: pointer;
+                }
+
+                .auto-popup-content{
+                font-size: 15px;
+                line-height: 1.4;
+                }
+
+                /* petite animation d'entrée */
+                .auto-popup-show {
+                animation: popup-in 280ms ease-out;
+                }
+                @keyframes popup-in {
+                from { transform: translate(-50%, -45%) scale(0.98); opacity: 0; }
+                to   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+                }
+
                 
             </style>
-        <?php      
-            }
-
-        ?>
+        
 
         <?php
         return ob_get_clean();

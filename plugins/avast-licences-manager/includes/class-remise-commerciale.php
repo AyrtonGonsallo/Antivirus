@@ -7,7 +7,8 @@ class ALM_Remise_Commerciale {
 
         // Lors du submit du formulaire → on crée la remise
         add_action('init', [$this, 'handle_demande_remise_creation']);
-        add_action('woocommerce_cart_calculate_fees', [$this, 'apply_remises_user']);
+        add_action('woocommerce_cart_calculate_fees', [$this, 'apply_remises_and_tva_to_user'],5);
+        
     }
 
     /**
@@ -124,28 +125,100 @@ class ALM_Remise_Commerciale {
     /**
      * Appliquer les remises validées au panier
      */
-    public function apply_remises_user($cart) {
+    public function apply_remises_and_tva_to_user($cart) {
         if ( is_admin() && !defined('DOING_AJAX') ) return;
 
         $user_id = get_current_user_id();
-        if (!$user_id) return;
+       
 
-        $remises = $this->get_user_remises($user_id);
-        if (empty($remises)) return;
+        if($user_id){
+             $remises = $this->get_user_remises($user_id);
+            if (empty($remises)) return;
 
-        $total_discount_percent = 0;
+            $total_discount_percent = 0;
 
-        foreach ($remises as $remise) {
-            $percent = get_field('pourcentage', $remise);
-            if ($percent) $total_discount_percent += floatval($percent);
+            foreach ($remises as $remise) {
+                $percent = get_field('pourcentage', $remise);
+                if ($percent) $total_discount_percent += floatval($percent);
+            }
+
+            if ($total_discount_percent > 0) {
+                $cart_total = $cart->get_subtotal();
+                $discount_amount = ($total_discount_percent / 100) * $cart_total;
+                $cart->add_fee("Remises commerciales", -$discount_amount, false); // false = non taxable
+            }
+
+            $total_now=$cart_total-$discount_amount;
+
+            // 1. On récupère le pays du client via ACF
+            $user_country = get_user_meta($user_id, 'pays', true);
+            if (!$user_country) return;
+
+            // 2. On récupère le taux dans le CPT taux_tva
+            $args = [
+                'post_type' => 'tva_par_pays',
+                'meta_query' => [
+                    [
+                        'key' => 'code_pays',
+                        'value' => $user_country,
+                        'compare' => '='
+                    ]
+                ],
+                'posts_per_page' => 1,
+            ];
+
+            $tva_posts = get_posts($args);
+            if (empty($tva_posts)){
+                // 3. On récupère le taux %
+                $taux = 20; // ex: 20
+                if (!$taux) return;
+
+                // 4. On calcule la TVA en fonction du panier
+                WC()->cart->remove_taxes(); // nettoyer les taxes WooCommerce
+
+                $cart_total_ht = $total_now;
+                $montant_tva   = ($cart_total_ht * $taux) / 100;
+
+                // 5. Ajouter la TVA comme surcharge dans WooCommerce
+                WC()->cart->add_fee("TVA ($taux%)", $montant_tva, true);
+            }else{
+                $tva_post_id = $tva_posts[0]->ID;
+
+                // 3. On récupère le taux %
+                $taux = get_field('pourcentage', $tva_post_id); // ex: 20
+                if (!$taux) return;
+
+                // 4. On calcule la TVA en fonction du panier
+                WC()->cart->remove_taxes(); // nettoyer les taxes WooCommerce
+
+                $cart_total_ht = $total_now;
+                $montant_tva   = ($cart_total_ht * $taux) / 100;
+
+                // 5. Ajouter la TVA comme surcharge dans WooCommerce
+                WC()->cart->add_fee("TVA ($taux%)", $montant_tva, true);
+            }
+        }else{
+            // 3. On récupère le taux %
+            $taux = 20; // ex: 20
+            if (!$taux) return;
+
+            // 4. On calcule la TVA en fonction du panier
+            WC()->cart->remove_taxes(); // nettoyer les taxes WooCommerce
+
+            $cart_total_ht  = $cart->get_subtotal();
+            $montant_tva   = ($cart_total_ht * $taux) / 100;
+
+            // 5. Ajouter la TVA comme surcharge dans WooCommerce
+            WC()->cart->add_fee("TVA ($taux%)", $montant_tva, true);
         }
 
-        if ($total_discount_percent > 0) {
-            $cart_total = $cart->get_subtotal();
-            $discount_amount = ($total_discount_percent / 100) * $cart_total;
-            $cart->add_fee("Remises commerciales", -$discount_amount, false); // false = non taxable
-        }
+       
+
     }
+
+
+    
+
 
 
 }

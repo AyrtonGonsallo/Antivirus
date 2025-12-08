@@ -50,12 +50,25 @@ do_action( 'woocommerce_before_edit_account_form' );
 			'DE' => 'Allemagne',
 		];
 		
+	 
+	
+		$user_id = get_current_user_id();
+		$user = wp_get_current_user();
+		$user_roles = $user->roles; // array de tous les rôles
+		if (in_array('customer_particulier', $user_roles)) {
+			$role = 'customer_particulier';
+		} elseif (in_array('customer_revendeur', $user_roles)) {
+			$role = 'customer_revendeur';
+		} else {
+			$role = ''; // fallback
+		}
 	?>
-
+	<?php if($role == 'customer_revendeur'){?>
 	<p class="form-row ">
         <label for="denomination">Dénomination sociale <span class="required">*</span></label>
         <input type="text" name="denomination" id="denomination" class="woocommerce-Input woocommerce-Input--text input-text" required value="<?php echo esc_attr($denomination); ?>"/>
     </p>
+	<?php }?>
 	<div class="clear"></div>
 	<p class="woocommerce-form-row woocommerce-form-row--first form-row form-row-first">
 		<label for="account_first_name"><?php esc_html_e( 'First name', 'woocommerce' ); ?>&nbsp;<span class="required" aria-hidden="true">*</span></label>
@@ -108,19 +121,7 @@ do_action( 'woocommerce_before_edit_account_form' );
 		<label for="account_email"><?php esc_html_e( 'Email address', 'woocommerce' ); ?>&nbsp;<span class="required" aria-hidden="true">*</span></label>
 		<input type="email" class="woocommerce-Input woocommerce-Input--email input-text" name="account_email" id="account_email" autocomplete="email" value="<?php echo esc_attr( $user->user_email ); ?>" aria-required="true" />
 	</p>
-	<?php 
 	
-		$user_id = get_current_user_id();
-		$user = wp_get_current_user();
-		$user_roles = $user->roles; // array de tous les rôles
-		if (in_array('customer_particulier', $user_roles)) {
-			$role = 'customer_particulier';
-		} elseif (in_array('customer_revendeur', $user_roles)) {
-			$role = 'customer_revendeur';
-		} else {
-			$role = ''; // fallback
-		}
-	?>
   	<p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
         <label for="role">Type de compte</label>
         <select  id="role" required disabled>

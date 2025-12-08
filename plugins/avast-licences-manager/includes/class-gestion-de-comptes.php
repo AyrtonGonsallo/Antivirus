@@ -24,8 +24,6 @@ class ALM_Gestion_De_Comptes {
         // Back Office WordPress
         add_action('show_user_profile', [$this, 'show_admin_user_fields']);
         add_action('edit_user_profile', [$this, 'show_admin_user_fields']);
-        add_action('personal_options_update', [$this, 'save_admin_user_fields']);
-        add_action('edit_user_profile_update', [$this, 'save_admin_user_fields']);
 
         add_action('init', [$this, 'register_clients_endpoint']);
         add_filter('query_vars', [$this, 'add_clients_query_var'], 0);

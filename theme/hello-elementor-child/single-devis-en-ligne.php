@@ -187,7 +187,7 @@ get_header();
                                 echo '<a href="'.get_permalink($product_id).'">';
                                     if($product_img_url)
                                         echo '<img src="'.esc_url($product_img_url).'" width="50" height="50" style="border-radius:4px;">';
-                                    echo '<span>'.esc_html($product_name).'</span>';
+                                    echo '<span>'.wp_kses_post($product_name).'</span>';
                                 echo '</a>';
                                 echo '</td>';
 

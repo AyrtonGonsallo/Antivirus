@@ -24,7 +24,10 @@ $variations_json = wp_json_encode( $available_variations );
 $variations_attr = function_exists( 'wc_esc_json' ) ? wc_esc_json( $variations_json ) : _wp_specialchars( $variations_json, ENT_QUOTES, 'UTF-8', true );
 function pcsToPoste($str) {
     if (strpos($str, "Nombre de pcs") !== false) {
-        return "poste(s)";
+        return "Poste(s)";
+    }
+	else if (strpos($str, "Durée") !== false) {
+        return $str;
     }
     return "";
 }
@@ -44,6 +47,9 @@ do_action( 'woocommerce_before_add_to_cart_form' ); ?>
 				<tbody>
 					<?php foreach ( $attributes as $attribute_name => $options ) : ?>
 						<tr>
+							
+							<th class="label"><label for="<?php echo esc_attr( sanitize_title( $attribute_name ) ); ?>"><?php echo pcsToPoste(wc_attribute_label( $attribute_name )); // WPCS: XSS ok. ?></label></th>
+
 							<td class="value">
 								<?php
 									wc_dropdown_variation_attribute_options(
@@ -63,7 +69,6 @@ do_action( 'woocommerce_before_add_to_cart_form' ); ?>
 									//echo end( $attribute_keys ) === $attribute_name ? wp_kses_post( apply_filters( 'woocommerce_reset_variations_link', '<a class="reset_variations" href="#" aria-label="' . esc_attr__( 'Clear options', 'woocommerce' ) . '">' . esc_html__( 'Clear', 'woocommerce' ) . '</a>' ) ) : '';
 								?>
 							</td>
-							<th class="label"><label for="<?php echo esc_attr( sanitize_title( $attribute_name ) ); ?>"><?php echo pcsToPoste(wc_attribute_label( $attribute_name )); // WPCS: XSS ok. ?></label></th>
 							
 						</tr>
 					<?php endforeach; ?>

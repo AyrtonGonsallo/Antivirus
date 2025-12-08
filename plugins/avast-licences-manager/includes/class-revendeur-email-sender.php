@@ -108,7 +108,7 @@ class RevendeurEmailSender {
                     <h2 style="margin-top:30px; color:#444;text-transform:uppercase;text-align:center">Votre compte revendeur avast vous permet de bénéficier des avantages suivants</h2>
                     
                      <p style="font-size:15px; color:#555; line-height:1.6; margin-top:20px;">       
-                    - une marge revendeur garentie quelquesoit le volume d\'affaires que vous faites avec nous.<br>
+                    - une marge revendeur garentie quelque soit le volume d\'affaires que vous faites avec nous.<br>
                     - un compte revendeur fonctionnel qui vous permet d\'etre le plus autonome possible dans vos demandes de devis, demandes de support technique, la gestion de vos commandes, etc...<br>
                     - un espace marketing dédié aux revendeurs avast ou vous pourrez télécharger des affiches, lire nos recommandations pour trouver de nouveaux clients, vous tenir informé des nouveautés avast via notre blog '.$lien_blog.'<br>
                     - des promotions sous forme de rabais ou de cadeaux.<br>
