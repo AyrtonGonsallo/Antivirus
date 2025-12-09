@@ -607,8 +607,6 @@ span.wc-block-components-address-card__edit:hover{border: 1px solid var(--e-glob
     background-color: #fff;}
 .woocommerce-account table.dataTable.no-footer td, .woocommerce-account table.dataTable.no-footer tr.odd, .woocommerce-account table.dataTable.no-footer tr.even { background: #fff !important;}
 .elementor-widget-woocommerce-my-account { font-family: 'Raleway' !important;}
-
-
 /**************************************** Quotes page ********************************************/
 .woocommerce table.my_account_orders td, .woocommerce table.my_account_orders th{ padding: 10px 6px !important;}
 .afrfq-pdf-download img{ filter: invert(1) !important;}
