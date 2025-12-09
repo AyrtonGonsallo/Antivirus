@@ -139,7 +139,7 @@ li.active-result.highlighted:hover, li.active-result.result-selected.highlighted
   vertical-align: middle;
 }
 .variables-prodct .woocommerce div.product form.cart .variations td.label{padding-right: 0em !important; line-height: 0em !important;}
-.sec-produit del .amount .woocommerce-Price-currencySymbol{display:none;}
+.sec-produit del .amount .woocommerce-Price-currencySymbol{font-size:20px !important;}
 .woocommerce div.product p.price del{opacity: 1 !important;}
 .cart.e-loop-add-to-cart-form > .button.add_to_cart_button, .cart.e-loop-add-to-cart-form .button.add_to_cart_button.afrfqbt{text-align: left !important}
 a.afrfqbt.button.add_to_cart_button.product_type_simple { margin-top: 9px !important; width: fit-content;  margin: auto;}
@@ -178,7 +178,6 @@ a.afrfqbt.button.add_to_cart_button.product_type_simple { margin-top: 9px !impor
 .col-product span.woocommerce-Price-currencySymbol{font-size: 28px;}
 .col-product .amount bdi{    
 	display: flex;
-    flex-direction: row;
     align-items:flex-end;
     gap: 2px;    
 	line-height: 1;}
@@ -218,7 +217,7 @@ body .afrfq-continue-button:hover{ background-color: var(--e-global-color-second
     gap: 20px;
 	margin-bottom:10px;
 }
-.devis-form .count-clmn div input, .devis-form .count-clmn div select, .alm-revendeur-form .count-clmn div input[type=text], .alm-revendeur-form .count-clmn div input[type=password], .alm-revendeur-form .count-clmn div select, div#tva_regime_1_box2 select, div#tva_regime_1_box2 input{padding: 4px 1rem; height: 28px;}
+.devis-form .count-clmn div input, .devis-form .count-clmn div select, .alm-revendeur-form .count-clmn div input[type=text], .alm-revendeur-form .count-clmn div input[type=password], .alm-revendeur-form .count-clmn div select, div#tva_regime_1_box select, div#tva_regime_1_box input{padding: 4px 1rem; height: 28px;}
 .devis-form button#send-button, .alm-revendeur-form button#send-button{
     font-weight: 700;
     font-family: 'Raleway';
@@ -258,7 +257,6 @@ a.cr-review-form-continue:hover{background-color: #00bbff !important;}
 /******************************* page single product ************************************/
 body .single-product .quantity .qty {min-height: 51px !important;}
 ins { text-decoration: none !important;}
-.single-product .prod-shop del bdi, .single-product .prod-shop ins bdi {justify-content: flex-end !important;}
 .single-product .col-dtls-product .prod-shop ins bdi{font-size: 76px !important;}
 .single-product .product .product_title, .page-compte h2, .alm-devis-form h2 {/*font-size:40px;*/position:relative;}
 .single-product .product .product_title:after{
@@ -282,11 +280,12 @@ ins { text-decoration: none !important;}
     padding: 0px 0px 0px 0px;
     z-index: -1;}
 .price:not(:has(del)) .woocommerce-Price-amount{
-    font-size: 52px;
+    font-size: 48px;
     font-weight: 800;
     color: #000;
 }
-.price:not(:has(del)) .woocommerce-Price-amount bdi .woocommerce-Price-currencySymbol{font-size: 28px;}
+.price:not(:has(del)) .woocommerce-Price-amount bdi{display: flex!important; gap: 10px; align-items: flex-end; line-height: 1;}
+.price:not(:has(del)) .woocommerce-Price-amount bdi .woocommerce-Price-currencySymbol{font-size: 28px;line-height: 0.6 !important;}
 .btn-remise:hover{ background-color: var(--e-global-color-secondary) !important; color: var(--e-global-color-1ac87de) !important;border-color: var(--e-global-color-secondary) !important;}
 /* .single-product .price del .woocommerce-Price-amount bdi{font-size: 20px !important;    text-decoration: line-through;color: #FF1212 !important;}
 .single-product .price ins .woocommerce-Price-amount bdi{
@@ -545,25 +544,29 @@ div.asl_r.vertical { z-index: 1 !important;}
 /***************************************** page compte ***********************************************/
 .woocommerce-info{ border-top-color: #ff7800 !important;}
 .woocommerce-info::before { border-top-color: #ff7800 !important;color: #ff7800 !important;}
-a.woocommerce-Button.wc-forward.button, .woocommerce .cart .button, .woocommerce .cart input.button{color: var(--e-global-color-1ac87de);
-    background-color: var(--e-global-color-primary);
-    border-color: var(--e-global-color-primary);
-    font-family: "Raleway", Raleway;
-    font-size: 16px;
-    font-weight: 700;
-    line-height: 1em;
-    letter-spacing: 0px;
-    border-style: solid;
-    border-width: 3px 3px 3px 3px;
-    border-radius: 8px 8px 8px 8px;
-    padding: 13px 25px 13px 25px;
-    margin-top: 0px;
+a.woocommerce-Button.wc-forward.button, .compte .woocommerce .cart .button, .woocommerce .cart input.button, .compte .woocommerce-Button.button{color: var(--e-global-color-1ac87de) !important;
+    background-color: var(--e-global-color-primary) !important;
+    border-color: var(--e-global-color-primary) !important;
+    font-family: "Raleway", Raleway !important;
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    line-height: 1em !important;
+    letter-spacing: 0px !important;
+    border-style: solid !important;
+    border-width: 3px 3px 3px 3px !important;
+    border-radius: 8px 8px 8px 8px !important;
+    padding: 13px 25px 13px 25px !important;
+    margin-top: 0px !important;
     color:white !important;}
-a.woocommerce-Button.wc-forward.button:hover, .woocommerce .cart .button:hover, .woocommerce .cart input.button:hover{color:var(--e-global-color-primary) !important;}
+a.woocommerce-Button.wc-forward.button:hover, .woocommerce .cart .button:hover, .compte .woocommerce .cart input.button:hover{color:var(--e-global-color-primary) !important;}
 .woocommerce-table__product-name.product-name a {color: #000 !important;}
 .woocommerce-table__product-name.product-name a:hover{color:var(--e-global-color-primary) !important;}
 .woocommerce-table__product-name.product-name ul.wc-item-meta { padding-left: 0px !important;}
 .nsm7Bb-HzV7m-LgbsSe .nsm7Bb-HzV7m-LgbsSe-BPrWId{font-family: "Raleway", Raleway !important;}
+a.woocommerce-MyAccount-downloads-file.button.alt { background-color: #ff7800 !important;}
+.woocommerce-Button.button.aw-communication-form__submit:hover, a.woocommerce-MyAccount-downloads-file.button.alt:hover, .compte .woocommerce-Button.button:hover{background-color:transparent !important;color:var(--e-global-color-primary) !important;}
+.elementor-widget-woocommerce-my-account .e-my-account-tab:not(.e-my-account-tab__dashboard--custom) .woocommerce .order_details .download-product a{ color: #000000 !important;}
+.elementor-widget-woocommerce-my-account .e-my-account-tab:not(.e-my-account-tab__dashboard--custom) .woocommerce .order_details .download-product a:hover{ color: var(--e-global-color-primary)  !important;}
 /*********************************************** page panier *********************************************/
 /* Conteneur général panier */
 .woocommerce-cart-form table.shop_table,
@@ -602,7 +605,7 @@ span.wc-block-components-address-card__edit:hover{border: 1px solid var(--e-glob
     border-bottom: 1px solid rgb(0 0 0 / 0%);
     border-radius: 12px;
     background-color: #fff;}
-.woocommerce-account table.dataTable.no-footer td, .woocommerce-account table.dataTable.no-footer tr.odd, .woocommerce-account table.dataTable.no-footer tr.even. { background: #fff !important;}
+.woocommerce-account table.dataTable.no-footer td, .woocommerce-account table.dataTable.no-footer tr.odd, .woocommerce-account table.dataTable.no-footer tr.even { background: #fff !important;}
 .elementor-widget-woocommerce-my-account { font-family: 'Raleway' !important;}
 
 
@@ -648,7 +651,7 @@ button{text-transform: unset !important;}
     border: 1px solid #BDBDBD !important;
     background: #D9D9D9 !important;
     border-radius: 0px;
-    width: 63px !important;
+    width: /*63px*/ 138px!important;
     height: 29px !important;
     padding: 0px 6px !important;
     margin: 0px !important;
@@ -658,7 +661,7 @@ button{text-transform: unset !important;}
 .duree-annee label {color:#8E8E8E !important;font-size: 17px;font-weight: 600 !important;font-family: 'Raleway';cursor: unset;}
 .variables-prodct td.value{ padding: 0px !important; background-color: transparent;}
 .variables-prodct th.label{padding: 0px !important;background-color: transparent;}
-.variables-prodct tr{display: flex; gap: 15px;}
+.variables-prodct tr{display: flex; gap: 15px; align-items: center;}
 .duree-annee .variations td.label, .duree-annee .variations td.label:hover{background: transparent !important;}
 .woocommerce div.product span.price {
     display: flex;
@@ -675,7 +678,7 @@ button{text-transform: unset !important;}
 	line-height: 1.2;
 }
 .woocommerce div.product span.price ins span.woocommerce-Price-currencySymbol{font-size: 28px; font-weight: 800;}
-.woocommerce div.product span.price del span.woocommerce-Price-currencySymbol{display:none;}
+/* .woocommerce div.product span.price del span.woocommerce-Price-currencySymbol{display:none;} */
 .woocommerce div.product span.price del{
     color: #FF1212;
     font-family: "Raleway", Raleway;
@@ -934,12 +937,30 @@ div#tva_regime_1_box2 input{width: 100% !important;}
 	
 	
 }
-
-
-body a.woocommerce-MyAccount-downloads-file.button.alt { background-color: #ff7800 !important;}
-body a.woocommerce-MyAccount-downloads-file.button.alt:hover { background-color: #00bbff !important;}
-
-
+/**************************************************************************************/
+.grecaptcha-badge{display:none !important;}
+/*************************************************************** related products ***************************************************************/
+.related.products .button {margin-top:20px !important;}
+.price {
+    /* On va masquer uniquement les mots non désirés */
+}
+.price {
+    /* On cache le texte brut après les montants */
+}
+.price {
+    position: relative;
+}
+.price:after {
+    content: ""; /* empêche Woo de réinjecter du texte */
+}
+/* Masquer le texte brut "for year and a" */
+.price {
+    font-size: 0 !important;
+}
+/* Cacher le texte "for year and a" + "sign-up fee" */
+.price {
+    white-space: nowrap;
+}
 
 
 
