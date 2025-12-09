@@ -18,6 +18,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // bouton Accepter cliqué
     if (isset($_POST['accept-devis'])) {
         update_field('status', 'acceptee', $id);
+        $user      = get_field('utilisateur', $devis_id);
+        $user_id = $user->ID;
+        $customer = new WC_Customer( $user_id );
+        $tax_rates = WC_Tax::get_rates("",$customer );
+        $first_rate = reset($tax_rates);
+        $percent_tva = $first_rate['rate'];
+        $title_tva = $first_rate['label'];
+        update_field('tva', $title_tva, $id);
+        update_field('taux_tva', $percent_tva, $id);
+
         wc_add_notice("Devis accepté avec succès.", "success");
         wp_safe_redirect('/mon-compte/mes-devis/');
         exit;
@@ -76,7 +86,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
         exit;
     }
 }
-
+$devis_id=get_the_ID();
 $status = get_field('status', $devis_id);
 
 
@@ -208,7 +218,9 @@ get_header();
                 // Afficher compt2save
                 echo "<p><strong>Ordinateurs à protéger:</strong> $compt2save</p>";
             }
-
+           
+            
+            
             
 
             ?>

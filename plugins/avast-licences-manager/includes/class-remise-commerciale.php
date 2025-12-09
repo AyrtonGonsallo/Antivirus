@@ -8,6 +8,12 @@ class ALM_Remise_Commerciale {
         // Lors du submit du formulaire → on crée la remise
         add_action('init', [$this, 'handle_demande_remise_creation']);
         add_action('woocommerce_cart_calculate_fees', [$this, 'apply_remises_and_tva_to_user'],5);
+
+        /**
+         * Désactive la TVA si l'utilisateur est revendeur HT.
+         */
+        add_filter( 'woocommerce_tax_rate_class', [$this, 'get_correct_tax_class'], 10, 2 );
+
         
     }
 
@@ -148,75 +154,58 @@ class ALM_Remise_Commerciale {
                 $cart->add_fee("Remises commerciales", -$discount_amount, false); // false = non taxable
             }
 
-            $total_now=$cart_total-$discount_amount;
+            $user = get_user_by( 'id', $user_id );
 
-            // 1. On récupère le pays du client via ACF
-            $user_country = get_user_meta($user_id, 'pays', true);
-            if (!$user_country) return;
+            if (  in_array( 'customer_revendeur', (array) $user->roles ) ) {
+                // Vérifier le régime TVA stocké par ton formulaire
+                $regime = get_user_meta( $user_id, 'new_revendeur_account_regime_tva', true );
 
-            // 2. On récupère le taux dans le CPT taux_tva
-            $args = [
-                'post_type' => 'tva_par_pays',
-                'meta_query' => [
-                    [
-                        'key' => 'code_pays',
-                        'value' => $user_country,
-                        'compare' => '='
-                    ]
-                ],
-                'posts_per_page' => 1,
-            ];
-
-            $tva_posts = get_posts($args);
-            if (empty($tva_posts)){
-                // 3. On récupère le taux %
-                $taux = 20; // ex: 20
-                if (!$taux) return;
-
-                // 4. On calcule la TVA en fonction du panier
-                WC()->cart->remove_taxes(); // nettoyer les taxes WooCommerce
-
-                $cart_total_ht = $total_now;
-                $montant_tva   = ($cart_total_ht * $taux) / 100;
-
-                // 5. Ajouter la TVA comme surcharge dans WooCommerce
-                WC()->cart->add_fee("TVA ($taux%)", $montant_tva, true);
-            }else{
-                $tva_post_id = $tva_posts[0]->ID;
-
-                // 3. On récupère le taux %
-                $taux = get_field('pourcentage', $tva_post_id); // ex: 20
-                if (!$taux) return;
-
-                // 4. On calcule la TVA en fonction du panier
-                WC()->cart->remove_taxes(); // nettoyer les taxes WooCommerce
-
-                $cart_total_ht = $total_now;
-                $montant_tva   = ($cart_total_ht * $taux) / 100;
-
-                // 5. Ajouter la TVA comme surcharge dans WooCommerce
-                WC()->cart->add_fee("TVA ($taux%)", $montant_tva, true);
+                // Si le revendeur est en régime HT => pas de TVA
+                if ( strtoupper( $regime ) === 'HT' ) {
+                    $cart->remove_taxes( );
+                }
+                
             }
+
+            
+
+
+        
         }else{
-            // 3. On récupère le taux %
-            $taux = 20; // ex: 20
-            if (!$taux) return;
-
-            // 4. On calcule la TVA en fonction du panier
-            WC()->cart->remove_taxes(); // nettoyer les taxes WooCommerce
-
-            $cart_total_ht  = $cart->get_subtotal();
-            $montant_tva   = ($cart_total_ht * $taux) / 100;
-
-            // 5. Ajouter la TVA comme surcharge dans WooCommerce
-            WC()->cart->add_fee("TVA ($taux%)", $montant_tva, true);
+            return;
         }
-
-       
 
     }
 
 
+
+    public function get_correct_tax_class($class, $product) {
+
+        // On récupère l'utilisateur connecté
+        $user_id = get_current_user_id();
+        if ( ! $user_id ) {
+            return 'Zero Rate'; // non connecté => normal
+        }
+
+        $user = get_user_by( 'id', $user_id );
+        
+        // Vérifier que c’est bien un revendeur
+        if ( ! in_array( 'customer_revendeur', (array) $user->roles ) ) {
+            return 'Zero Rate';
+        }
+
+        // Vérifier le régime TVA stocké par ton formulaire
+        $regime = get_user_meta( $user_id, 'new_revendeur_account_regime_tva', true );
+
+        // Si le revendeur est en régime HT => pas de TVA
+        if ( strtoupper( $regime ) === 'HT' ) {
+            $tax_class = 'taux-zero';
+            return $tax_class;
+        }
+
+        // Sinon on laisse WooCommerce faire son job
+        return 'Zero Rate';
+    }
     
 
 

@@ -42,6 +42,7 @@ if (isset($_GET['client_added']) && $_GET['client_added'] == 'true') {
 <table id="tableMesDevis" class="display">
     <thead>
         <tr>
+            <th>Nº</th>
             <th>Date de création</th>
             <th>Date d’expiration</th>
             <th>Status</th>
@@ -64,6 +65,7 @@ if (isset($_GET['client_added']) && $_GET['client_added'] == 'true') {
 
         ?>
         <tr>
+            <td><?php echo $devis->ID; ?></td>
             <td><?php echo esc_html($date_de_creation_formatted); ?></td>
             <td><?php echo esc_html($date_expiration_formatted); ?></td>
             <td><?php echo esc_html($status); ?></td>

@@ -183,13 +183,16 @@ class ALM_Devis {
 
             case 'actions':
                 $recapitulatif_pdf  = get_field('recapitulatif_pdf', $post_id);
-                $lien_fichier = $recapitulatif_pdf["link"];
+                $type_value = get_field('type_de_devis', $post_id)['value'];
+                $lien_fichier = ($recapitulatif_pdf)?$recapitulatif_pdf["link"]:null;
                 $pdf_url   = admin_url("admin-post.php?action=generer_pdf_devis&id=$post_id");
                 $mail_url  = admin_url("admin-post.php?action=envoyer_mail_devis&id=$post_id");
-
+                $status_value = get_field('status', $post_id)['value'];
                 echo '<div style="display:flex; gap:8px; flex-wrap:wrap;">';
-
-                echo '<a class="button button-primary" href="'.esc_url($pdf_url).'">Générer le pdf</a>';
+                if(($type_value=="admin" || $type_value=="corrige") && ($status_value=="acceptee") ){
+                    echo '<a class="button button-primary" href="'.esc_url($pdf_url).'">Générer le pdf</a>';
+                }
+                
 
                 if ($lien_fichier) {
                     echo '<a class="button" href="'.esc_url($lien_fichier).'" target="_blank">Télécharger le pdf</a>';

@@ -50,17 +50,35 @@ class ALM_Gestion_De_Comptes {
         update_user_meta($user_id, 'ville', sanitize_text_field($_POST['ville']));
         update_user_meta($user_id, 'code_postal', sanitize_text_field($_POST['code_postal']));
         update_user_meta($user_id, 'pays', sanitize_text_field($_POST['pays']));
+        update_user_meta( $user_id, 'billing_country', sanitize_text_field( $_POST['pays'] ) );
+        update_user_meta( $user_id, 'shipping_country', sanitize_text_field( $_POST['pays'] ) );
         update_user_meta($user_id, 'civilite', sanitize_text_field($_POST['civilite']));
         update_user_meta($user_id, 'billing_address_1', sanitize_text_field($_POST['billing_address_1']));
         update_user_meta($user_id, 'billing_phone', sanitize_text_field($_POST['billing_phone']));
         update_user_meta($user_id, 'optin_promos', isset($_POST['optin_promos']) ? 'yes' : 'no');
         update_user_meta($user_id, 'optin_expiration', isset($_POST['optin_expiration']) ? 'yes' : 'no');
+        if( isset($_POST['new_revendeur_account_regime_tva'])){
+            $regime=$_POST['new_revendeur_account_regime_tva'];
+            if($regime==1){
+                update_user_meta( $user_id, 'new_revendeur_account_regime_tva', "HT" );
+                update_user_meta($user_id, 'new_revendeur_account_prefixe_tva', sanitize_text_field($_POST['new_revendeur_account_prefixe_tva']));
+                update_user_meta($user_id, 'new_revendeur_account_tva_intra', sanitize_text_field($_POST['new_revendeur_account_tva_intra']));
+            }else{
+                update_user_meta( $user_id, 'new_revendeur_account_regime_tva', "TVA" );
+
+            }
+
+        }
     }
 
      public function show_admin_user_fields($user) {
         $billing_address_1 = get_user_meta($user->ID, 'billing_address_1', true);
         $billing_phone   = get_user_meta($user->ID, 'billing_phone', true);
         $optin_promos    = get_user_meta($user->ID, 'optin_promos', true);
+        $optin_expiration = get_user_meta($user->ID, 'optin_expiration', true);
+        $new_revendeur_account_regime_tva = get_user_meta($user->ID, 'new_revendeur_account_regime_tva', true);
+        $new_revendeur_account_prefixe_tva = get_user_meta($user->ID, 'new_revendeur_account_prefixe_tva', true);
+        $new_revendeur_account_tva_intra = get_user_meta($user->ID, 'new_revendeur_account_tva_intra', true);
         $optin_expiration = get_user_meta($user->ID, 'optin_expiration', true);
 
 
@@ -88,70 +106,95 @@ class ALM_Gestion_De_Comptes {
                 <th><label for="optin_promos">Recevoir promotions</label></th>
                 <td><input type="checkbox" name="optin_promos" id="optin_promos" value="yes" <?php checked($optin_promos, 'yes'); ?> /></td>
             </tr>
+
             <?php if (in_array('customer_particulier', $user->roles)) : ?>
-            <tr>
-                <th><label for="optin_expiration">Informer de l’expiration des licences</label></th>
-                <td><input type="checkbox" name="optin_expiration" id="optin_expiration" value="yes" <?php checked($optin_expiration, 'yes'); ?> /></td>
+                <tr>
+                    <th><label for="optin_expiration">Informer de l’expiration des licences</label></th>
+                    <td><input type="checkbox" name="optin_expiration" id="optin_expiration" value="yes" <?php checked($optin_expiration, 'yes'); ?> /></td>
+                </tr>
+
+                <tr>
+                <th><label for="type_client">Type de client</label></th>
+                <td>
+                    <input type="text" name="type_client" id="type_client" value="<?php echo esc_attr($type_client); ?>" class="regular-text" />
+                </td>
             </tr>
 
             <tr>
-            <th><label for="type_client">Type de client</label></th>
-            <td>
-                <input type="text" name="type_client" id="type_client" value="<?php echo esc_attr($type_client); ?>" class="regular-text" />
-            </td>
-        </tr>
+                <th><label for="denomination">Dénomination sociale</label></th>
+                <td>
+                    <input type="text" name="denomination" id="denomination" value="<?php echo esc_attr($denomination); ?>" class="regular-text" />
+                </td>
+            </tr>
 
-        <tr>
-            <th><label for="denomination">Dénomination sociale</label></th>
-            <td>
-                <input type="text" name="denomination" id="denomination" value="<?php echo esc_attr($denomination); ?>" class="regular-text" />
-            </td>
-        </tr>
+            <tr>
+                <th><label for="genre">Genre</label></th>
+                <td>
+                    <input type="text" name="genre" id="genre" value="<?php echo esc_attr($genre); ?>" class="regular-text" />
+                </td>
+            </tr>
 
-        <tr>
-            <th><label for="genre">Genre</label></th>
-            <td>
-                <input type="text" name="genre" id="genre" value="<?php echo esc_attr($genre); ?>" class="regular-text" />
-            </td>
-        </tr>
-
-       
-        <tr>
-            <th><label for="fax">Fax</label></th>
-            <td>
-                <input type="text" name="fax" id="fax" value="<?php echo esc_attr($fax); ?>" class="regular-text" />
-            </td>
-        </tr>
+        
+            <tr>
+                <th><label for="fax">Fax</label></th>
+                <td>
+                    <input type="text" name="fax" id="fax" value="<?php echo esc_attr($fax); ?>" class="regular-text" />
+                </td>
+            </tr>
 
 
-        <tr>
-            <th><label for="ville">Ville</label></th>
-            <td>
-                <input type="text" name="ville" id="ville" value="<?php echo esc_attr($ville); ?>" class="regular-text" />
-            </td>
-        </tr>
+            <tr>
+                <th><label for="ville">Ville</label></th>
+                <td>
+                    <input type="text" name="ville" id="ville" value="<?php echo esc_attr($ville); ?>" class="regular-text" />
+                </td>
+            </tr>
 
-        <tr>
-            <th><label for="code_postal">Code Postal</label></th>
-            <td>
-                <input type="text" name="code_postal" id="code_postal" value="<?php echo esc_attr($code_postal); ?>" class="regular-text" />
-            </td>
-        </tr>
+            <tr>
+                <th><label for="code_postal">Code Postal</label></th>
+                <td>
+                    <input type="text" name="code_postal" id="code_postal" value="<?php echo esc_attr($code_postal); ?>" class="regular-text" />
+                </td>
+            </tr>
 
-        <tr>
-            <th><label for="pays">Pays</label></th>
-            <td>
-                <input type="text" name="pays" id="pays" value="<?php echo esc_attr($pays); ?>" class="regular-text" />
-            </td>
-        </tr>
-
-        <tr>
-            <th><label for="revendeur_id">Revendeur associé</label></th>
-            <td>
-                <input type="text" name="revendeur_id" id="revendeur_id" value="<?php echo esc_attr($revendeur_id); ?>" class="regular-text" readonly />
-            </td>
-        </tr>
+            <tr>
+                <th><label for="pays">Pays</label></th>
+                <td>
+                    <input type="text" name="pays" id="pays" value="<?php echo esc_attr($pays); ?>" class="regular-text" />
+                </td>
+            </tr>
+            
+            <tr>
+                <th><label for="revendeur_id">Revendeur associé</label></th>
+                <td>
+                    <input type="text" name="revendeur_id" id="revendeur_id" value="<?php echo esc_attr($revendeur_id); ?>" class="regular-text" readonly />
+                </td>
+            </tr>
             <?php endif; ?>
+
+            <?php if($new_revendeur_account_regime_tva){?>
+                <tr>
+                    <th><label for="new_revendeur_account_regime_tva">Régime tva</label></th>
+                    <td>
+                        <input type="text" name="new_revendeur_account_regime_tva" id="new_revendeur_account_regime_tva" value="<?php echo esc_attr($new_revendeur_account_regime_tva); ?>" class="regular-text" />
+                    </td>
+                </tr>
+            <?php }?>
+            <?php if($new_revendeur_account_prefixe_tva){?>
+            <tr>
+                <th><label for="new_revendeur_account_prefixe_tva">Préfixe tva intracommunautaire</label></th>
+                <td>
+                    <input type="text" name="new_revendeur_account_prefixe_tva" id="new_revendeur_account_prefixe_tva" value="<?php echo esc_attr($new_revendeur_account_prefixe_tva); ?>" class="regular-text" />
+                </td>
+            </tr>
+            <tr>
+                <th><label for="new_revendeur_account_tva_intra">Numéro tva intracommunautaire</label></th>
+                <td>
+                    <input type="text" name="new_revendeur_account_tva_intra" id="new_revendeur_account_tva_intra" value="<?php echo esc_attr($new_revendeur_account_tva_intra); ?>" class="regular-text" />
+                </td>
+            </tr>
+
+            <?php }?>
         </table>
         <?php
     }
@@ -333,6 +376,8 @@ class ALM_Gestion_De_Comptes {
         update_user_meta($user_id, 'ville', $ville);
         update_user_meta($user_id, 'code_postal', $code_postal);
         update_user_meta($user_id, 'pays', $pays);
+        update_user_meta( $user_id, 'billing_country', sanitize_text_field( $pays ) );
+        update_user_meta( $user_id, 'shipping_country', sanitize_text_field( $pays ) );
 
         // Envoi email au client avec ses identifiants
         $subject = 'Votre compte client';

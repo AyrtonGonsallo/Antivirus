@@ -1,4 +1,5 @@
 <?php
+//include_once WC_ABSPATH . 'includes/wc-cart-functions.php';
 
 
 class DevisPDFGenerator {
@@ -66,33 +67,29 @@ class DevisPDFGenerator {
        
 
         $remises = get_posts($args);
-
         $percent_tva = 20;
-        // 1. On récupère le pays du client via ACF
-        $user_country = get_user_meta($user_id, 'pays', true);
-        if (!$user_country) return;
+        $has_tva=true;
 
-        // 2. On récupère le taux dans le CPT taux_tva
-        $args = [
-            'post_type' => 'tva_par_pays',
-            'meta_query' => [
-                [
-                    'key' => 'code_pays',
-                    'value' => $user_country,
-                    'compare' => '='
-                ]
-            ],
-            'posts_per_page' => 1,
-        ];
+        if (  in_array( 'customer_revendeur', (array) $user->roles ) ) {
+            // Vérifier le régime TVA stocké par ton formulaire
+            $regime = get_user_meta( $user_id, 'new_revendeur_account_regime_tva', true );
 
-        $tva_posts = get_posts($args);
-        if (!empty($tva_posts)){
-             $tva_post_id = $tva_posts[0]->ID;
-
-            // 3. On récupère le taux %
-            $percent_tva = get_field('pourcentage', $tva_post_id); // ex: 20
+            // Si le revendeur est en régime HT => pas de TVA
+            if ( strtoupper( $regime ) === 'HT' ) {
+                //$cart->remove_taxes( );
+                $has_tva=false;
+            }else{
+                //trouver sa taxe sur le pays
+                $percent_tva  = get_field('taux_tva', $post_id);
+                $tva  = get_field('tva', $post_id);
+            }
             
+        }else{
+            $percent_tva  = get_field('taux_tva', $post_id);
+            $tva  = get_field('tva', $post_id);
         }
+
+        
 
        
     
@@ -218,7 +215,7 @@ class DevisPDFGenerator {
             }
              footer {
                 position: fixed;
-                bottom: -30px; 
+                bottom: -60px; 
                 left: 0px;
                 right: 0px;
                 height: 100px; 
@@ -230,6 +227,9 @@ class DevisPDFGenerator {
                 color:black;
                 font-weight:bolder;
                 text-decoration:none;
+            }
+            .product-link span{
+                vertical-align:middle;
             }
 
 
@@ -435,9 +435,14 @@ class DevisPDFGenerator {
                         }
                     }
 
+                    
+
                     // Sous-total (produits - remises)
                     $sous_total = $total_produits - $total_discount_amount;
-                    $tva = ($sous_total * $percent_tva) / 100; // TVA 20%
+                    $tva = 0; 
+                    if($has_tva){
+                        $tva = ($sous_total * $percent_tva) / 100;
+                    }
                     
                     $total_ttc = $sous_total + $tva;
 
@@ -462,12 +467,16 @@ class DevisPDFGenerator {
                     $html .= '<td colspan="4" style="text-align:right;">Sous-total HT</td>';
                     $html .= '<td>'.number_format($sous_total, 2, ',', ' ').' €</td>';
                     $html .= '</tr>';
-
-                    // Ligne TVA
-                    $html .= '<tr>';
-                    $html .= '<td colspan="4" style="text-align:right;">TVA '.$percent_tva.'%</td>';
-                    $html .= '<td>'.number_format($tva, 2, ',', ' ').' €</td>';
-                    $html .= '</tr>';
+                    
+                    if($has_tva){
+                        // Ligne TVA
+                        $html .= '<tr>';
+                        $html .= '<td colspan="4" style="text-align:right;">TVA '.$percent_tva.'%</td>';
+                        $html .= '<td>'.number_format($tva, 2, ',', ' ').' €</td>';
+                        $html .= '</tr>';
+                    }
+                    
+                    
 
                     // Ligne Total TTC
                     $html .= '<tr>';

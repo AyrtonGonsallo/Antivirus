@@ -60,6 +60,29 @@ class DevisEmailSender {
 
         $remises = get_posts($args);
         $percent_tva = 20;
+        $has_tva=true;
+
+        if (  in_array( 'customer_revendeur', (array) $user->roles ) ) {
+            // Vérifier le régime TVA stocké par ton formulaire
+            $regime = get_user_meta( $user_id, 'new_revendeur_account_regime_tva', true );
+
+            // Si le revendeur est en régime HT => pas de TVA
+            if ( strtoupper( $regime ) === 'HT' ) {
+                //$cart->remove_taxes( );
+                $has_tva=false;
+            }else{
+                //trouver sa taxe sur le pays
+                //les classes
+                $percent_tva  = get_field('taux_tva', $post_id);
+                $tva  = get_field('tva', $post_id);
+            }
+            
+        }else{
+            //trouver sa taxe sur le pays
+            $percent_tva  = get_field('taux_tva', $post_id);
+            $tva  = get_field('tva', $post_id);
+        }
+        /*
         // 1. On récupère le pays du client via ACF
         $user_country = get_user_meta($user_id, 'pays', true);
         if (!$user_country) return;
@@ -85,6 +108,7 @@ class DevisEmailSender {
             $percent_tva = get_field('pourcentage', $tva_post_id); // ex: 20
             
         }
+        */
         $total_produits=0;
         $devis_content_html = "";
         if ($produits_de_la_commande) {
@@ -129,7 +153,10 @@ class DevisEmailSender {
 
                     // Sous-total (produits - remises)
                     $sous_total = $total_produits - $total_discount_amount;
-                    $tva = ($sous_total * $percent_tva) / 100; // TVA 20%
+                    $tva = 0; 
+                    if($has_tva){
+                        $tva = ($sous_total * $percent_tva) / 100;
+                    }
                     $total_ttc = $sous_total + $tva;
 
                     // Ligne Total HT
@@ -154,11 +181,16 @@ class DevisEmailSender {
                     $devis_content_html .= '<div>'.number_format($sous_total, 2, ',', ' ').' €</div>';
                     $devis_content_html .= '</div>';
 
-                    // Ligne TVA
-                    $devis_content_html .= '<div style="display:flex;width: 50%;padding:6px 0;justify-content: space-between;">';
-                    $devis_content_html .= '<div style="padding:0px 6px;">TVA '.$percent_tva.'%</div>';
-                    $devis_content_html .= '<div>'.number_format($tva, 2, ',', ' ').' €</div>';
-                    $devis_content_html .= '</div>';
+                    if($has_tva){
+                        // Ligne TVA
+                        $devis_content_html .= '<div style="display:flex;width: 50%;padding:6px 0;justify-content: space-between;">';
+                        $devis_content_html .= '<div style="padding:0px 6px;">TVA '.$percent_tva.'%</div>';
+                        $devis_content_html .= '<div>'.number_format($tva, 2, ',', ' ').' €</div>';
+                        $devis_content_html .= '</div>';
+
+                    }
+
+                    
 
                     // Ligne Total TTC
                     $devis_content_html .= '<div style="display:flex;width:50%;padding:6px 0;justify-content:space-between;">';

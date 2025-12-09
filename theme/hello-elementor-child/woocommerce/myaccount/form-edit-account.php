@@ -36,6 +36,11 @@ do_action( 'woocommerce_before_edit_account_form' );
 		$civilite   = get_user_meta($user_id, 'civilite', true);
 		$optin_promos    = get_user_meta($user_id, 'optin_promos', true);
 		$optin_expiration = get_user_meta($user_id, 'optin_expiration', true);
+		$account_regime_tva = get_user_meta($user->ID, 'new_revendeur_account_regime_tva', true);
+		$selected_regime=($account_regime_tva=="HT")?1:2;
+        $account_prefixe_tva = get_user_meta($user->ID, 'new_revendeur_account_prefixe_tva', true);
+        $account_tva_intra = get_user_meta($user->ID, 'new_revendeur_account_tva_intra', true);
+       
 
 		$denomination = get_user_meta($user_id, 'denomination', true);
 		$ville = get_user_meta($user_id, 'ville', true);
@@ -43,11 +48,58 @@ do_action( 'woocommerce_before_edit_account_form' );
 		$selected_pays = get_user_meta($user_id, 'pays', true);
 
 		$pays_liste = [
-			'FR' => 'France',
-			'BE' => 'Belgique',
-			'CH' => 'Suisse',
-			'LU' => 'Luxembourg',
+			'AL' => 'Albanie',
 			'DE' => 'Allemagne',
+			'AD' => 'Andorre',
+			'AT' => 'Autriche',
+			'BE' => 'Belgique',
+			'BY' => 'Biélorussie',
+			'BA' => 'Bosnie-Herzégovine',
+			'BG' => 'Bulgarie',
+			'HR' => 'Croatie',
+			'DK' => 'Danemark',
+			'ES' => 'Espagne',
+			'EE' => 'Estonie',
+			'FI' => 'Finlande',
+			'FR' => 'France',
+			'GR' => 'Grèce',
+			'HU' => 'Hongrie',
+			'IE' => 'Irlande',
+			'IS' => 'Islande',
+			'IT' => 'Italie',
+			'XK' => 'Kosovo',
+			'LV' => 'Lettonie',
+			'LI' => 'Liechtenstein',
+			'LT' => 'Lituanie',
+			'LU' => 'Luxembourg',
+			'MK' => 'Macédoine du Nord',
+			'MT' => 'Malte',
+			'MD' => 'Moldavie',
+			'MC' => 'Monaco',
+			'ME' => 'Montenegro',
+			'NO' => 'Norvège',
+			'NL' => 'Pays-Bas',
+			'PL' => 'Pologne',
+			'PT' => 'Portugal',
+			'CZ' => 'République Tchèque',
+			'RO' => 'Roumanie',
+			'GB' => 'Royaume-Uni (UK)',
+			'RU' => 'Russie',
+			'SM' => 'San Marino',
+			'RS' => 'Serbie',
+			'SK' => 'Slovaquie',
+			'SI' => 'Slovénie',
+			'SE' => 'Suède',
+			'CH' => 'Suisse',
+			'UA' => 'Ukraine',
+			'VA' => 'Vatican',
+			'AX' => 'Åland Islands',
+			'GG' => 'Guernesey',
+			'JE' => 'Jersey',
+			'IM' => 'Île de Man',
+			'FO' => 'Îles Féroé',
+			'GI' => 'Gibraltar',
+			'SJ' => 'Svalbard et Jan Mayen',
 		];
 		
 	 
@@ -141,6 +193,72 @@ do_action( 'woocommerce_before_edit_account_form' );
 		</select>
     </p>
 
+	<?php if($role == 'customer_revendeur'){?>			
+		<div id="boxtva" name="boxtva" >            
+			<b>Régime de TVA applicable :<span class="required">*</span></b>
+			<br><br>
+			
+			
+			<div style="width: 100%; display: flex; align-items: flex-start; gap: 7px;">
+				<input type="radio" id="regime_2"  <?php echo (isset($selected_regime) && $selected_regime == 2) ? 'checked' : ''; ?> name="new_revendeur_account_regime_tva" value="2" style="width: auto" >
+				<label style="line-height: 1.5;"><b>Facturation TTC faisant ressortir la TVA</b> (pays de l'union) Facturation avec TVA de 20%</label>
+			</div>
+			<br>
+
+			<div style="">
+				<div style="display: flex;align-items: flex-start;justify-content: flex-start;gap: 7px;">
+				<input type="radio" id="regime_1"  <?php echo (isset($selected_regime) && $selected_regime == 1) ? 'checked' : ''; ?> name="new_revendeur_account_regime_tva" value="1" style="width: auto" >
+				<label style="line-height: 1.5;"><b>Facturation HT</b> (pour les pays de l'union Européenne, hors France) Merci de justifier ci dessous d'un numéro de TVA Intra valide :</label>
+			</div>
+				<div id="tva_regime_1_box">
+					<div id="tva_regime_1_box2">
+					N° TVA intracommunautaire:
+					<select title="Prefixe TVA" id="prefixe_tva" name="new_revendeur_account_prefixe_tva" alt="Prefixe TVA">
+						<option <?php echo empty($account_prefixe_tva) ? 'selected' : ''; ?> value="" alt="Prefixe TVA">--</option>
+						<option value="AT"  <?php echo ($account_prefixe_tva === 'AT') ? 'selected' : ''; ?> alt="Prefixe TVA">AT</option>
+						<option value="BE"  <?php echo ($account_prefixe_tva === 'BE') ? 'selected' : ''; ?> alt="Prefixe TVA">BE</option>
+						<option value="BG"  <?php echo ($account_prefixe_tva === 'BG') ? 'selected' : ''; ?> alt="Prefixe TVA">BG</option>
+						<option value="CY"  <?php echo ($account_prefixe_tva === 'CY') ? 'selected' : ''; ?> alt="Prefixe TVA">CY</option>
+						<option value="CZ"  <?php echo ($account_prefixe_tva === 'CZ') ? 'selected' : ''; ?> alt="Prefixe TVA">CZ</option>
+						<option value="DE"  <?php echo ($account_prefixe_tva === 'DE') ? 'selected' : ''; ?> alt="Prefixe TVA">DE</option>
+						<option value="DK"  <?php echo ($account_prefixe_tva === 'DK') ? 'selected' : ''; ?> alt="Prefixe TVA">DK</option>
+						<option value="EE"  <?php echo ($account_prefixe_tva === 'EE') ? 'selected' : ''; ?> alt="Prefixe TVA">EE</option>
+						<option value="EL"  <?php echo ($account_prefixe_tva === 'EL') ? 'selected' : ''; ?> alt="Prefixe TVA">EL</option>
+						<option value="ES"  <?php echo ($account_prefixe_tva === 'ES') ? 'selected' : ''; ?> alt="Prefixe TVA">ES</option>
+						<option value="FI"  <?php echo ($account_prefixe_tva === 'FI') ? 'selected' : ''; ?> alt="Prefixe TVA">FI</option>
+						<option value="FR"  <?php echo ($account_prefixe_tva === 'FR') ? 'selected' : ''; ?> alt="Prefixe TVA">FR</option>
+						<option value="HU"  <?php echo ($account_prefixe_tva === 'HU') ? 'selected' : ''; ?> alt="Prefixe TVA">HU</option>
+						<option value="IE"  <?php echo ($account_prefixe_tva === 'IE') ? 'selected' : ''; ?> alt="Prefixe TVA">IE</option>
+						<option value="IT"  <?php echo ($account_prefixe_tva === 'IT') ? 'selected' : ''; ?> alt="Prefixe TVA">IT</option>
+						<option value="LT"  <?php echo ($account_prefixe_tva === 'LT') ? 'selected' : ''; ?> alt="Prefixe TVA">LT</option>
+						<option value="LU"  <?php echo ($account_prefixe_tva === 'LU') ? 'selected' : ''; ?> alt="Prefixe TVA">LU</option>
+						<option value="LV"  <?php echo ($account_prefixe_tva === 'LV') ? 'selected' : ''; ?> alt="Prefixe TVA">LV</option>
+						<option value="MT"  <?php echo ($account_prefixe_tva === 'MT') ? 'selected' : ''; ?> alt="Prefixe TVA">MT</option>
+						<option value="NL"  <?php echo ($account_prefixe_tva === 'NL') ? 'selected' : ''; ?> alt="Prefixe TVA">NL</option>
+						<option value="PL"  <?php echo ($account_prefixe_tva === 'PL') ? 'selected' : ''; ?> alt="Prefixe TVA">PL</option>
+						<option value="PT"  <?php echo ($account_prefixe_tva === 'PT') ? 'selected' : ''; ?> alt="Prefixe TVA">PT</option>
+						<option value="RO"  <?php echo ($account_prefixe_tva === 'RO') ? 'selected' : ''; ?> alt="Prefixe TVA">RO</option>
+						<option value="SE"  <?php echo ($account_prefixe_tva === 'SE') ? 'selected' : ''; ?> alt="Prefixe TVA">SE</option>
+						<option value="SI"  <?php echo ($account_prefixe_tva === 'SI') ? 'selected' : ''; ?> alt="Prefixe TVA">SI</option>
+						<option value="SK"  <?php echo ($account_prefixe_tva === 'SK') ? 'selected' : ''; ?> alt="Prefixe TVA">SK</option>
+					</select>
+					<input  style="width: auto" type="text" name="new_revendeur_account_tva_intra" value="<?php echo $account_tva_intra;?>" size="25" onblur="IsRequiredOk(this)">
+					</div>
+					<br>
+					<span style="font-size:11px;position: relative;top: -24px;"> 
+						Obligatoire pour facturation Hors TVA pour les sociétés situées dans un pays de l'Union Européenne et hors de France.
+					</span>
+				</div>
+				
+					</div>
+			<br>
+
+			<b>Franchise de TVA</b><p>
+			Contactez-nous pour que nous puissions paramétrer spécifiquement votre compte, sur présentation d'un justificatif de situation, et vous permettre de passer vos commandes avec le taux de TVA qui vous est applicable.</p></td>
+
+		</div>
+	<?php }?>
+
 	 <p class="form-row">
         <label>
 			<input type="checkbox" name="optin_promos" value="yes" <?php checked($optin_promos, 'yes'); ?>>
@@ -201,6 +319,23 @@ do_action( 'woocommerce_before_edit_account_form' );
 
 			// À chaque changement
 			$roleField.on('change', toggleOptinExpiration);
+
+
+			$('#tva_regime_1_box').hide();
+			if ($('#regime_1').is(':checked')) {
+				$('#tva_regime_1_box').show();
+			}
+
+			$('input[name="new_revendeur_account_regime_tva"]').on('change', function() {
+
+			if ($('#regime_1').is(':checked')) {
+				$('#tva_regime_1_box').show();
+			}
+
+			if ($('#regime_2').is(':checked')) {
+				$('#tva_regime_1_box').hide();
+			}
+		});
 		});
 	</script>
 
