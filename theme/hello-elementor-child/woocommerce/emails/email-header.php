@@ -33,7 +33,20 @@ $store_name                 = $store_name ?? get_bloginfo( 'name', 'display' );
 		<title><?php echo esc_html( $store_name ); ?></title>
 	</head>
 	<body <?php echo is_rtl() ? 'rightmargin' : 'leftmargin'; ?>="0" marginwidth="0" topmargin="0" marginheight="0" offset="0">
-		<table width="100%" id="outer_wrapper">
+		
+	<table width="100%" id="outer_wrapper">
+			<tr>
+				<td>
+				</td>
+				<td width="600" style="text-align:center;">
+					<?php
+						$lien_logo_png = site_url().'/wp-content/uploads/2025/11/avast-logo.png';
+						echo '<img src="'.$lien_logo_png.'" alt="Logo du site" >';
+					?>
+				</td>
+				<td>
+				</td>
+			</tr>
 			<tr>
 				<td><!-- Deliberately empty to support consistent sizing and layout across multiple email clients. --></td>
 				<td width="600">

@@ -284,6 +284,12 @@ ins { text-decoration: none !important;}
     font-weight: 800;
     color: #000;
 }
+.subscription-details  .woocommerce-Price-amount{
+    font-size: inherit!important;
+    font-weight: inherit !important;
+    display: inherit !important;
+    color: inherit !important;
+}
 .price:not(:has(del)) .woocommerce-Price-amount bdi{display: flex!important; gap: 10px; align-items: flex-end; line-height: 1;}
 .price:not(:has(del)) .woocommerce-Price-amount bdi .woocommerce-Price-currencySymbol{font-size: 28px;line-height: 0.6 !important;}
 .btn-remise:hover{ background-color: var(--e-global-color-secondary) !important; color: var(--e-global-color-1ac87de) !important;border-color: var(--e-global-color-secondary) !important;}
@@ -939,27 +945,22 @@ div#tva_regime_1_box2 input{width: 100% !important;}
 .grecaptcha-badge{display:none !important;}
 /*************************************************************** related products ***************************************************************/
 .related.products .button {margin-top:20px !important;}
-.price {
-    /* On va masquer uniquement les mots non désirés */
-}
-.price {
-    /* On cache le texte brut après les montants */
-}
-.price {
+
+/*
+
+.wp-singular.page-template .elementor-element.e-flex.e-con-boxed.e-parent .price {
     position: relative;
-}
-.price:after {
-    content: ""; /* empêche Woo de réinjecter du texte */
-}
-/* Masquer le texte brut "for year and a" */
-.price {
     font-size: 0 !important;
+     white-space: nowrap;
 }
-/* Cacher le texte "for year and a" + "sign-up fee" */
-.price {
-    white-space: nowrap;
+.wp-singular.page-template .elementor-element.e-flex.e-con-boxed.e-parent .price:after {
+    content: ""; 
 }
 
-
-
-
+*/
+.wp-singular.page-template .elementor-element.e-flex.e-con-boxed.e-parent .subscription-details{
+    display: none !important;
+}
+section.related.products .subscription-details{
+    display: none !important;
+}

@@ -40,9 +40,120 @@ class ALM_Gestion_De_Comptes {
         add_action('template_redirect', [$this, 'handle_client_submission']);
 
 
+        add_filter('wp_mail',  [$this, 'log_source'], 1, 1);
+
     }
 
+    
+    private function detect_email_source(string $file) : string {
+
+        $relative = str_replace(ABSPATH, '', $file);
+
+        // 1) WooCommerce (toutes les extensions WooCommerce)
+        if (strpos($relative, 'woocommerce') !== false) {
+            return 'WooCommerce';
+        }
+
+        // 2) WordPress Core
+        if (strpos($relative, 'wp-admin') === 0 || strpos($relative, 'wp-includes') === 0) {
+            return 'WordPress Core';
+        }
+        if (preg_match('#^wp-.*\.php$#', $relative)) {
+            return 'WordPress Core';
+        }
+
+        // 3) Plugins tiers
+        if (strpos($relative, 'wp-content/plugins') === 0) {
+            return 'Plugin tiers';
+        }
+
+        // 4) Thème
+        if (strpos($relative, 'wp-content/themes') === 0) {
+            return 'Thème';
+        }
+
+        return 'Inconnu';
+    }
    
+  private function get_wp_mail_caller() : array {
+    $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+
+    foreach ($trace as $call) {
+        if ($call['function'] === 'wp_mail') {
+            return $call;
+        }
+    }
+
+    throw new Exception("Impossible de détecter l’appelant wp_mail().");
+}
+
+
+    public function log_source($args) {
+        try {
+            $caller = $this->get_wp_mail_caller();
+            $file   = $caller['file'];
+            $line   = $caller['line'];
+        } catch (Exception $e) {
+            error_log('[MAIL LOGGER] Impossible d’identifier l’appelant.');
+            return $args;
+        }
+
+        $source = $this->detect_email_source($file);
+
+        // 🎯 Personnalisation uniquement des emails WordPress Core
+        if ($source === "WordPress Core") {
+            $args = $this->override_mails($args);
+        }
+
+        // 📄 Log
+        $log_entry = sprintf(
+            "[%s] Source: %s | To: %s | Subject: %s\n",
+            date('Y-m-d H:i:s'),
+            $source,
+            is_array($args['to']) ? implode(',', $args['to']) : $args['to'],
+            $args['subject']
+        );
+
+        error_log($log_entry, 3, WP_CONTENT_DIR . '/email-log.txt');
+
+        return $args;
+    }
+
+
+
+    public function override_mails($args) {
+
+        // ✔ Flag anti-template
+        if (!empty($args['_template_applied'])) {
+            return $args;
+        }
+        $args['_template_applied'] = true;
+
+        $subject = $args['subject'];
+        $message = $args['message'];
+        $lien_logo_png = site_url().'/wp-content/uploads/2025/11/avast-logo.png';
+
+        $html  = '<html><body style="font-family: Arial; padding:40px 80px; background:#f5f5f5;">';
+        $html .= '<div style="max-width:600px;margin:0 auto;background:white;padding:30px;border-radius:8px;box-shadow:0 0 10px rgba(0,0,0,0.08);">';
+        $html .= '<div style="text-align:center;margin-bottom:25px;">
+                    <img src="'.$lien_logo_png.'" alt="Logo" >
+                </div>';
+       
+        $html .= '<div style="font-size:15px;color:#333;line-height:1.6;">'.wpautop($message).'</div>';
+        $html .= '<hr style="margin-top:30px;">';
+        $html .= '<p style="font-size:13px;color:#888;text-align:center;">Cet email a été envoyé automatiquement par '.get_bloginfo("name").'.</p>';
+        $html .= '</div></body></html>';
+
+        // Forcer HTML
+        add_filter('wp_mail_content_type', function() {
+            return 'text/html';
+        });
+
+        $args['message'] = $html;
+
+        return $args;
+    }
+
 
     public function save_account_fields($user_id) {
          

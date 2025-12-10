@@ -84,5 +84,6 @@ $email = $email ?? null;
 				<td><!-- Deliberately empty to support consistent sizing and layout across multiple email clients. --></td>
 			</tr>
 		</table>
+		
 	</body>
 </html>

@@ -92,13 +92,20 @@ $text_lighter_40 = wc_hex_lighter( $text, 40 );
 // body{padding: 0;} ensures proper scale/positioning of the email in the iOS native email app.
 ?>
 body {
-	background-color: <?php echo esc_attr( $bg ); ?>;
-	padding: 0;
-	text-align: center;
+    background: #f5f5f5;
+    padding: 40px 0;
+    font-family: Arial, sans-serif;
 }
 
 #outer_wrapper {
-	background-color: <?php echo esc_attr( $bg ); ?>;
+	border-radius: 8px;
+	max-width:600px;
+	margin:0 auto;
+	background:white;
+	padding:30px;
+	border-radius:8px;
+	text-align:start;
+	box-shadow:0 0 10px rgba(0,0,0,0.08);
 }
 
 <?php if ( $email_improvements_enabled ) : ?>

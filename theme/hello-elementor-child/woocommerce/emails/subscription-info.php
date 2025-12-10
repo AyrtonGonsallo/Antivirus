@@ -28,7 +28,7 @@ $has_automatic_renewal = false;
 			<th class="td" scope="col" style="text-align:left;"><?php echo esc_html_x( 'ID', 'subscription ID table heading', 'flexible-subscriptions' ); ?></th>
 			<th class="td" scope="col" style="text-align:left;"><?php echo esc_html_x( 'Start date', 'table heading', 'flexible-subscriptions' ); ?></th>
 			<th class="td" scope="col" style="text-align:left;"><?php echo esc_html_x( 'End date', 'table heading', 'flexible-subscriptions' ); ?></th>
-			<th class="td" scope="col" style="text-align:left;"><?php echo esc_html_x( 'Recurring total', 'table heading', 'flexible-subscriptions' ); ?></th>
+			<th class="td" scope="col" style="text-align:left;"><?php echo esc_html_x( 'Totaux récurrents', 'table heading', 'flexible-subscriptions' ); ?></th>
 		</tr>
 	</thead>
 	<tbody>
