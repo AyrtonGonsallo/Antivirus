@@ -190,27 +190,27 @@ class ALM_Revendeur {
                            </div>
                            <div>
                             <label>Nom : <span class="required">*</span></label>
-                            <input class="input_required" type="text" title="Nom" alt="text" name="new_revendeur_account_nom" size="30" value="" >
+                            <input class="input_required" type="text" title="Nom" alt="text" name="new_revendeur_account_nom" size="30" maxlength="50" value="" >
                         </div>
                         <div>
                             <label>Prénom : <span class="required">*</span></label>
-                            <input class="input_required" type="text" title="prenom" alt="text" name="new_revendeur_account_prenom" size="30" value="" >
+                            <input class="input_required" type="text" title="prenom" alt="text" name="new_revendeur_account_prenom" size="30" maxlength="50" value="" >
                             </div>
                             <div>
                             <label>Téléphone : <span class="required">*</span></label>
-                            <input class="input_required" type="text" title="telephone" alt="text" name="new_revendeur_account_telephone" size="30" value="" >
+                            <input class="input_required" type="text" title="telephone" alt="text" name="new_revendeur_account_telephone" maxlength="20" size="30" value="" >
                             </div>
                         <div>
                             <label>Adresse : <span class="required">*</span></label>
-                            <input class="input_required" type="text" title="adresse" alt="text" name="new_revendeur_account_adresse" size="30" value="" >
+                            <input class="input_required" type="text" title="adresse" alt="text" name="new_revendeur_account_adresse" maxlength="100" size="30" value="" >
                             </div>
                         <div>
                             <label>Ville : <span class="required">*</span></label>
-                            <input class="input_required" type="text" title="ville" alt="text" name="new_revendeur_account_ville" size="30" value="" >
+                            <input class="input_required" type="text" title="ville" alt="text" name="new_revendeur_account_ville" size="30" maxlength="50" value="" >
                             </div>
                         <div>
                             <label>Code postal : <span class="required">*</span></label>
-                            <input class="input_required" type="text" title="code_postal" alt="text" name="new_revendeur_account_code_postal" size="30" value="" >
+                            <input class="input_required" type="text" title="code_postal" alt="text" name="new_revendeur_account_code_postal" maxlength="6" size="30" value="" >
                             </div>
                         <div>
                             <label>Pays : <span class="required">*</span></label>
@@ -292,7 +292,7 @@ class ALM_Revendeur {
                                     <option value="SI" alt="Prefixe TVA">SI</option>
                                     <option value="SK" alt="Prefixe TVA">SK</option>
                                 </select>
-                                <input  style="width: auto" type="text" name="new_revendeur_account_tva_intra" value="" size="25" onblur="IsRequiredOk(this)">
+                                <input  style="width: auto" type="text" name="new_revendeur_account_tva_intra" value="" size="25" maxlength="30" onblur="IsRequiredOk(this)">
                                 </div>
                                 <br>
                                 <span style="font-size:11px;position: relative;top: -24px;"> 
@@ -317,19 +317,19 @@ class ALM_Revendeur {
                          <div class="count-clmn" style="">
                             <div>    
                             <label>Adresse Email : <span class="required">*</span></label>
-                            <input class="input_required" type="text" title="Adresse Email" alt="email" name="new_revendeur_account_email" size="40" value="" >
+                            <input class="input_required" type="text" title="Adresse Email" alt="email" name="new_revendeur_account_email" size="40" maxlength="60" value="" >
                             </div>
                             <div>
                             <label>Confirmer Email : <span class="required">*</span></label>
-                            <input class="input_required" type="text" title="Confirmer Email" alt="email" name="new_revendeur_account_confirm_email" size="40" value="" >
+                            <input class="input_required" type="text" title="Confirmer Email" alt="email" name="new_revendeur_account_confirm_email" size="40" maxlength="60" value="" >
                             </div>
                             <div>
                             <label>Mot de passe : <span class="required">*</span></label> 
-                            <input id="password_1" class="input_required" type="password" title="Mot de passe" name="new_revendeur_account_password_1" size="20" value="">     
+                            <input id="password_1" class="input_required" type="password" title="Mot de passe" name="new_revendeur_account_password_1" size="20" maxlength="50" value="">     
                             </div>
                             <div>
                             <label>Confirmer Mot de passe : <span class="required">*</span></label> 
-                            <input id="password_2" class="input_required" type="password" title="Confirmer Mot de passe" name="new_revendeur_account_password_2" size="20" value="">      
+                            <input id="password_2" class="input_required" type="password" title="Confirmer Mot de passe" name="new_revendeur_account_password_2" maxlength="50" size="20" value="">      
                             </div>
                             </div>
 

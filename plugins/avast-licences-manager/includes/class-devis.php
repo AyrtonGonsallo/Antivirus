@@ -279,7 +279,7 @@ class ALM_Devis {
                         <label for="compt2save" class="" style="margin-bottom: 12px;">
                             Indiquez simplement les ordinateurs à protéger :							
                         </label>
-                        <textarea class="" name="compt2save" id="compt2save" rows="4"></textarea>				
+                        <textarea class="" name="compt2save" maxlength="200" id="compt2save" rows="4"></textarea>				
                     </div>
                 </div>
                 <div id="iknowForm">
@@ -358,7 +358,7 @@ class ALM_Devis {
                     <label for="comment" class="" style="margin-bottom: 12px;">
                         Ajouter un commentaire à ma demande :<span class="required">*</span>							
                     </label>
-                    <textarea class="" name="comment" id="comment" rows="4" required></textarea>				
+                    <textarea class="" name="comment" id="comment" maxlength="200" rows="4" required></textarea>				
                 </div>
 
                 <div class="div-form2">
@@ -419,27 +419,27 @@ class ALM_Devis {
                             </div>
                             <div>
                             <label>Nom : <span class="required">*</span></label>
-                            <input class="input_required" type="text" title="Nom" alt="text" name="new_account_nom" size="30" value="" >
+                            <input class="input_required" type="text" title="Nom" alt="text" name="new_account_nom" size="30" maxlength="50" value="" >
                             </div>
                             <div>
                             <label>Prénom : <span class="required">*</span></label>
-                            <input class="input_required" type="text" title="prenom" alt="text" name="new_account_prenom" size="30" value="" >
+                            <input class="input_required" type="text" title="prenom" alt="text" name="new_account_prenom" size="30" maxlength="50" value="" >
                             </div>
                             <div>
                             <label>Téléphone : <span class="required">*</span></label>
-                            <input class="input_required" type="text" title="telephone" alt="text" name="new_account_telephone" size="30" value="" >
+                            <input class="input_required" type="text" title="telephone" alt="text" name="new_account_telephone" size="30" maxlength="20" value="" >
                             </div>
                             <div>
                             <label>Adresse : <span class="required">*</span></label>
-                            <input class="input_required" type="text" title="adresse" alt="text" name="new_account_adresse" size="30" value="" >
+                            <input class="input_required" type="text" title="adresse" alt="text" name="new_account_adresse" size="30" maxlength="100" value="" >
                             </div>
                             <div>
                             <label>Ville : <span class="required">*</span></label>
-                            <input class="input_required" type="text" title="ville" alt="text" name="new_account_ville" size="30" value="" >
+                            <input class="input_required" type="text" title="ville" alt="text" name="new_account_ville" size="30" maxlength="50" value="" >
                             </div>
                             <div>
                             <label>Code postal : <span class="required">*</span></label>
-                            <input class="input_required" type="text" title="code_postal" alt="text" name="new_account_code_postal" size="30" value="" >
+                            <input class="input_required" type="text" title="code_postal" alt="text" name="new_account_code_postal" size="30" maxlength="6" value="" >
                             </div>
                             <div>
                             <label>Pays : <span class="required">*</span></label>
@@ -455,19 +455,19 @@ class ALM_Devis {
                             <div>
                             <!-- <b>Mes identifiants de connexion :</b>   <br> -->  
                             <label>Adresse Email : <span class="required">*</span></label>
-                            <input class="input_required" type="text" title="Adresse Email" alt="email" name="new_account_email" size="40" value="" >
+                            <input class="input_required" type="text" title="Adresse Email" alt="email" name="new_account_email" maxlength="60" size="40" value="" >
                             </div>
                             <div>
                             <label>Confirmer Email : <span class="required">*</span></label>
-                            <input class="input_required" type="text" title="Confirmer Email" alt="email" name="new_account_confirm_email" size="40" value="" >
+                            <input class="input_required" type="text" title="Confirmer Email" alt="email" name="new_account_confirm_email" maxlength="60" size="40" value="" >
                             </div>
                             <div>
                             <label>Mot de passe : <span class="required">*</span></label> 
-                            <input id="password_1" class="input_required" type="password" title="Mot de passe" name="new_account_password_1" size="20" value="">     
+                            <input id="password_1" class="input_required" type="password" title="Mot de passe" name="new_account_password_1" maxlength="50" size="20" value="">     
                             </div>
                             <div>
                             <label>Confirmer Mot de passe : <span class="required">*</span></label> 
-                            <input id="password_2" class="input_required" type="password" title="Confirmer Mot de passe" name="new_account_password_2" size="20" value="">      
+                            <input id="password_2" class="input_required" type="password" title="Confirmer Mot de passe" name="new_account_password_2" maxlength="50" size="20" value="">      
                             </div>
                         </div>
                         <br>
@@ -482,10 +482,10 @@ class ALM_Devis {
                     <!-- Zone pour client existant -->
                     <div id="login_existant" style="display:none; margin-top:10px;">
                         <label>Adresse Email :</label>
-                        <input class="input_required" type="email" name="existing_account_email">
+                        <input class="input_required" type="email" maxlength="60" name="existing_account_email">
                         <br>
                         <label>Mot de passe :</label>
-                        <input class="input_required" type="password" name="existing_account_password">
+                        <input class="input_required" type="password" maxlength="50" name="existing_account_password">
                     </div>
                 <?php endif; ?>
                 <input type="hidden" name="logged" value="<?php if ( is_user_logged_in() ) echo '1'; ?>">
