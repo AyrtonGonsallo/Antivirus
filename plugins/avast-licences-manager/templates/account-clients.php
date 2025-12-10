@@ -193,7 +193,7 @@ jQuery(document).ready(function($) {
 
     <p class="form-row ">
         <label for="denomination">Dénomination sociale <span class="required">*</span></label>
-        <input type="text" name="denomination" id="denomination" required class="woocommerce-Input woocommerce-Input--text input-text"/>
+        <input type="text" maxlength="100" name="denomination" id="denomination" required class="woocommerce-Input woocommerce-Input--text input-text"/>
     </p>
     <div class="clear"></div>
 
@@ -208,23 +208,23 @@ jQuery(document).ready(function($) {
 
     <p class="form-row ">
         <label for="nom">Nom <span class="required">*</span></label>
-        <input type="text" name="nom" id="nom" required class="woocommerce-Input woocommerce-Input--text input-text"/>
+        <input type="text" maxlength="50" name="nom" id="nom" required class="woocommerce-Input woocommerce-Input--text input-text"/>
     </p>
 
     <p class="form-row ">
         <label for="prenom">Prénom <span class="required">*</span></label>
-        <input type="text" name="prenom" id="prenom" required class="woocommerce-Input woocommerce-Input--text input-text"/>
+        <input type="text" maxlength="50" name="prenom" id="prenom" required class="woocommerce-Input woocommerce-Input--text input-text"/>
     </p>
     <div class="clear"></div>
 
     <p class="form-row">
         <label for="email">Adresse email <span class="required">*</span></label>
-        <input type="email" name="email" id="email" required class="woocommerce-Input woocommerce-Input--text input-text"/>
+        <input type="email" maxlength="70" name="email" id="email" required class="woocommerce-Input woocommerce-Input--text input-text"/>
     </p>
 
     <p class="form-row ">
         <label for="billing_phone">Téléphone <span class="required">*</span></label>
-        <input type="text" name="billing_phone" id="billing_phone" required class="woocommerce-Input woocommerce-Input--text input-text"/>
+        <input type="text" maxlength="20" name="billing_phone" id="billing_phone" required class="woocommerce-Input woocommerce-Input--text input-text"/>
     </p>
 
     <p class="form-row ">
@@ -235,17 +235,17 @@ jQuery(document).ready(function($) {
 
     <p class="form-row">
         <label for="billing_address_1">Adresse <span class="required">*</span></label>
-        <input type="text" name="billing_address_1" id="billing_address_1" required class="woocommerce-Input woocommerce-Input--text input-text"/>
+        <input type="text" maxlength="70" name="billing_address_1" id="billing_address_1" required class="woocommerce-Input woocommerce-Input--text input-text"/>
     </p>
 
     <p class="form-row ">
         <label for="ville">Ville <span class="required">*</span></label>
-        <input type="text" name="ville" id="ville" required class="woocommerce-Input woocommerce-Input--text input-text"/>
+        <input type="text" maxlength="30" name="ville" id="ville" required class="woocommerce-Input woocommerce-Input--text input-text"/>
     </p>
 
     <p class="form-row ">
         <label for="code_postal">Code postal <span class="required">*</span></label>
-        <input type="text" name="code_postal" id="code_postal" required class="woocommerce-Input woocommerce-Input--text input-text"/>
+        <input type="text" maxlength="6" name="code_postal" id="code_postal" required class="woocommerce-Input woocommerce-Input--text input-text"/>
     </p>
     <div class="clear"></div>
 

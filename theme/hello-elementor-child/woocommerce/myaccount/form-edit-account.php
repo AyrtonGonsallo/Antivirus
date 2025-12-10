@@ -118,37 +118,37 @@ do_action( 'woocommerce_before_edit_account_form' );
 	<?php if($role == 'customer_revendeur'){?>
 	<p class="form-row ">
         <label for="denomination">Dénomination sociale <span class="required">*</span></label>
-        <input type="text" name="denomination" id="denomination" class="woocommerce-Input woocommerce-Input--text input-text" required value="<?php echo esc_attr($denomination); ?>"/>
+        <input type="text" maxlength="100" name="denomination" id="denomination" class="woocommerce-Input woocommerce-Input--text input-text" required value="<?php echo esc_attr($denomination); ?>"/>
     </p>
 	<?php }?>
 	<div class="clear"></div>
 	<p class="woocommerce-form-row woocommerce-form-row--first form-row form-row-first">
 		<label for="account_first_name"><?php esc_html_e( 'First name', 'woocommerce' ); ?>&nbsp;<span class="required" aria-hidden="true">*</span></label>
-		<input type="text" class="woocommerce-Input woocommerce-Input--text input-text" name="account_first_name" id="account_first_name" autocomplete="given-name" value="<?php echo esc_attr( $user->first_name ); ?>" aria-required="true" />
+		<input type="text" maxlength="50" class="woocommerce-Input woocommerce-Input--text input-text" name="account_first_name" id="account_first_name" autocomplete="given-name" value="<?php echo esc_attr( $user->first_name ); ?>" aria-required="true" />
 	</p>
 	<p class="woocommerce-form-row woocommerce-form-row--last form-row form-row-last">
 		<label for="account_last_name"><?php esc_html_e( 'Last name', 'woocommerce' ); ?>&nbsp;<span class="required" aria-hidden="true">*</span></label>
-		<input type="text" class="woocommerce-Input woocommerce-Input--text input-text" name="account_last_name" id="account_last_name" autocomplete="family-name" value="<?php echo esc_attr( $user->last_name ); ?>" aria-required="true" />
+		<input type="text" maxlength="50" class="woocommerce-Input woocommerce-Input--text input-text" name="account_last_name" id="account_last_name" autocomplete="family-name" value="<?php echo esc_attr( $user->last_name ); ?>" aria-required="true" />
 	</p>
 	<div class="clear"></div>
  	<p class="woocommerce-form-row form-row">
         <label for="billing_address_1">Adresse</label>
-		<input type="text" name="billing_address_1" id="billing_address_1" class="woocommerce-Input woocommerce-Input--text input-text" value="<?php echo esc_attr($billing_address); ?>">
+		<input type="text" maxlength="100" name="billing_address_1" id="billing_address_1" class="woocommerce-Input woocommerce-Input--text input-text" value="<?php echo esc_attr($billing_address); ?>">
     </p>
 
     <p class="woocommerce-form-row  form-row">
         <label for="billing_phone">Téléphone</label>
-		<input type="text" name="billing_phone" id="billing_phone" class="woocommerce-Input woocommerce-Input--text input-text" value="<?php echo esc_attr($billing_phone); ?>">
+		<input type="text" maxlength="20" name="billing_phone" id="billing_phone" class="woocommerce-Input woocommerce-Input--text input-text" value="<?php echo esc_attr($billing_phone); ?>">
     </p>
 	<div class="clear"></div>
 	 <p class="form-row ">
         <label for="ville">Ville <span class="required">*</span></label>
-        <input type="text" name="ville" id="ville" class="woocommerce-Input woocommerce-Input--text input-text" required value="<?php echo esc_attr($ville); ?>"/>
+        <input type="text" name="ville" maxlength="50" id="ville" class="woocommerce-Input woocommerce-Input--text input-text" required value="<?php echo esc_attr($ville); ?>"/>
     </p>
 <div class="clear"></div>
     <p class="form-row ">
         <label for="code_postal">Code postal <span class="required">*</span></label>
-        <input type="text" name="code_postal" id="code_postal" class="woocommerce-Input woocommerce-Input--text input-text" required value="<?php echo esc_attr($code_postal); ?>"/>
+        <input type="text" name="code_postal" maxlength="6" id="code_postal" class="woocommerce-Input woocommerce-Input--text input-text" required value="<?php echo esc_attr($code_postal); ?>"/>
     </p>
     <div class="clear"></div>
 
@@ -171,7 +171,7 @@ do_action( 'woocommerce_before_edit_account_form' );
 
 	<p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
 		<label for="account_email"><?php esc_html_e( 'Email address', 'woocommerce' ); ?>&nbsp;<span class="required" aria-hidden="true">*</span></label>
-		<input type="email" class="woocommerce-Input woocommerce-Input--email input-text" name="account_email" id="account_email" autocomplete="email" value="<?php echo esc_attr( $user->user_email ); ?>" aria-required="true" />
+		<input type="email" maxlength="70" class="woocommerce-Input woocommerce-Input--email input-text" name="account_email" id="account_email" autocomplete="email" value="<?php echo esc_attr( $user->user_email ); ?>" aria-required="true" />
 	</p>
 	
   	<p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
@@ -242,7 +242,7 @@ do_action( 'woocommerce_before_edit_account_form' );
 						<option value="SI"  <?php echo ($account_prefixe_tva === 'SI') ? 'selected' : ''; ?> alt="Prefixe TVA">SI</option>
 						<option value="SK"  <?php echo ($account_prefixe_tva === 'SK') ? 'selected' : ''; ?> alt="Prefixe TVA">SK</option>
 					</select>
-					<input  style="width: auto" type="text" name="new_revendeur_account_tva_intra" value="<?php echo $account_tva_intra;?>" size="25" onblur="IsRequiredOk(this)">
+					<input  style="width: auto" maxlength="60" type="text" name="new_revendeur_account_tva_intra" value="<?php echo $account_tva_intra;?>" size="25" onblur="IsRequiredOk(this)">
 					</div>
 					<br>
 					<span style="font-size:11px;position: relative;top: -24px;"> 
