@@ -621,6 +621,36 @@ jQuery(function($){
 });
 
 
+add_action('admin_enqueue_scripts', 'ae_enqueue_admin_js_for_specific_post');
+function ae_enqueue_admin_js_for_specific_post($hook) {
+
+    // Charger uniquement sur la page d’édition (pas de création)
+    if ($hook !== 'post.php') {
+        return;
+    }
+
+    // Sécuriser la présence du paramètre ?post=
+    if (empty($_GET['post'])) {
+        return;
+    }
+
+    $post_id = intval($_GET['post']);
+    
+    $post_type = get_post_type($post_id);
+    if ($post_type !== 'devis-en-ligne') {
+        return;
+    }
+  
+
+    // Charger ton fichier JS du thème enfant
+    wp_enqueue_script(
+        'ae-custom-admin-js',
+        get_stylesheet_directory_uri() . '/js/custom-admin.js',
+        ['jquery'],
+        false,
+        true
+    );
+}
 
 
 
