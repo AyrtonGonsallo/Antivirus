@@ -13,9 +13,7 @@ defined( 'ABSPATH' ) || exit;
 $display_th = true;
 ?>
 
-<tr class="recurring-totals">
-	<th colspan="2"><?php esc_html_e( 'Recurring totals', 'woocommerce-subscriptions' ); ?></th>
-</tr>
+
 
 <?php
 

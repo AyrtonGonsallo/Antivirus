@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/class-revendeur-email-sender.php';
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 class ALM_Revendeur {
@@ -9,6 +10,11 @@ class ALM_Revendeur {
 
         add_shortcode('alm_revendeur_form', [$this, 'alm_render_revendeur_form']);
         add_action('init', [$this, 'alm_handle_revendeur_form']);
+
+          add_filter( 'manage_demande_revendeur_posts_columns', [$this, 'alm_demande_revendeur_posts_columns'], 10, 1);
+        add_action( 'manage_demande_revendeur_posts_custom_column', [$this, 'alm_demande_revendeur_posts_datas'], 10, 2);
+
+        add_action('admin_post_valider_compte_revendeur', [$this, 'valider_compte_revendeur']);
 
     }
 
@@ -84,6 +90,92 @@ class ALM_Revendeur {
 }
 
 
+
+
+    function alm_demande_revendeur_posts_columns($columns) {
+
+        $new = [];
+
+        // On garde le titre avant d’insérer nos colonnes
+        foreach( $columns as $key => $label ) {
+
+            $new[$key] = $label;
+
+            if ($key === 'title') {
+                $new['status']        = 'Status';
+                $new['account_nom']   = 'Nom';
+                $new['account_prenom'] = 'Prénom';
+                $new['actions']       = 'Actions';
+            }
+        }
+
+        return $new;
+    }
+
+    // 2. Remplir les colonnes
+    function alm_demande_revendeur_posts_datas( $column, $post_id ) {
+
+        switch ( $column ) {
+
+            case 'status':
+                $status = get_field('status', $post_id);
+               echo esc_html( $status['label'] ?? '—' );
+                break;
+
+
+            case 'account_nom':
+                $account_nom = get_field('account_nom', $post_id);
+                echo  esc_html($account_nom) ;
+                break;
+
+            case 'account_prenom':
+                $account_prenom = get_field('account_prenom', $post_id);
+                echo  esc_html($account_prenom) ;
+                break;
+
+            case 'actions':
+                $status_value = get_field('status', $post_id)["value"];
+                $valider_url   = admin_url("admin-post.php?action=valider_compte_revendeur&id=$post_id");
+                if($status_value=="en_attente"){
+                    echo '<div style="display:flex; gap:8px; flex-wrap:wrap;">';
+                    echo '<a class="button button-primary" href="'.esc_url($valider_url).'">Valider</a>';
+                    echo '</div>';
+                }
+                
+
+                
+                break;
+        }
+
+    }
+
+    
+    function valider_compte_revendeur() {
+        if (!current_user_can('manage_options')) {
+                wp_die("Permissions insuffisantes.");
+            }
+
+        if (!isset($_GET['id'])) {
+            wp_die("ID manquant.");
+        }
+
+        $id = intval($_GET['id']);
+
+        // Générer le PDF et l'enregistrer dans le champ ACF
+        $sent = RevendeurEmailSender::create_account_and_send_email($id);
+        
+
+        // 5️⃣ Redirection avec info
+        if ($sent) {
+            update_field('status', "acceptee", $id);
+            wp_safe_redirect(admin_url("edit.php?post_type=demande_revendeur&mail=ok"));
+        } else {
+            wp_safe_redirect(admin_url("edit.php?post_type=demande_revendeur&mail=error"));
+        }
+        exit;
+    }
+
+
     function alm_render_revendeur_form() {
         ob_start(); ?>
 
@@ -94,7 +186,7 @@ class ALM_Revendeur {
                     <a href="#" class="auto-popup-close">&times;</a>
                     <div class="auto-popup-content">
                         <?php if(($_GET["status_demande"])=="success" ){
-                            echo "<div class='msg-box success' style='font-weight: bolder;text-align: center;padding: 4px 10px;color: #00d369;'>Demande de création de compte revendeur envoyée avec succès.</div>";
+                            echo "<div class='msg-box success' style='font-weight: bolder;text-align: center;padding: 4px 10px;color: #00d369;'>Votre demande a été envoyée. Vous allez recevoir un email de confirmation.</div>";
                         }else{
                             echo "<div class='msg-box failure' style='font-weight: bolder;text-align: center;padding: 4px 10px;color: #d30b00ff;'>Échec de la demande.</div>";
                         }?>
@@ -338,11 +430,11 @@ class ALM_Revendeur {
                             <label  style="line-height: 1.5; margin-block:20px 15px;">
                                 <input type="hidden" name="new_revendeur_account_charte" value="Acceptation de la charte de confidentialité">
                                 <input type="checkbox" style="line-height: 1.5;" checked name="new_revendeur_account_divulgation" title="Acceptation de la charte de confidentialité" value="1" class="input_ok"  alt="checkbox" >
-                                Je comprends que mes informations ne seront pas divulguées à des tiers, conformément à <a href="charte.php" target="_blank">la charte de confidentialité</a> de ce site.
+                                Je comprends que mes informations ne seront pas divulguées à des tiers, conformément à <a href="/charte-de-confidentialite/" target="_blank" style="text-decoration:underline;">la charte de confidentialité</a> de ce site.
                             </label> 
                             <label  style="line-height: 1.5;">
                                 <input type="checkbox" name="new_revendeur_account_agree_cgr" value="1">
-                                Je reconnais avoir pris connaissance et accepter pleinement les Conditions Générales Revendeur, <a href="#" onclick="openWin(&quot;cgr.php&quot;);">disponibles ici</a>.
+                                Je reconnais avoir pris connaissance et accepter pleinement les Conditions Générales Revendeur, <a style="text-decoration:underline;" href="/conditions-generales-de-ventes/" onclick="openWin(&quot;cgr.php&quot;);">disponibles ici</a>.
                             </label>
                             <br> 
      
@@ -632,6 +724,7 @@ class ALM_Revendeur {
                 update_field('account_genre', $new_revendeur_account_genre, $demande_id);
                 update_field('account_telephone', $new_revendeur_account_telephone, $demande_id);
                 update_field('account_adresse', $new_revendeur_account_adresse, $demande_id);
+                update_field('status', 'en_attente', $demande_id);
                 update_field('account_ville', $new_revendeur_account_ville, $demande_id);
                 update_field('account_code_postal', $new_revendeur_account_code_postal, $demande_id);
                 update_field('account_pays', $new_revendeur_account_pays, $demande_id);
@@ -654,7 +747,33 @@ class ALM_Revendeur {
                         update_field("account_justificatif_immatriculation", $file_id, $demande_id);
                     }
                 }
+
+
+                $site_name      = get_bloginfo('name');
+
+                // Sujet
+                $subject = 'Nous avons bien reçu votre demande de création de compte';
+
+                // Message HTML (aucun header/footer)
+                $message  = '<html><body>';
+                $message .= '<p>Bonjour ' . esc_html( $new_revendeur_account_prenom ) . ',</p>';
+                $message .= '<p>Merci pour votre demande de création de compte sur <strong>' . esc_html( $site_name ) . '</strong>.</p>';
+                $message .= '<p>Nous l\'avons bien reçue et elle est en cours de traitement.</p>';
+                $message .= '<p>Vous recevrez un autre e-mail dès que votre compte sera prêt.</p>';
+                $message .= '<br>';
+                $message .= '<p>Cordialement,<br>L\'équipe AVAST</p>';
+                $message .= '</body></html>';
+
+                // Headers WordPress pour envoyer du HTML
+                $headers = array(
+                    'Content-Type: text/html; charset=UTF-8',
+                    'From: ' . esc_html( $site_name ) . ' <no-reply@' . $_SERVER['SERVER_NAME'] . '>',
+                );
+
+                // Envoi
+                wp_mail( $new_revendeur_account_email, $subject, $message, $headers );
                 
+
          
 
         if(!$demande_id){

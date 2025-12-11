@@ -400,11 +400,12 @@ class ALM_Devis {
                                     Professionnel, Association ou Institution
                                 </label>
                             </div>
-                            <br> <br>
-                            <div id="dnom_sos">
+                            <br>
+                            <div id="dnom_sos" style="display: grid; grid-template-columns: 0.5fr 1fr; align-items: center; width: 48%;">
                                 <label>Dénomination sociale : </label>
-                                <input  type="text" title="Dénomination sociale" alt="text" name="new_account_societe" size="40" value="" >
+                                <input style="padding: 4px 1rem;height: 28px;" type="text" title="Dénomination sociale" alt="text" name="new_account_societe" size="40" value="" >
                             </div>
+                            <br>
                             <div class="count-clmn" style="">
                             <div>
                             <label>Genre : <span class="required">*</span></label>
@@ -474,19 +475,22 @@ class ALM_Devis {
                         <div>
                             <label style="line-height: 1.5;">
                                 <input type="hidden" name="new_account_charte" value="Acceptation de la charte de confidentialité">
-                                <input style="margin-right:15px;" type="checkbox" checked name="new_account_divulgation" title="Acceptation de la charte de confidentialité" value="1" class="input_ok"  alt="checkbox" >Je comprends que mes informations ne seront pas divulguées à des tiers, conformément à <a href="charte.php" target="_blank">la charte de confidentialité</a> de ce site.
+                                <input style="margin-right:15px;" type="checkbox" checked name="new_account_divulgation" title="Acceptation de la charte de confidentialité" value="1" class="input_ok"  alt="checkbox" >Je comprends que mes informations ne seront pas divulguées à des tiers, conformément à <a href="/charte-de-confidentialite/" target="_blank" style="text-decoration:underline;">la charte de confidentialité</a> de ce site.
                             </label><br>   
                             </div><br><br>
                     </div>
 
                     <!-- Zone pour client existant -->
                     <div id="login_existant" style="display:none; margin-top:10px;">
-                        <label>Adresse Email :</label>
-                        <input class="input_required" type="email" maxlength="60" name="existing_account_email">
-                        <br>
+                        <div style="display: grid !important; grid-template-columns: 0.6fr 1fr; gap: 20px; margin-bottom: 10px;"><label>Adresse Email :</label>
+                        <input style="padding: 4px 1rem;height: 28px;" class="input_required" type="email" maxlength="60" name="existing_account_email">
+                        </div>
+                        <div style="display: grid !important; grid-template-columns: 0.6fr 1fr; gap: 20px; margin-bottom: 10px;">
                         <label>Mot de passe :</label>
-                        <input class="input_required" type="password" maxlength="50" name="existing_account_password">
+                        <input style="padding: 4px 1rem;height: 28px;" class="input_required" type="password" maxlength="50" name="existing_account_password">
+                        </div>
                     </div>
+                    <br>
                 <?php endif; ?>
                 <input type="hidden" name="logged" value="<?php if ( is_user_logged_in() ) echo '1'; ?>">
                 <input type="hidden" name="goal" value="devis_en_ligne">
@@ -1109,7 +1113,7 @@ class ALM_Devis {
                 
             }
 
-            wc_add_notice("Vos demandes de remise ont été envoyées avec succès.", "success");
+            wc_add_notice("Votre demande a été envoyée. Vous allez recevoir un email de confirmation.", "success");
         }
 
 

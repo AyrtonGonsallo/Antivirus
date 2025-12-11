@@ -9,6 +9,8 @@ jQuery(function($){
     $('#acf-field_692eab163985b').attr("disabled", true); 
     $('#acf-field_692ea8ec39855').attr('readonly', true);
     $('#acf-field_692ea8ec39855').attr('disabled', true);
+    $('#dp1765360554444').attr('readonly', true);
+    $('#dp1765360554444').attr('disabled', true);
     
 
 

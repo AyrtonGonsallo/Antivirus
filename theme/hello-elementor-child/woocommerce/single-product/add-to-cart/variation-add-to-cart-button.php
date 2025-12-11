@@ -41,7 +41,7 @@ global $product;
 
 <div class="div-remise">
 <form id="demandeRemise" method="post" enctype="multipart/form-data">
-    <span style="font-family: 'Raleway';font-weight: 600;"> JE PEUX BÉNÉFICIER D'UNE REMISE COMMERCIALE :</span>
+    <span style="font-family: 'Raleway';font-weight: 600;text-align:center;"> JE PEUX BÉNÉFICIER<br> D'UNE REMISE COMMERCIALE :</span>
     <!-- Option 1 -->
     <label>
         <input type="checkbox" name="option_remise[]"  id="option1" class="optionRemise" data-group="1" data-file="file1" data-value="Changement -25%"> Je change d'antivirus pour Avast -25%
@@ -155,5 +155,6 @@ jQuery(document).ready(function($) {
     border-color: #777 !important;
     cursor: not-allowed;
     opacity: 0.5;
+	margin-block: 10px !important;
 }
 </style>

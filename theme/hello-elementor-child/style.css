@@ -290,7 +290,7 @@ ins { text-decoration: none !important;}
     display: inherit !important;
     color: inherit !important;
 }
-.price:not(:has(del)) .woocommerce-Price-amount bdi{display: flex!important; gap: 10px; align-items: flex-end; line-height: 1;}
+.price:not(:has(del)) .woocommerce-Price-amount bdi{/*display: flex!important; gap: 10px; align-items: flex-end; */line-height: 1.2;}
 .price:not(:has(del)) .woocommerce-Price-amount bdi .woocommerce-Price-currencySymbol{font-size: 28px;line-height: 0.6 !important;}
 .btn-remise:hover{ background-color: var(--e-global-color-secondary) !important; color: var(--e-global-color-1ac87de) !important;border-color: var(--e-global-color-secondary) !important;}
 /* .single-product .price del .woocommerce-Price-amount bdi{font-size: 20px !important;    text-decoration: line-through;color: #FF1212 !important;}
@@ -648,7 +648,7 @@ a.woocommerce-button.button.view.afrfq-view-quote:hover, body .afrfq-quote-actio
     justify-content: flex-end;
     gap: 10px;
     align-items: flex-end;}
-.col-dtls-product .div-remise { background-color: #f5f3f3;padding: 15px 30px; display: flex; flex-direction: column;gap: 11px;}
+.col-dtls-product .div-remise { background-color: #f5f3f3;padding: 15px 28px; display: flex; flex-direction: column;gap: 11px;}
 
 button{text-transform: unset !important;}
 .duree-annee select{    
@@ -906,7 +906,7 @@ form#demandeRemise {display: flex; gap: 13px; flex-direction: column;margin-top:
 .div-remise .upload.hidden input{width:100% !important;}	
 .paragrph p{min-height:0 !important;}
 .elementor-wc-products ul.products li.product .price{ line-height: 4.5em;}
-.col-dtls-product form.cart .variations tbody{ justify-content: center;}
+.col-dtls-product form.cart .variations tbody{    align-items: flex-start;}
 .alm-devis-form .flx-radio-devis input, .alm-devis-form input[type=radio]{margin-right: 6px !important;}	
 .devis-form .count-clmn div, .alm-revendeur-form .count-clmn div {grid-template-columns: 1fr;gap: 10px;}
 div#tva_regime_1_box2{ display: flex;flex-direction: column; align-items: flex-start; gap: 6px;}
@@ -917,7 +917,10 @@ div#tva_regime_1_box2 input{width: 100% !important;}
 .footer nav a{line-height: 1.2 !important;}
 .panier .woocommerce table.cart tr { padding: 10px 8px !important; }
 .panier .woocommerce .coupon-col{ display: block !important;}
- 
+ .elementor-element.elementor-element-ee730c1.e-con-full.e-flex.e-con.e-child {
+    display: flex;
+    justify-content: flex-start;
+}
 	
 	
 	
@@ -945,22 +948,30 @@ div#tva_regime_1_box2 input{width: 100% !important;}
 .grecaptcha-badge{display:none !important;}
 /*************************************************************** related products ***************************************************************/
 .related.products .button {margin-top:20px !important;}
-
-/*
-
-.wp-singular.page-template .elementor-element.e-flex.e-con-boxed.e-parent .price {
-    position: relative;
-    font-size: 0 !important;
-     white-space: nowrap;
+.variables-prodct div.product span.price {
+    color: #00bbff !important;
+    font-size: 17px !important;
 }
-.wp-singular.page-template .elementor-element.e-flex.e-con-boxed.e-parent .price:after {
-    content: ""; 
+span.subscription-details {
+	color: #000 !important;
+    font-size: 15px!important;
+    line-height: 1.8!important;
+    font-weight: 500!important;
+	text-align: left;
 }
+span.subscription-details .woocommerce-Price-currencySymbol{font-size: 15px!important;}
+.subscription-details .woocommerce-Price-amount {display: inline !important; font-weight: 800 !important;}
 
-*/
-.wp-singular.page-template .elementor-element.e-flex.e-con-boxed.e-parent .subscription-details{
+.wp-singular.page-template:not(.page-id-2033) .elementor-element.e-flex.e-con-boxed.e-parent .subscription-details{
     display: none !important;
 }
 section.related.products .subscription-details{
     display: none !important;
 }
+div.cart_totals .recurring-total{
+    display: none !important;
+}
+
+
+
+

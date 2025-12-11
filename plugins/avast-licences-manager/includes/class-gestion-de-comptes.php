@@ -134,16 +134,16 @@ class ALM_Gestion_De_Comptes {
         $lien_logo_png = site_url().'/wp-content/uploads/2025/11/avast-logo.png';
 
         $html  = '<html><body style="font-family: Arial; padding:40px 80px; background:#f5f5f5;">';
-        $html .= '<div style="max-width:600px;margin:0 auto;background:white;padding:30px;border-radius:8px;box-shadow:0 0 10px rgba(0,0,0,0.08);">';
-        $html .= '<div style="text-align:center;margin-bottom:25px;">
-                    <img src="'.$lien_logo_png.'" alt="Logo" >
-                </div>';
-       
-        $html .= '<div style="font-size:15px;color:#333;line-height:1.6;">'.wpautop($message).'</div>';
-        $html .= '<hr style="margin-top:30px;">';
-        $html .= '<p style="font-size:13px;color:#888;text-align:center;">Cet email a été envoyé automatiquement par '.get_bloginfo("name").'.</p>';
-        $html .= '</div></body></html>';
-
+            $html .= '<div style="max-width:600px;margin:0 auto;background:white;padding:30px;border-radius:8px;box-shadow:0 0 10px rgba(0,0,0,0.08);">';
+                $html .= '<div style="text-align:center;margin-bottom:25px;">
+                            <img src="'.$lien_logo_png.'" alt="Logo" >
+                        </div>';
+            
+                $html .= '<div id="contenu" style="font-size:15px;color:#333;line-height:1.6;">'.wpautop($message).'</div>';
+                $html .= '<hr style="margin-top:30px;">';
+                $html .= '<p style="font-size:13px;color:#888;text-align:center;">Cet email a été envoyé automatiquement par '.get_bloginfo("name").'.</p>';
+            $html .= '</div>';
+        $html .= '</body></html>';
         // Forcer HTML
         add_filter('wp_mail_content_type', function() {
             return 'text/html';

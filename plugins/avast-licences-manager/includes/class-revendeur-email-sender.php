@@ -56,8 +56,6 @@ class RevendeurEmailSender {
        $message = '
             <div style="
                 width:100%;
-                background:#f5f5f5;
-                padding:40px 0;
                 font-family:Arial, sans-serif;
             ">
                 
@@ -72,13 +70,7 @@ class RevendeurEmailSender {
                     box-shadow:0 0 10px rgba(0,0,0,0.08);
                 ">            
 
-                    <div style="width: auto;padding: 20px;text-align: center !important;max-width: 100%;margin-left: auto;margin-right: auto;margin-bottom:30px;">
-                        <div>
-                            <div style="text-align: center;">
-                                <img src="'.$lien_logo_png.'" alt="Logo du site" >      
-                            </div>
-                        </div>       
-                    </div>
+                  
                 
                     
                         Bonjour '.$civilite.' '.$new_revendeur_account_nom.' '.$new_revendeur_account_prenom.',
@@ -100,9 +92,7 @@ class RevendeurEmailSender {
                             text-decoration:none;
                             font-size:16px;
                             border-radius:6px;
-                        ">
-                            Accéder à mon compte revendeur avast
-                        </a>
+                        ">Accéder à mon compte revendeur avast</a>
                     </div>
 
                     <h2 style="margin-top:30px; color:#444;text-transform:uppercase;text-align:center">Votre compte revendeur avast vous permet de bénéficier des avantages suivants</h2>

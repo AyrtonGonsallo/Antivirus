@@ -10,10 +10,10 @@
 
 function pcsToPoste($str) {
     if (strpos($str, "Nombre de pcs") !== false) {
-        return "Poste(s)";
+        return "Nbre de postes(s):";
     }
 	else if (strpos($str, "Durée") !== false) {
-        return $str;
+        return "Durée:";
     }
     return "";
 }

@@ -162,7 +162,7 @@ class ALM_Remise_Commerciale {
 
                 // Si le revendeur est en régime HT => pas de TVA
                 if ( strtoupper( $regime ) === 'HT' ) {
-                    $cart->remove_taxes( );
+                    $cart->remove_taxes(  );
                 }
                 
             }
