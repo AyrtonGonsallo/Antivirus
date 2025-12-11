@@ -34,3 +34,20 @@ do_action( 'woocommerce_account_navigation' ); ?>
 		do_action( 'woocommerce_account_content' );
 	?>
 </div>
+
+<script>
+jQuery(document).ready(function($){
+
+    // Vérifier si on revient du login
+    var savedUrl = localStorage.getItem('redirect_after_login');
+
+    if (savedUrl) {
+        // On efface pour éviter une boucle
+        localStorage.removeItem('redirect_after_login');
+
+        // Redirection
+        window.location.href = savedUrl;
+    }
+
+});
+</script>

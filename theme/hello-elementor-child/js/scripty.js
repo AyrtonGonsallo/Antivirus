@@ -516,6 +516,18 @@ jQuery(document).ready(function($){
 /************************************************ code globale pour le size des images ****************************************************/
 
 
+jQuery(document).ready(function($){
+
+    // Quand l'utilisateur clique sur "Se connecter"
+    $(document).on('click', '.cr-review-form-continue', function () {
+      console.log("produit stocké")
+
+        // On stocke l'URL actuelle (page produit)
+        localStorage.setItem('redirect_after_login', window.location.href);
+
+    });
+
+});
 
 
 
