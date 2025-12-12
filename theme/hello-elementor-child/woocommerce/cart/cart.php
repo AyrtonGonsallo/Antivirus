@@ -39,7 +39,7 @@ do_action( 'woocommerce_before_cart' ); ?>
 				<th scope="col" class="software_duration"><?php esc_html_e( 'Durée', 'woocommerce' ); ?></th>
 				<th scope="col" class="number_of_computers"><?php esc_html_e( 'PC', 'woocommerce' ); ?></th>
 				
-				<th scope="col" class="product-price"><?php esc_html_e( 'Price', 'woocommerce' ); ?> Unitaire HT</th>
+				<th scope="col" class="product-price"><?php esc_html_e( 'Price', 'woocommerce' ); ?> unitaire HT</th>
 				<th scope="col" class="product-quantity"><?php esc_html_e( 'Quantity', 'woocommerce' ); ?></th>
 				<th scope="col" class="product-subtotal"><?php esc_html_e( 'Subtotal', 'woocommerce' ); ?> HT</th>
 				<!-- ✔️ Nouvelle colonne Durée -->

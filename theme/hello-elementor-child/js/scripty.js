@@ -13,11 +13,38 @@ document.addEventListener("DOMContentLoaded", async () => {
 	
 }, 100);
 
-	/*************************** footer lang switcher ****************************/
+	/*************************** mega menu overlay ****************************/
+   const parents = document.querySelectorAll('li.mega-menu-item');
 
+    parents.forEach(parent => {
+        const submenu = parent.querySelector('ul.mega-sub-menu');
 
+        if (submenu) {
+            parent.addEventListener('mouseenter', () => {
+                document.body.classList.add('menu-open');
+            });
 
+            parent.addEventListener('mouseleave', () => {
+                document.body.classList.remove('menu-open');
+            });
+        }
+    });
 
+/********************** plugin reviews date placement ********************************/
+document.querySelectorAll(".cr-review-card").forEach(card => {
+        
+        const verified = card.querySelector(".reviewer-verified");
+        const datetime = card.querySelector(".datetime");
+        
+        // Vérifier que les deux éléments existent
+        if (verified && datetime) {
+            // Remplacer le HTML interne
+            verified.innerHTML = datetime.innerHTML;
+
+            // Cacher l'élément datetime original
+            datetime.style.display = "none";
+        }
+    });
 
 	
 });
@@ -514,8 +541,36 @@ jQuery(document).ready(function($){
 
 });
 /************************************************ code globale pour le size des images ****************************************************/
+/************************************ select languages menu ***********************************/
+   const wrapper = document.querySelector(".trp-flags-hover");
+const trigger = wrapper.querySelector(".trp-hover-icon");
+const menu = wrapper.querySelector(".trp-hover-menu222");
 
+if (trigger && menu) {
+    // Toggle au clic sur l'icône
+    trigger.addEventListener("click", function (e) {
+        e.stopPropagation(); // Empêche le clic de remonter
+        if (menu.style.display === "block") {
+            menu.style.display = "none";
+        } else {
+            menu.style.display = "block";
+        }
+    });
 
+    // Fermer si on clique en dehors du wrapper
+    document.addEventListener("click", function (e) {
+        if (!wrapper.contains(e.target)) {
+            menu.style.display = "none";
+        }
+    });
+
+    // Fermer quand la souris sort du wrapper
+    wrapper.addEventListener("mouseleave", function () {
+        menu.style.display = "none";
+    });
+}
+
+/***********************************************************************/
 jQuery(document).ready(function($){
 
     // Quand l'utilisateur clique sur "Se connecter"

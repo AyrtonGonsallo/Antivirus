@@ -494,7 +494,7 @@ function shortcode_menu_entreprise($atts) {
                     'status'   => 'publish',
                     'category' => [$cat->slug],
                     'return'   => 'ids',
-                    'type' => array( 'variable-subscription' ),
+                    'type' => array( 'variable-subscription','variable'),
                     'meta_query' => [
                         [
                             'key'     => 'afficher_dans_le_menu',

@@ -74,7 +74,7 @@ class ALM_Devis {
                 'status' => 'publish',
                 'limit'  => -1,
                 'category' => [$cat->slug],
-                'type'   => 'variable'
+                'type'   => 'variable-subscription'
             ]);
 
             $variations = [];
