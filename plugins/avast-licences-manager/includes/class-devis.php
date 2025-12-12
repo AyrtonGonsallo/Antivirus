@@ -189,7 +189,7 @@ class ALM_Devis {
                 $mail_url  = admin_url("admin-post.php?action=envoyer_mail_devis&id=$post_id");
                 $status_value = get_field('status', $post_id)['value'];
                 echo '<div style="display:flex; gap:8px; flex-wrap:wrap;">';
-                if(($type_value=="admin" || $type_value=="corrige") && ($status_value=="acceptee") ){
+                if(($type_value=="admin" || $type_value=="corrige") && ($status_value=="en_attente") ){
                     echo '<a class="button button-primary" href="'.esc_url($pdf_url).'">Générer le pdf</a>';
                 }
                 
@@ -245,9 +245,9 @@ class ALM_Devis {
                     <a href="#" class="auto-popup-close">&times;</a>
                     <div class="auto-popup-content">
                         <?php if(($_GET["status_demande"])=="success_and_email" ){
-                            echo "<div class='msg-box success' style='text-align: center;font-weight: bolder;padding: 4px 10px;color: #00d369;'>Demande de devis envoyée avec succès vous devrez recevoir un mail.</div>";
+                            echo "<div class='msg-box success' style='text-align: center;font-weight: bolder;padding: 4px 10px;color: #00d369;'>Votre demande a été envoyée. Vous allez recevoir un email de confirmation.</div>";
                         }else if(($_GET["status_demande"])=="success_without_email"){
-                            echo "<div class='msg-box success' style='text-align: center;font-weight: bolder;padding: 4px 10px;color: #00d369;'>Demande de devis envoyée avec succès.</div>";
+                            echo "<div class='msg-box success' style='text-align: center;font-weight: bolder;padding: 4px 10px;color: #00d369;'>Votre demande a été envoyée.</div>";
                         }
                         else{
                             echo "<div class='msg-box failure' style='text-align: center;font-weight: bolder;padding: 4px 10px;color: #d30b00ff;'>Échec de la demande.</div>";
@@ -401,9 +401,13 @@ class ALM_Devis {
                                 </label>
                             </div>
                             <br>
-                            <div id="dnom_sos" style="display: grid; grid-template-columns: 0.5fr 1fr; align-items: center; width: 48%;">
-                                <label>Dénomination sociale : </label>
-                                <input style="padding: 4px 1rem;height: 28px;" type="text" title="Dénomination sociale" alt="text" name="new_account_societe" size="40" value="" >
+                            <div id="dnom_sos" style="">
+                                <div class="count-clmn" style="">
+                                    <div>
+                                        <label>Dénomination sociale : </label>
+                                        <input style="padding: 4px 1rem;height: 28px;" type="text" title="Dénomination sociale" alt="text" name="new_account_societe" size="40" value="" >
+                                    </div>
+                                </div>
                             </div>
                             <br>
                             <div class="count-clmn" style="">

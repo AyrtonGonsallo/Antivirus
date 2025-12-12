@@ -192,8 +192,8 @@ jQuery(document).ready(function($) {
     </p>
 
     <p class="form-row ">
-        <label for="denomination">Dénomination sociale <span class="required">*</span></label>
-        <input type="text" maxlength="100" name="denomination" id="denomination" required class="woocommerce-Input woocommerce-Input--text input-text"/>
+        <label for="denomination">Dénomination sociale </label>
+        <input type="text" maxlength="100" name="denomination" id="denomination" class="woocommerce-Input woocommerce-Input--text input-text"/>
     </p>
     <div class="clear"></div>
 
@@ -203,6 +203,16 @@ jQuery(document).ready(function($) {
             <option value="">--</option>
             <option value="m">Masculin</option>
             <option value="f">Féminin</option>
+        </select>
+    </p>
+
+    <p class="form-row ">
+        <label for="civilite">Civilité <span class="required">*</span></label>
+        <select name="civilite" id="civilite" required >
+            <option value="">Sélectionnez...</option>
+            <option value="Monsieur" >Monsieur</option>
+            <option value="Madame" >Madame</option>
+            <option value="Mademoiseille">Mademoiseille</option>
         </select>
     </p>
 

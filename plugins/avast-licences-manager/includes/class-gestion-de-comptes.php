@@ -20,6 +20,7 @@ class ALM_Gestion_De_Comptes {
             
         // Hooks WooCommerce
         add_action('woocommerce_save_account_details', [$this, 'save_account_fields']);
+        add_action( 'user_register', [$this, 'wc_save_custom_registration_field'], 10, 1 );
 
         // Back Office WordPress
         add_action('show_user_profile', [$this, 'show_admin_user_fields']);
@@ -42,8 +43,36 @@ class ALM_Gestion_De_Comptes {
 
         add_filter('wp_mail',  [$this, 'log_source'], 1, 1);
 
+        
+
+
     }
 
+
+    public function wc_save_custom_registration_field( $user_id ) {
+        
+        $user = get_user_by( 'id', $user_id );
+        $user->set_role( 'customer_particulier' ); // <-- ton rôle (ou autre : subscriber, editor...)
+        update_user_meta($user_id, 'ville', sanitize_text_field($_POST['ville']));
+        update_user_meta($user_id, 'billing_city', sanitize_text_field($_POST['ville']));
+        update_user_meta($user_id, 'code_postal', sanitize_text_field($_POST['code_postal']));
+        update_user_meta($user_id, 'billing_postcode', sanitize_text_field($_POST['code_postal']));
+        update_user_meta($user_id, 'pays', sanitize_text_field($_POST['pays']));
+        update_user_meta( $user_id, 'billing_phone', sanitize_text_field( $_POST['billing_phone'] ) );
+        update_user_meta( $user_id, 'first_name', sanitize_text_field( $_POST['prenom'] ) );
+        update_user_meta( $user_id, 'last_name', sanitize_text_field( $_POST['nom'] ) );
+        update_user_meta( $user_id, 'billing_first_name', sanitize_text_field( $_POST['prenom'] ) );
+        update_user_meta( $user_id, 'billing_last_name', sanitize_text_field( $_POST['nom'] ) );
+        update_user_meta($user_id, 'billing_country', sanitize_text_field($_POST['pays']));
+        update_user_meta($user_id, 'civilite', sanitize_text_field($_POST['civilite']));
+        update_user_meta( $user_id, 'shipping_first_name', sanitize_text_field( $_POST['prenom'] ) );
+        update_user_meta( $user_id, 'shipping_last_name', sanitize_text_field( $_POST['nom'] ) );
+        update_user_meta($user_id, 'shipping_country', sanitize_text_field($_POST['pays']));
+        update_user_meta($user_id, 'shipping_postcode', sanitize_text_field($_POST['code_postal']));
+        update_user_meta($user_id, 'shipping_city', sanitize_text_field($_POST['ville']));
+    }
+
+  
     
     private function detect_email_source(string $file) : string {
 
@@ -197,6 +226,7 @@ class ALM_Gestion_De_Comptes {
         $denomination   = get_user_meta($user->ID, 'denomination', true);
         $genre          = get_user_meta($user->ID, 'genre', true);
         $fax            = get_user_meta($user->ID, 'fax', true);
+        $civilite            = get_user_meta($user->ID, 'civilite', true);
         $ville          = get_user_meta($user->ID, 'ville', true);
         $code_postal    = get_user_meta($user->ID, 'code_postal', true);
         $pays           = get_user_meta($user->ID, 'pays', true);
@@ -242,6 +272,13 @@ class ALM_Gestion_De_Comptes {
                 <th><label for="genre">Genre</label></th>
                 <td>
                     <input type="text" name="genre" id="genre" value="<?php echo esc_attr($genre); ?>" class="regular-text" />
+                </td>
+            </tr>
+
+            <tr>
+                <th><label for="civilite">Civilité</label></th>
+                <td>
+                    <input type="text" name="civilite" id="civilite" value="<?php echo esc_attr($civilite); ?>" class="regular-text" />
                 </td>
             </tr>
 
@@ -429,6 +466,7 @@ class ALM_Gestion_De_Comptes {
         $genre         = sanitize_text_field($_POST['genre'] ?? '');
         $nom           = sanitize_text_field($_POST['nom'] ?? '');
         $prenom        = sanitize_text_field($_POST['prenom'] ?? '');
+        $civilite        = sanitize_text_field($_POST['civilite'] ?? '');
         $email         = sanitize_email($_POST['email'] ?? '');
         $billing_phone     = sanitize_text_field($_POST['billing_phone'] ?? '');
         $fax           = sanitize_text_field($_POST['fax'] ?? '');
@@ -439,7 +477,7 @@ class ALM_Gestion_De_Comptes {
 
         // Vérification des champs obligatoires
         $errors = [];
-        foreach ( ['type_client','denomination','nom','prenom','email','billing_address_1','billing_phone','ville','code_postal','pays'] as $field ) {
+        foreach ( ['type_client','civilite','nom','prenom','email','billing_address_1','billing_phone','ville','code_postal','pays'] as $field ) {
             if ( empty( ${$field} ) ) {
                 $errors[] = ucfirst(str_replace('_',' ',$field)).' est obligatoire.';
             }
@@ -482,6 +520,7 @@ class ALM_Gestion_De_Comptes {
         update_user_meta($user_id, 'denomination', $denomination);
         update_user_meta($user_id, 'genre', $genre);
         update_user_meta($user_id, 'billing_phone', $billing_phone);
+        update_user_meta($user_id, 'civilite', $civilite);
         update_user_meta($user_id, 'fax', $fax);
         update_user_meta($user_id, 'billing_address_1', $billing_address_1);
         update_user_meta($user_id, 'ville', $ville);

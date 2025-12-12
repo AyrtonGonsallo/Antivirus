@@ -86,6 +86,65 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
         exit;
     }
 }
+
+
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["action"] === "accept_and_convert_devis_to_cart") {
+        
+        // ---------- accepté
+        $user      = get_field('utilisateur', $devis_id);
+        $user_id = $user->ID;
+        $customer = new WC_Customer( $user_id );
+        $tax_rates = WC_Tax::get_rates("",$customer );
+        $first_rate = reset($tax_rates);
+        $percent_tva = $first_rate['rate'];
+        $title_tva = $first_rate['label'];
+        update_field('tva', $title_tva, $id);
+        update_field('taux_tva', $percent_tva, $id);
+
+        wc_add_notice("Devis accepté avec succès.", "success");
+        
+        //--convertir en panier
+
+         $devis_id = intval($_POST['devis_id']);
+        $produits_de_la_commande = get_field('produits_de_la_commande', $devis_id);
+
+        if ($produits_de_la_commande) {
+
+            if (WC()->cart) {
+                WC()->cart->empty_cart();
+            }
+
+            foreach ($produits_de_la_commande as $ligne) {
+                
+                $prod_obj = $ligne['produit'][0]; // ACF relation
+                $qty      = (int)$ligne['quantite'];
+                $prix     = (float)$ligne['prix_propose'];
+
+                WC()->cart->add_to_cart(
+                    $prod_obj->ID,
+                    $qty,
+                    0,
+                    [],
+                    [
+                        'prix_force' => $prix,
+                        'source_devis' => $devis_id
+                    ]
+                );
+            }
+
+            
+            update_field('status', 'accepte_par_le_client', $id);
+            wc_add_notice("Votre devis à été converti en panier.", "success");
+            wp_safe_redirect(wc_get_cart_url());
+            exit;
+        }
+
+
+
+
+        //wp_safe_redirect('/mon-compte/mes-devis/');
+        exit;
+    }
 $devis_id=get_the_ID();
 $status = get_field('status', $devis_id);
 
@@ -227,22 +286,33 @@ get_header();
            
             <?php if($type_de_devis_value=="admin" || $type_de_devis_value=="corrige"){?>
 
-                <form method="POST">
+                
 
                     <?php if ($status_value === 'en_attente') : ?>
 
                         <!-- Si bouton refuser n’a pas encore été cliqué -->
                         <?php if (empty($show_refuse_form)) : ?>
-
-                            <button type="submit" name="accept-devis" class="devis-btn tbn-yes">Accepter</button>
-                            <button type="submit" name="refuse-devis" class="devis-btn tbn-no">Refuser</button>
-
+                            <!--
+                                <form method="POST">
+                                    <button type="submit" name="accept-devis" class="devis-btn tbn-yes">Accepter</button>
+                                </form>
+                            -->
+                            <div class="action-btns">
+                                <form method="POST">
+                                    <input type="hidden" name="action" value="accept_and_convert_devis_to_cart">
+                                    <input type="hidden" name="devis_id" value="<?php echo $post->ID;?>">
+                                    <button type="submit" class="btn-cart">Accepter et convertir en panier</button>
+                                </form>
+                                <form method="POST">
+                                    <button type="submit" name="refuse-devis" class="devis-btn tbn-no">Refuser</button>
+                                </form>
+                            </div>
                         <?php else : ?>
-
-                            <textarea name="motif" required placeholder="Motif du refus"></textarea>
-                            <br>
-                            <button type="submit" name="send-refuse">Confirmer le refus</button>
-
+                            <form method="POST">
+                                <textarea name="motif" required placeholder="Motif du refus"></textarea>
+                                <br>
+                                <button type="submit" name="send-refuse">Confirmer le refus</button>
+                            </form>
                         <?php endif; ?>
 
                     <?php endif; ?>
@@ -254,7 +324,7 @@ get_header();
                         </form>
                     <?php endif; ?>
 
-                </form>
+                
 
 
             <?php }?>
@@ -333,22 +403,26 @@ get_header();
     .tbn-no{
         background-color: red !important;
     }
-
-
- @media (max-width:1024px){
-    .layout-account .page-content,.layout-account nav{
-        width:100%;
+    .action-btns{
+        display:flex;
+        gap:20px
+        
     }
-}
 
- @media (min-width:1024px){
-    .layout-account .page-content{
-        width:75%;
+    @media (max-width:1024px){
+        .layout-account .page-content,.layout-account nav{
+            width:100%;
+        }
     }
-    .layout-account nav{
-        width:25%;
+
+    @media (min-width:1024px){
+        .layout-account .page-content{
+            width:75%;
+        }
+        .layout-account nav{
+            width:25%;
+        }
     }
-}
     </style>
     
 	<?php

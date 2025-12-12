@@ -23,6 +23,63 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 
 <?php if ( 'yes' === get_option( 'woocommerce_enable_myaccount_registration' ) ) : ?>
 
+<?php
+    $pays_liste = [
+        'AL' => 'Albanie',
+        'DE' => 'Allemagne',
+        'AD' => 'Andorre',
+        'AT' => 'Autriche',
+        'BE' => 'Belgique',
+        'BY' => 'Biélorussie',
+        'BA' => 'Bosnie-Herzégovine',
+        'BG' => 'Bulgarie',
+        'HR' => 'Croatie',
+        'DK' => 'Danemark',
+        'ES' => 'Espagne',
+        'EE' => 'Estonie',
+        'FI' => 'Finlande',
+        'FR' => 'France',
+        'GR' => 'Grèce',
+        'HU' => 'Hongrie',
+        'IE' => 'Irlande',
+        'IS' => 'Islande',
+        'IT' => 'Italie',
+        'XK' => 'Kosovo',
+        'LV' => 'Lettonie',
+        'LI' => 'Liechtenstein',
+        'LT' => 'Lituanie',
+        'LU' => 'Luxembourg',
+        'MK' => 'Macédoine du Nord',
+        'MT' => 'Malte',
+        'MD' => 'Moldavie',
+        'MC' => 'Monaco',
+        'ME' => 'Montenegro',
+        'NO' => 'Norvège',
+        'NL' => 'Pays-Bas',
+        'PL' => 'Pologne',
+        'PT' => 'Portugal',
+        'CZ' => 'République Tchèque',
+        'RO' => 'Roumanie',
+        'GB' => 'Royaume-Uni (UK)',
+        'RU' => 'Russie',
+        'SM' => 'San Marino',
+        'RS' => 'Serbie',
+        'SK' => 'Slovaquie',
+        'SI' => 'Slovénie',
+        'SE' => 'Suède',
+        'CH' => 'Suisse',
+        'UA' => 'Ukraine',
+        'VA' => 'Vatican',
+        'AX' => 'Åland Islands',
+        'GG' => 'Guernesey',
+        'JE' => 'Jersey',
+        'IM' => 'Île de Man',
+        'FO' => 'Îles Féroé',
+        'GI' => 'Gibraltar',
+        'SJ' => 'Svalbard et Jan Mayen',
+    ];
+?>
+
 <div class="u-columns col2-set" id="customer_login">
 
 	<div class="u-column1 col-1">
@@ -72,6 +129,54 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 		<form method="post" class="woocommerce-form woocommerce-form-register register" <?php do_action( 'woocommerce_register_form_tag' ); ?> >
 
 			<?php do_action( 'woocommerce_register_form_start' ); ?>
+
+			<p class="form-row ">
+				<label for="nom">Nom <span class="required">*</span></label>
+				<input type="text" maxlength="50" name="nom" id="nom" required class="woocommerce-Input woocommerce-Input--text input-text"/>
+			</p>
+
+			<p class="form-row ">
+				<label for="prenom">Prénom <span class="required">*</span></label>
+				<input type="text" maxlength="50" name="prenom" id="prenom" required class="woocommerce-Input woocommerce-Input--text input-text"/>
+			</p>
+
+			<p class="form-row ">
+				<label for="billing_phone">Téléphone <span class="required">*</span></label>
+				<input type="text" maxlength="20" name="billing_phone" id="billing_phone" required class="woocommerce-Input woocommerce-Input--text input-text"/>
+			</p>
+
+			<p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
+				<label for="civilite">Civilité <span class="required">*</span></label>
+				<select name="civilite" id="civilite" required >
+					<option value="">Sélectionnez...</option>
+					<option value="Monsieur" >Monsieur</option>
+					<option value="Madame" >Madame</option>
+					<option value="Mademoiseille">Mademoiseille</option>
+				</select>
+			</p>
+
+			<p class="form-row ">
+				<label for="ville">Ville <span class="required">*</span></label>
+				<input type="text" maxlength="30" name="ville" id="ville" required class="woocommerce-Input woocommerce-Input--text input-text"/>
+			</p>
+
+			<p class="form-row ">
+				<label for="code_postal">Code postal <span class="required">*</span></label>
+				<input type="text" maxlength="6" name="code_postal" id="code_postal" required class="woocommerce-Input woocommerce-Input--text input-text"/>
+			</p>
+			<div class="clear"></div>
+
+			<p class="form-row">
+				<label for="pays">Pays <span class="required">*</span></label>
+				
+				<select name="pays" id="pays" required class="woocommerce-Input woocommerce-Input--text input-text">
+					<?php foreach ( $pays_liste as $code => $nom ) : ?>
+						<option value="<?php echo esc_attr($code); ?>" >
+							<?php echo esc_html($nom); ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+			</p>
 
 			<?php if ( 'no' === get_option( 'woocommerce_registration_generate_username' ) ) : ?>
 

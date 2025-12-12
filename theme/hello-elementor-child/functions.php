@@ -485,19 +485,28 @@ function shortcode_menu_entreprise($atts) {
     ?>
     <div class="menu-entreprise-wrapper">
         <div class="categories-row <?php echo $class_col_mega_menu;?>" style="display:grid;grid-template-columns: repeat(3, 1fr); gap:15px;">
-            <?php foreach ($product_cats as $cat): ?>
+            <?php foreach ($product_cats as $cat): //pour chaque categorie du shortcode
+                ?> 
 
-                <?php 
+                <?php //je prends les produits avec ce champ afficher_dans_le_menu coché a vrai et de type abonnement variable
                 $products = wc_get_products([
                     'limit'    => -1,
                     'status'   => 'publish',
                     'category' => [$cat->slug],
-                    'return'   => 'ids'
+                    'return'   => 'ids',
+                    'type' => array( 'variable-subscription' ),
+                    'meta_query' => [
+                        [
+                            'key'     => 'afficher_dans_le_menu',
+                            'value'   => '1',
+                            'compare' => '='
+                        ]
+                    ]
                 ]);
                 if (empty($products)) continue;
 
                 // Regrouper par marque
-                $marques = [];
+                $marques = []; 
                 foreach ($products as $pid) {
                     $terms = wp_get_post_terms($pid, 'product_brand');
                     if (!empty($terms)) {
@@ -508,13 +517,13 @@ function shortcode_menu_entreprise($atts) {
                         $marques['Sans marque'][] = $pid;
                     }
                 }
-                ksort($marques, SORT_NATURAL | SORT_FLAG_CASE);
+                ksort($marques, SORT_NATURAL | SORT_FLAG_CASE); //je les tri
 
                 ?>
                 
                     <div class="col-categorie col1" style="margin-bottom:30px;">
-                        <span style="color:#ff7700;font-family: 'Raleway'; font-weight: 700; font-size: 13px;text-transform:uppercase">
-                            <a href="<?php echo get_category_link($cat->term_id); ?>" style="color:#ff7700;font-family: 'Raleway'; font-weight: 700; font-size: 13px;text-transform:uppercase"> 
+                        <span style="color:#ff7700;font-family: 'Raleway'; font-weight: 800; font-size: 18px;text-transform:uppercase">
+                            <a href="<?php echo get_category_link($cat->term_id); ?>" style="color:#ff7700;font-family: 'Raleway'; font-weight: 800; font-size: 17px;text-transform:uppercase"> 
                                 <?php echo $cat->name; ?>
                             </a>
                         </span>
@@ -527,21 +536,33 @@ function shortcode_menu_entreprise($atts) {
                             ?>
                                 <div class="col-marque">
                                     <?php if($cat->slug!="antivirus-pour-android"){?>
-                                        <a href="<?php echo esc_url($marque_link); ?>" style="text-decoration:none;color:#000;">
-                                            <b><?php echo $marque; ?></b>
+                                        <a href="<?php echo esc_url($marque_link); ?>" style="text-decoration:none;color:#000;font-family: 'Raleway'; font-weight: 800; font-size: 17px;">
+                                            <?php echo $marque; ?>
                                         </a>
                                     <?php }?>
                                     <?php foreach ($liste_produits as $pid): 
-                                        $p = wc_get_product($pid); ?>
-                                        <div class="produit-item" style="margin-bottom:5px;">
-                                            <a href="<?php echo get_permalink($pid); ?>" style="text-decoration:none;color:#000;">
-                                                <?php if($cat->slug!="antivirus-pour-android"){?>
-                                                    <?php echo $p->get_name(); ?>
-                                                <?php }else{?>
-                                                    <b><?php echo $p->get_name(); ?></b>
-                                                <?php }?>
-                                            </a>
-                                        </div>
+                                        $parent_product = wc_get_product($pid); //je cherche les fils
+                                        //$available_variations = $parent_product->get_available_variations();
+                                        $available_variations = array_slice(
+                                            $parent_product->get_available_variations(),
+                                            0,
+                                            1 // limiter à 3 variations
+                                        );
+                                        ?>
+                                        <?php foreach ($available_variations as $key => $value): 
+                                            $variation_id = $value['variation_id']; // <-- Correct
+                                            $variation = wc_get_product($variation_id);
+                                        ?>
+                                            <div class="produit-item" style="margin-bottom:5px;">
+                                                <a href="<?php echo get_permalink($variation_id); ?>" class="link-mega-menu" style="text-decoration:none;color:#000;">
+                                                    <?php if($cat->slug!="antivirus-pour-android"){?>
+                                                        <?php echo $variation->get_name(); ?>
+                                                    <?php }else{?>
+                                                        <span style="font-family: 'Raleway'; font-weight: 800; font-size: 17px;"><?php echo $variation->get_name(); ?></span>
+                                                    <?php }?>
+                                                </a>
+                                            </div>
+                                        <?php endforeach; ?>
                                     <?php endforeach; ?>
 
                                 </div>
@@ -653,6 +674,14 @@ function ae_enqueue_admin_js_for_specific_post($hook) {
 }
 
 
+add_filter( 'woocommerce_product_data_store_cpt_get_products_query', 'handle_custom_product_meta_query', 10, 3 );
+
+function handle_custom_product_meta_query( $wp_query_args, $query_vars, $data_store_cpt ) {
+    if ( ! empty( $query_vars['meta_query'] ) ) {
+        $wp_query_args['meta_query'] = $query_vars['meta_query'];
+    }
+    return $wp_query_args;
+}
 
 
 
