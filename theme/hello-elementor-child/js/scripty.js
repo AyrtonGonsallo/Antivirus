@@ -13,38 +13,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 	
 }, 100);
 
-	/*************************** mega menu overlay ****************************/
-   const parents = document.querySelectorAll('li.mega-menu-item');
+	/*************************** footer lang switcher ****************************/
 
-    parents.forEach(parent => {
-        const submenu = parent.querySelector('ul.mega-sub-menu');
 
-        if (submenu) {
-            parent.addEventListener('mouseenter', () => {
-                document.body.classList.add('menu-open');
-            });
 
-            parent.addEventListener('mouseleave', () => {
-                document.body.classList.remove('menu-open');
-            });
-        }
-    });
 
-/********************** plugin reviews date placement ********************************/
-document.querySelectorAll(".cr-review-card").forEach(card => {
-        
-        const verified = card.querySelector(".reviewer-verified");
-        const datetime = card.querySelector(".datetime");
-        
-        // Vérifier que les deux éléments existent
-        if (verified && datetime) {
-            // Remplacer le HTML interne
-            verified.innerHTML = datetime.innerHTML;
-
-            // Cacher l'élément datetime original
-            datetime.style.display = "none";
-        }
-    });
 
 	
 });
@@ -227,19 +200,22 @@ jQuery(document).ready(function($) {
 	console.log("part3",part3);
 	
 	
+  function activateEntreprisesTab() {
+    const $tab = $('#e-n-tab-title-1985465122');
+    if ($tab.length && $tab.attr('aria-selected') !== 'true') {
+      $tab.trigger('click');
+      console.log('✅ Onglet "Entreprises" activé');
+    }
+    
+    $("#mega-menu-item-3513").removeClass("mega-current-menu-item");//desactiver particulier
+    $("#mega-menu-item-1867").addClass("mega-current-menu-item");//activer entreprise
+    $(".elementor-element.elementor-element-836bccd").css("background", "#002f40");
+  }
 	
 	// Vérifie si l'URL contient #entreprises
   if (part3 === '#entreprises') {
 	 
-    function activateEntreprisesTab() {
-      const $tab = $('#e-n-tab-title-1985465122');
-      if ($tab.length && $tab.attr('aria-selected') !== 'true') {
-        $tab.trigger('click');
-        console.log('✅ Onglet "Entreprises" activé');
-      }
-		$("#mega-menu-item-3513").removeClass("mega-current-menu-item");//desactiver particulier
-	  $("#mega-menu-item-1867").addClass("mega-current-menu-item");//activer entreprise
-    }
+    
 
     // Essaie immédiatement
     activateEntreprisesTab();
@@ -261,6 +237,8 @@ jQuery(document).ready(function($) {
 
   }
 
+  
+
   if (part3 === '') {
 	 
     function activateParticuliersTab() {
@@ -269,8 +247,9 @@ jQuery(document).ready(function($) {
         $tab.trigger('click');
         console.log('✅ Onglet "Particulier" activé');
       }
-		$("#mega-menu-item-1867").removeClass("mega-current-menu-item");//desactiver entreprise
-	  $("#mega-menu-item-3513").addClass("mega-current-menu-item");//activer particulier
+      $("#mega-menu-item-1867").removeClass("mega-current-menu-item");//desactiver entreprise
+      $("#mega-menu-item-3513").addClass("mega-current-menu-item");//activer particulier
+      $(".elementor-element.elementor-element-836bccd").css("background", "#ffffff");
     }
 
     // Essaie immédiatement
@@ -289,25 +268,13 @@ jQuery(document).ready(function($) {
     observer.observe(document.body, { childList: true, subtree: true });
 
     // Sécurité : retente après 500ms (Elementor est parfois lent)
-    setTimeout(activateParticuliersTab, 500);
+    //setTimeout(activateParticuliersTab, 500);
 
   }
 
 	
-	function activateParticulierTab() {
-    const $tab = $('#pariculiers');
-    if ($tab.length && $tab.attr('aria-selected') !== 'true') {
-      $tab.trigger('click');
-      console.log('✅ Onglet "Entreprises" activé');
-    }
-  }
-	function activateEntrepriseTab() {
-    const $tab = $('#e-n-tab-title-1985465122');
-    if ($tab.length && $tab.attr('aria-selected') !== 'true') {
-      $tab.trigger('click');
-      console.log('✅ Onglet "Entreprises" activé');
-    }
-  }
+
+	
   
   // Fonction pour le clic "Particuliers"
   $("#pariculiers").on("click", function() {
@@ -316,120 +283,29 @@ jQuery(document).ready(function($) {
         .css("background", "#ffffffff");
 	  $("#mega-menu-item-1867").removeClass("mega-current-menu-item");//desactiver entreprise
 	  $("#mega-menu-item-3513").addClass("mega-current-menu-item");//activer particulier
-	  setTimeout(activateParticulierTab, 500);
+	  //setTimeout(activateParticulierTab, 500);
   });
 
-  // Fonction pour le clic "Entreprises"
-//   $("#e-n-tab-title-1985465122").on("click", function() {
-//     console.log("Onglet Entreprises cliqué");
-//     $(".elementor-element.elementor-element-836bccd ")
-//         .css("background", "#002f40");
-// 	  $("#mega-menu-item-3513").removeClass("mega-current-menu-item");//desactiver particulier
-// 	  $("#mega-menu-item-1867").addClass("mega-current-menu-item");//activer entreprise
-// 	  setTimeout(activateEntrepriseTab, 500);
-//   });
+  $("#e-n-tab-title-1985465122").on("click", function() {
+    console.log("Onglet Entreprise cliqué");
+    $("#mega-menu-item-3513").removeClass("mega-current-menu-item");//desactiver particulier
+	  $("#mega-menu-item-1867").addClass("mega-current-menu-item");//activer entreprise
+    $(".elementor-element.elementor-element-836bccd").css("background", "#002f40");
+	  //setTimeout(activateParticulierTab, 500);
+  });
 
-
-//   const selector = '#mega-menu-wrap-menu-1 #mega-menu-menu-1 > li.mega-menu-item > a.mega-menu-link';
-
-//   $(document).on('focus', selector, function(e){
-//     const $a = $(this);
-//     console.log('focus:', $a.text().trim());
-//     $(".elementor-element.elementor-element-836bccd ")
-//         .css("background", "#002f40");
-// 	  $("#mega-menu-item-3513").removeClass("mega-current-menu-item");//desactiver particulier
-// 	  $("#mega-menu-item-1867").addClass("mega-current-menu-item");//activer entreprise
-// 	  setTimeout(activateEntrepriseTab, 500);
-//   });
-
-//   $("#mega-menu-item-1867 .mega-menu-link").on("click", function(e) {
-//       e.preventDefault(); // si tu veux empêcher le scroll vers #entreprises
-//       console.log("Onglet Entreprises cliqué");
-
-//       $(".elementor-element.elementor-element-836bccd ")
-//           .css("background", "#002f40");
-
-//       $("#mega-menu-item-3513").removeClass("mega-current-menu-item");
-//       $("#mega-menu-item-1867").addClass("mega-current-menu-item");
-
-//       setTimeout(activateEntrepriseTab, 500);
-//   });
-
-
-
-
-/********************************* ACTIVE ENTREPRISE / PARTICULIER **************************************/
-
-jQuery(document).ready(function($) {
-
-    let switching = false; // empêche les doubles clics rapides
-
-    function safeActivate($tab) {
-        if (switching) return;
-        switching = true;
-
-        if ($tab.length && $tab.attr('aria-selected') !== 'true') {
-            $tab.trigger('click');
-        }
-
-        setTimeout(() => switching = false, 200); // anti-spam
-    }
-
-    function activateEntrepriseUI() {
-        $(".elementor-element.elementor-element-836bccd").css("background", "#002f40");
-        $("#mega-menu-item-3513").removeClass("mega-current-menu-item");
-        $("#mega-menu-item-1867").addClass("mega-current-menu-item");
-    }
-
-    function activateParticulierUI() {
-        $(".elementor-element.elementor-element-836bccd").css("background", "#ffffff");
-        $("#mega-menu-item-1867").removeClass("mega-current-menu-item");
-        $("#mega-menu-item-3513").addClass("mega-current-menu-item");
-    }
-
-    const $tabParticulier = $("#pariculiers");
-    const $tabEntreprise = $("#e-n-tab-title-1985465122");
-
-    /*** ---- Gestion URL ---- ***/
-    const part3 = window.location.pathname.split("/")[3];
-
-    if (part3 === "#entreprises") {
-        activateEntrepriseUI();
-        safeActivate($tabEntreprise);
-    }
-
-    if (part3 === "" || part3 === undefined) {
-        activateParticulierUI();
-        safeActivate($tabParticulier);
-    }
-
-    /*** ---- Clic sur tab Particuliers ---- ***/
-    $tabParticulier.on("click", function () {
-        activateParticulierUI();
-        safeActivate($tabParticulier);
-    });
-
-    /*** ---- Clic sur tab Entreprises ---- ***/
-    $tabEntreprise.on("click", function () {
-        activateEntrepriseUI();
-        safeActivate($tabEntreprise);
-    });
-
-    /*** ---- Clic menu entreprise ---- ***/
-    $("#mega-menu-item-1867 .mega-menu-link").on("click", function (e) {
-        e.preventDefault();
-        activateEntrepriseUI();
-        safeActivate($tabEntreprise);
-    });
-
-    /*** ---- Focus menu (tab clavier) ---- ***/
-    const selector = '#mega-menu-wrap-menu-1 #mega-menu-menu-1 > li.mega-menu-item > a.mega-menu-link';
+   const selector = '#mega-menu-item-1867 > a.mega-menu-link';
     $(document).on('focus', selector, function () {
-        activateEntrepriseUI();
-        safeActivate($tabEntreprise);
+      console.log("page Entreprise cliqué");
+     
+      
+
+      setTimeout(activateEntreprisesTab, 500);
+      
     });
 
-});
+
+
 
 
  });
@@ -541,36 +417,8 @@ jQuery(document).ready(function($){
 
 });
 /************************************************ code globale pour le size des images ****************************************************/
-/************************************ select languages menu ***********************************/
-   const wrapper = document.querySelector(".trp-flags-hover");
-const trigger = wrapper.querySelector(".trp-hover-icon");
-const menu = wrapper.querySelector(".trp-hover-menu222");
 
-if (trigger && menu) {
-    // Toggle au clic sur l'icône
-    trigger.addEventListener("click", function (e) {
-        e.stopPropagation(); // Empêche le clic de remonter
-        if (menu.style.display === "block") {
-            menu.style.display = "none";
-        } else {
-            menu.style.display = "block";
-        }
-    });
 
-    // Fermer si on clique en dehors du wrapper
-    document.addEventListener("click", function (e) {
-        if (!wrapper.contains(e.target)) {
-            menu.style.display = "none";
-        }
-    });
-
-    // Fermer quand la souris sort du wrapper
-    wrapper.addEventListener("mouseleave", function () {
-        menu.style.display = "none";
-    });
-}
-
-/***********************************************************************/
 jQuery(document).ready(function($){
 
     // Quand l'utilisateur clique sur "Se connecter"
@@ -583,6 +431,10 @@ jQuery(document).ready(function($){
     });
 
 });
+
+
+
+
 
 
 
