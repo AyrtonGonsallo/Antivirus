@@ -212,7 +212,7 @@ jQuery(document).ready(function($) {
             <option value="">Sélectionnez...</option>
             <option value="Monsieur" >Monsieur</option>
             <option value="Madame" >Madame</option>
-            <option value="Mademoiseille">Mademoiseille</option>
+            <option value="Mademoiselle">Mademoiselle</option>
         </select>
     </p>
 

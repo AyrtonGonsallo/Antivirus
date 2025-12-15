@@ -25,7 +25,7 @@ class ALM_Devis {
 
             foreach ( $cart->get_cart() as $item ) {
                 if ( isset($item['prix_force']) ) {
-                    $item['data']->set_price( $item['prix_force'] );
+                    //$item['data']->set_price( $item['prix_force'] );
                 }
             }
         });

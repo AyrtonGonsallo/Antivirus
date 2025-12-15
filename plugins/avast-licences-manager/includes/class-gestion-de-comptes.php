@@ -50,8 +50,20 @@ class ALM_Gestion_De_Comptes {
 
 
     public function wc_save_custom_registration_field( $user_id ) {
+
+
         
         $user = get_user_by( 'id', $user_id );
+
+         // Sécurité
+        if ( ! $user ) {
+            return;
+        }
+
+        if ( ! empty( $user->roles ) && ! in_array( 'customer', $user->roles ) ) {
+            return;
+        }
+
         $user->set_role( 'customer_particulier' ); // <-- ton rôle (ou autre : subscriber, editor...)
         update_user_meta($user_id, 'ville', sanitize_text_field($_POST['ville']));
         update_user_meta($user_id, 'billing_city', sanitize_text_field($_POST['ville']));

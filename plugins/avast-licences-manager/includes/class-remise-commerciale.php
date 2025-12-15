@@ -42,6 +42,13 @@ class ALM_Remise_Commerciale {
 
             if ( !empty($_POST['remise_type']) ) {
 
+                $userdata = get_userdata( $user_id );
+                $prenom = get_user_meta($user_id, 'first_name', true);
+                $nom = get_user_meta($user_id, 'last_name', true);
+                $email =  $userdata->user_email;
+                $civilite = get_user_meta($user_id, 'civilite', true); 
+                $lien_commandes = site_url()."/mon-compte/orders/";
+
                 // Split sur la virgule pour récupérer chaque option
                 $options = array_map('trim', explode(',', $_POST['remise_type']));
 
@@ -87,10 +94,67 @@ class ALM_Remise_Commerciale {
                             }
                         }
                     }
+
+                    $percent = $percentage_fields_map[$option];
+                    $subject = 'Votre remise statutaire Avast est approuvée';
+
+                    $message = '
+                    <html>
+                    <body style="font-family: Arial, sans-serif; line-height:1.6; color:#333;">
+                        <p>Bonjour '.$civilite.' '.$nom.' '.$prenom.', </p>
+
+                        <p>
+                            Nous avons le plaisir de vous informer que la remise statutaire applicable à votre compte Avast a été validée par notre service commercial.
+                        </p>
+
+                        <p>
+                            Vous pouvez dès à présent passer vos commandes en ligne en bénéficiant d’une remise de <strong>' . esc_html($percent) . '%</strong> sur l’ensemble des produits Avast.
+                        </p>
+
+                        <p style="text-align:center;">
+                            <a href="' . esc_url($lien_commandes) . '" target="_blank" style="
+                                display:inline-block;
+                                margin:20px 0;
+                                padding:12px 25px;
+                                background:#FF7800;
+                                color:#ffffff;
+                                text-decoration:none;
+                                text-transform:uppercase;
+                                font-size:16px;
+                                border-radius:6px;
+                            ">Commander mon logiciel avast</a>
+                        </p>
+
+                        <p>
+                            Si vous rencontrez une quelconque difficulté pour commander votre logiciel Avast, n’hésitez pas à nous en faire part en répondant à cet email.
+                            Nous vous répondrons dans les plus brefs délais.
+                        </p>
+
+                        <p>
+                            Merci pour votre confiance et à très bientôt.<br>
+                            <strong>L’équipe Avast</strong>
+                        </p>
+                    </body>
+                    </html>
+                    ';
+
+                    // Headers pour email HTML
+                    $headers = array('Content-Type: text/html; charset=UTF-8');
+
+                    wp_mail($email, $subject, $message, $headers);
+
                     
                 }
 
+                
+                
+                
+
+                
+
                 wc_add_notice("Vos demandes de remise ont été envoyées avec succès.", "success");
+
+
             }
         }
 

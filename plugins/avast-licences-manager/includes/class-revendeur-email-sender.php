@@ -45,6 +45,18 @@ class RevendeurEmailSender {
 
         update_user_meta($user_id, 'billing_address_1', $new_revendeur_account_adresse);
         update_user_meta($user_id, 'billing_phone', $new_revendeur_account_telephone);
+        if( isset($new_revendeur_account_regime_tva)){
+            $regime=$new_revendeur_account_regime_tva;
+            if($regime==1){
+                update_user_meta( $user_id, 'new_revendeur_account_regime_tva', "HT" );
+                update_user_meta($user_id, 'new_revendeur_account_prefixe_tva', sanitize_text_field($new_revendeur_account_prefixe_tva));
+                update_user_meta($user_id, 'new_revendeur_account_tva_intra', sanitize_text_field($new_revendeur_account_tva_intra));
+            }else{
+                update_user_meta( $user_id, 'new_revendeur_account_regime_tva', "TVA" );
+
+            }
+
+        }
 
 
         $lien_auto_connect_compte = site_url('/mon-compte/');

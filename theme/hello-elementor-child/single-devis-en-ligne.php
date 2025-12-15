@@ -226,8 +226,9 @@ get_header();
                             <tr>
                                 <th>Produit</th>
                                 <th>Quantité</th>
-                                <th>Prix actuel</th>
-                                <th>Prix proposé</th>
+                                <th>Prix d\'achat actuel</th>
+                                <th>Prix de renouvellement actuel</th>
+                                <th>Prix d\'achat proposé</th>
                             </tr>
                         </thead>';
                     echo '<tbody>';
@@ -242,6 +243,29 @@ get_header();
                             $produit_post = $produit_relation[0];
                             $product_id = $produit_post->ID;
                             $product_obj = wc_get_product($product_id);
+
+
+                           
+                            /*
+                            var_dump($product_obj->get_sale_price());
+                            var_dump($product_obj->get_regular_price());
+                            var_dump($product_obj->get_price());
+                            if ( $product_obj && $product_obj->is_type( 'variation' ) ) {
+                                $parent_id      = $product_obj->get_parent_id();
+                                $parent_product = wc_get_product( $parent_id );
+                            }
+                            $prices = wcs_get_variation_prices( $product_obj, $parent_product );
+
+                            var_dump( $prices );
+                            */
+
+                            if ( $product_obj && $product_obj->is_type( 'variation' ) ) {
+                                $parent_id      = $product_obj->get_parent_id();
+                                $parent_product = wc_get_product( $parent_id );
+                            }
+                            $prices = wcs_get_variation_prices( $product_obj, $parent_product );
+                            $premier_paiement = $prices["sign_up_fee"];
+                            
 
                             if ($product_obj) {
 
@@ -261,6 +285,7 @@ get_header();
                                 echo '</td>';
 
                                 echo '<td>'.esc_html($quantite).'</td>';
+                                 echo '<td>'.esc_html($premier_paiement).'€</td>';
                                 echo '<td>'.esc_html($product_price).'€</td>';
                                 echo '<td>'.esc_html($prix_propose).'</td>';
                                 

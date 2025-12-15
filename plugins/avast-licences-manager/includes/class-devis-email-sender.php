@@ -240,9 +240,7 @@ class DevisEmailSender {
                             text-decoration:none;
                             font-size:16px;
                             border-radius:6px;
-                        ">
-                            Voir mon devis
-                        </a>
+                        ">Voir mon devis</a>
                     </div>
 
                     <h2 style="margin-top:30px; color:#444;text-transform:uppercase;text-align:center">Votre demande de devis</h2>
@@ -327,8 +325,6 @@ class DevisEmailSender {
         $message = '
             <div style="
                 width:100%;
-                background:#f5f5f5;
-                padding:40px 0;
                 font-family:Arial, sans-serif;
             ">
 
@@ -342,13 +338,7 @@ class DevisEmailSender {
                     box-shadow:0 0 10px rgba(0,0,0,0.08);
                 ">
 
-                    <div style="width: auto;padding: 20px;text-align: center !important;max-width: 100%;margin-left: auto;margin-right: auto;margin-bottom:30px;">
-                        <div>
-                            <div style="text-align: center;">
-                                <img src="'.$lien_logo_png.'" alt="Logo du site" >      
-                            </div>
-                        </div>       
-                    </div>
+                  
                 
                     
                         Bonjour '.$civilite.' '.$nom.' '.$prenom.',
@@ -385,9 +375,7 @@ class DevisEmailSender {
                             text-decoration:none;
                             font-size:16px;
                             border-radius:6px;
-                        ">
-                            Voir mon devis
-                        </a>
+                        ">Voir mon devis</a>
                     </div>
 
                     <p style="font-size:15px; color:#555; line-height:1.6; margin-top:20px;">
@@ -461,8 +449,6 @@ class DevisEmailSender {
         $message = '
             <div style="
                 width:100%;
-                background:#f5f5f5;
-                padding:40px 0;
                 font-family:Arial, sans-serif;
             ">
 
@@ -476,13 +462,7 @@ class DevisEmailSender {
                     box-shadow:0 0 10px rgba(0,0,0,0.08);
                 ">
 
-                    <div style="width: auto;padding: 20px;text-align: center !important;max-width: 100%;margin-left: auto;margin-right: auto;margin-bottom:30px;">
-                        <div>
-                            <div style="text-align: center;">
-                                <img src="'.$lien_logo_png.'" alt="Logo du site" >      
-                            </div>
-                        </div>       
-                    </div>
+                  
                 
                     
                         Bonjour '.$civilite.' '.$nom.' '.$prenom.',
@@ -512,9 +492,7 @@ class DevisEmailSender {
                             text-decoration:none;
                             font-size:16px;
                             border-radius:6px;
-                        ">
-                            Voir mon devis
-                        </a>
+                        ">Voir mon devis</a>
                     </div>
 
 

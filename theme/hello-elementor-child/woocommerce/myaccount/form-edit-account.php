@@ -189,7 +189,7 @@ do_action( 'woocommerce_before_edit_account_form' );
 			<option value="">Sélectionnez...</option>
 			<option value="Monsieur" <?php selected($civilite,'Monsieur'); ?>>Monsieur</option>
 			<option value="Madame" <?php selected($civilite,'Madame'); ?>>Madame</option>
-			<option value="Mademoiseille" <?php selected($civilite,'Mademoiseille'); ?>>Mademoiseille</option>
+			<option value="Mademoiselle" <?php selected($civilite,'Mademoiselle'); ?>>Mademoiselle</option>
 		</select>
     </p>
 
