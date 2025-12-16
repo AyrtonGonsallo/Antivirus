@@ -79,8 +79,10 @@ class DevisEmailSender {
             
         }else{
             //trouver sa taxe sur le pays
-            $percent_tva  = get_field('taux_tva', $post_id);
-            $tva  = get_field('tva', $post_id);
+            if(get_field('taux_tva', $post_id)){
+                $percent_tva  = get_field('taux_tva', $post_id);
+                $tva  = get_field('tva', $post_id);
+            }
         }
         /*
         // 1. On récupère le pays du client via ACF
@@ -161,7 +163,7 @@ class DevisEmailSender {
 
                     // Ligne Total HT
                     $devis_content_html .= '<div style="display:flex;width:50%;padding:6px 0;justify-content: space-between;">';
-                    $devis_content_html .= '<div style="padding:0px 6px;"> Total HT</div>';
+                    $devis_content_html .= '<div style="padding:0px 6px 0px 0px;"> Total HT</div>';
                     $devis_content_html .= '<div>'.number_format($total_produits, 2, ',', ' ').' €</div>';
                     $devis_content_html .= '</div>';
 
@@ -170,21 +172,21 @@ class DevisEmailSender {
                     // Ligne Remises
                     if ($total_discount_amount > 0) {
                         $devis_content_html .= '<div style="display:flex;width: 50%;padding:6px 0;justify-content: space-between;">';
-                        $devis_content_html .= '<div style="padding:0px 6px;">Remises commerciales</div>';
+                        $devis_content_html .= '<div style="padding:0px 6px 0px 0px;">Remises commerciales</div>';
                         $devis_content_html .= '<div>-'.number_format($total_discount_amount, 2, ',', ' ').' €</div>';
                         $devis_content_html .= '</div>';
                     }
 
                     // Ligne Sous-total HT
                     $devis_content_html .= '<div style="display:flex;width: 50%;padding:6px 0;justify-content: space-between;">';
-                    $devis_content_html .= '<div style="padding:0px 6px;">Sous-total HT</div>';
+                    $devis_content_html .= '<div style="padding:0px 6px 0px 0px;">Sous-total HT</div>';
                     $devis_content_html .= '<div>'.number_format($sous_total, 2, ',', ' ').' €</div>';
                     $devis_content_html .= '</div>';
 
                     if($has_tva){
                         // Ligne TVA
                         $devis_content_html .= '<div style="display:flex;width: 50%;padding:6px 0;justify-content: space-between;">';
-                        $devis_content_html .= '<div style="padding:0px 6px;">TVA '.$percent_tva.'%</div>';
+                        $devis_content_html .= '<div style="padding:0px 6px 0px 0px;">TVA '.$percent_tva.'%</div>';
                         $devis_content_html .= '<div>'.number_format($tva, 2, ',', ' ').' €</div>';
                         $devis_content_html .= '</div>';
 
@@ -194,7 +196,7 @@ class DevisEmailSender {
 
                     // Ligne Total TTC
                     $devis_content_html .= '<div style="display:flex;width:50%;padding:6px 0;justify-content:space-between;">';
-                    $devis_content_html .= '<div style="padding:0px 6px;">Total TTC</div>';
+                    $devis_content_html .= '<div style="padding:0px 6px 0px 0px;">Total TTC</div>';
                     $devis_content_html .= '<div style="font-weight:bold;">'.number_format($total_ttc, 2, ',', ' ').' €</div>';
                     $devis_content_html .= '</div>';
 
@@ -362,7 +364,7 @@ class DevisEmailSender {
                     </p>
 
                     <p style="font-size:15px; color:#555; line-height:1.6; margin-top:20px;">
-                        Vous pouvez suivre le status de votre demande de devis dans votre compte client :
+                        Vous pouvez suivre le statut de votre demande de devis dans votre compte client :
                     </p>
                     
                     <div class="content-center" style="text-align:center;">

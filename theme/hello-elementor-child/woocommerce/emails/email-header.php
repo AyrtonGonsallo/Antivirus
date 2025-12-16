@@ -94,13 +94,7 @@ $store_name                 = $store_name ?? get_bloginfo( 'name', 'display' );
 										<tr>
 											<td align="center" valign="top">
 												<!-- Header -->
-												<table border="0" cellpadding="0" cellspacing="0" width="100%" id="template_header">
-													<tr>
-														<td id="header_wrapper">
-															<h1><?php echo esc_html( $email_heading ); ?></h1>
-														</td>
-													</tr>
-												</table>
+												
 												<!-- End Header -->
 											</td>
 										</tr>

@@ -187,9 +187,19 @@ class ALM_Revendeur {
                     <div class="auto-popup-content">
                         <?php if(($_GET["status_demande"])=="success" ){
                             echo "<div class='msg-box success' style='font-weight: bolder;text-align: center;padding: 4px 10px;color: #00d369;'>Votre demande a été envoyée. Vous allez recevoir un email de confirmation.</div>";
-                        }else{
+                        }else if(($_GET["status_demande"])=="email_invalid"){
+                            echo "<div class='msg-box failure' style='font-weight: bolder;text-align: center;padding: 4px 10px;color: #d30b00ff;'>Adresse email invalide.</div>";
+                        }
+                        else if(($_GET["status_demande"])=="user_exists"){
+                            echo "<div class='msg-box failure' style='font-weight: bolder;text-align: center;padding: 4px 10px;color: #d30b00ff;'>Un compte existe déjà avec cet identifiant.</div>";
+                        }
+                        else if(($_GET["status_demande"])=="email_exists"){
+                            echo "<div class='msg-box failure' style='font-weight: bolder;text-align: center;padding: 4px 10px;color: #d30b00ff;'>Un compte existe déjà avec cette adresse email.</div>";
+                        }
+                        else{
                             echo "<div class='msg-box failure' style='font-weight: bolder;text-align: center;padding: 4px 10px;color: #d30b00ff;'>Échec de la demande.</div>";
-                        }?>
+                        }
+                        ?>
                     </div>
                 </div>
             </div>
@@ -405,7 +415,7 @@ class ALM_Revendeur {
 
                     <br>  <br>
 
-                         <b>Mes identifiants de connexion :</b>      <br>  <br>
+                         <b>Créer les identifiants de connexion de mon compte revendeur :</b>      <br>  <br>
                          <div class="count-clmn" style="">
                             <div>    
                             <label>Adresse Email : <span class="required">*</span></label>
@@ -705,7 +715,23 @@ class ALM_Revendeur {
         $new_revendeur_account_regime_tva = sanitize_text_field($_POST['new_revendeur_account_regime_tva'] ?? '');
         $new_revendeur_account_prefixe_tva = sanitize_text_field($_POST['new_revendeur_account_prefixe_tva'] ?? '');
 
-        
+      
+
+        if ( empty($new_revendeur_account_email) || ! is_email($new_revendeur_account_email) ) {
+            wp_redirect(home_url('/devenir-revendeur-avast/?status_demande=email_invalid'));
+            exit;
+        }
+
+        // 🔍 VÉRIFICATIONS IMPORTANTES
+        if ( email_exists( $new_revendeur_account_email ) ) {
+            wp_redirect(home_url('/devenir-revendeur-avast/?status_demande=email_exists'));
+            exit;
+        }
+
+        if ( username_exists( $new_revendeur_account_email ) ) {
+            wp_redirect(home_url('/devenir-revendeur-avast/?status_demande=user_exists'));
+            exit;
+        }
 
         
                 // 1️⃣ Créer la remise CPT
@@ -752,7 +778,7 @@ class ALM_Revendeur {
                 $site_name      = get_bloginfo('name');
 
                 // Sujet
-                $subject = 'Nous avons bien reçu votre demande de création de compte';
+                $subject = 'Nous avons bien reçu votre demande de création de compte revendeur';
 
                 // Message HTML (aucun header/footer)
                 $message  = '<html><body>';

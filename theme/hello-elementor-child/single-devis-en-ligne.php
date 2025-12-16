@@ -276,8 +276,8 @@ get_header();
 
                                 echo '<tr>';
                                 
-                                echo '<td style="display:flex;align-items:center;gap:10px;">';
-                                echo '<a href="'.get_permalink($product_id).'">';
+                                echo '<td style="display:flex;align-items:center;gap:10px; padding: 8px;border-width: 0px 0px 1px 1px;">';
+                                echo '<a style="display: flex;gap: 10px; align-items: center; justify-content: flex-start;" href="'.get_permalink($product_id).'">';
                                     if($product_img_url)
                                         echo '<img src="'.esc_url($product_img_url).'" width="50" height="50" style="border-radius:4px;">';
                                     echo '<span>'.wp_kses_post($product_name).'</span>';
@@ -413,6 +413,8 @@ get_header();
     border-color: #FF7800 !important;
     color: #ffffffff !important;
 }
+.btn-cart{ font-weight: 600!important; padding: 15px 30px 15px 30px !important;border-width: 3px 3px 3px 3px;}
+.btn-cart:hover{ background-color:transparent!important;color:#FF7800!important;}
 .devis-btn{
         border-width: 2px 2px 2px 2px;
         border:none !important;
@@ -423,16 +425,41 @@ get_header();
         text-decoration:none !important;
     }
     .tbn-yes{
+		border-width: 3px 3px 3px 3px;
+		padding: 15px 30px 15px 30px !important;
         background-color: #42b30a !important;
     }
     .tbn-no{
+		border-width: 3px 3px 3px 3px !important;
+		padding: 15px 30px 15px 30px !important;
         background-color: red !important;
+		border:2px solid red !important;
+    }
+	.tbn-no:hover{
+		opacity:0.6;
     }
     .action-btns{
         display:flex;
-        gap:20px
-        
+        gap:20px;
+        align-items: center;
     }
+
+
+
+
+/* En-têtes */
+.table-devis th {
+  font-weight: 600;
+  text-align: left;
+}
+
+/* Colonnes des prix en gras (3, 4 et 5) */
+.table-devis td:nth-child(2),
+.table-devis td:nth-child(3),
+.table-devis td:nth-child(4),
+.table-devis td:nth-child(5) {
+  font-weight: bold;
+}
 
     @media (max-width:1024px){
         .layout-account .page-content,.layout-account nav{

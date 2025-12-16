@@ -85,8 +85,11 @@ class DevisPDFGenerator {
             }
             
         }else{
-            $percent_tva  = get_field('taux_tva', $post_id);
-            $tva  = get_field('tva', $post_id);
+            if(get_field('taux_tva', $post_id)){
+                $percent_tva  = get_field('taux_tva', $post_id);
+                $tva  = get_field('tva', $post_id);
+            }
+            
         }
 
         
@@ -329,7 +332,7 @@ class DevisPDFGenerator {
                                 </td>
                                 <td>$quantite</td>
                                 <td>$duree</td>
-                                <td>".$prix_propose." €</td>
+                                <td>".$prix_propose." </td>
                                 <td>$total</td>
                             </tr>";
                         }

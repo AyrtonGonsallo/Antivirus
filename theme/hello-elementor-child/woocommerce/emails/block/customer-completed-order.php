@@ -24,9 +24,8 @@ defined( 'ABSPATH' ) || exit;
 ?>
 
 <!-- wp:heading -->
-<h2 class="wp-block-heading"> <?php echo esc_html__( 'Good things are heading your way!', 'woocommerce' ); ?> </h2>
 <!-- /wp:heading -->
-
+ee
 <!-- wp:paragraph -->
 <p><?php
 	/* translators: %s: Customer first name */
