@@ -62,6 +62,7 @@ do_action( 'woocommerce_before_add_to_cart_form' ); ?>
 			<div class="duree-annee" style="display: flex;gap: 8px;">
 				<table class="variations" cellspacing="0">
 					<tbody>
+						
 					<?php foreach ( $attributes as $attribute_name => $options ) : ?>
 						<tr>
 							<td class="label"><label for="<?php echo esc_attr( sanitize_title( $attribute_name ) ); ?>"><?php echo pcsToPoste( wc_attribute_label( $attribute_name ) ); ?></label></td>

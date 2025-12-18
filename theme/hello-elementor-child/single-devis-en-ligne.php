@@ -477,6 +477,76 @@ get_header();
     }
     </style>
     
+
+    <?php
+/*
+    
+if ( ! is_user_logged_in() ) {
+    echo 'Accès refusé';
+    return;
+}
+
+$batch_size = 50; // nombre d’articles par chargement
+$paged      = isset($_GET['p']) ? (int) $_GET['p'] : 1;
+
+$args = array(
+    'post_type'      => 'post',
+    'post_status'    => 'publish',
+    'posts_per_page' => $batch_size,
+    'paged'          => $paged,
+    'orderby'        => 'date',
+    'order'          => 'DESC',
+    'meta_query'     => array(
+        array(
+            'key'     => '_thumbnail_id',
+            'compare' => 'NOT EXISTS',
+        ),
+    ),
+);
+
+$query = new WP_Query($args);
+
+if ( ! $query->have_posts() ) {
+    echo '<strong>✔ Terminé, plus aucun article à traiter.</strong>';
+    return;
+}
+
+foreach ( $query->posts as $post ) {
+
+    if ( empty($post->post_content) ) {
+        continue;
+    }
+
+    if ( preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $post->post_content, $m) ) {
+
+        $img_url = $m[1];
+
+        // enlever les tailles -90x90, -300x200, etc.
+        $img_url = preg_replace(
+            '/-\d+x\d+(?=\.(jpg|jpeg|png|gif|webp))/i',
+            '',
+            $img_url
+        );
+        
+        $attachment_id = attachment_url_to_postid($img_url);
+        
+        echo '✔ Image trouvée pour '.$post->post_title.' : <strong>' . esc_html($img_url) . '</strong><br>';
+        echo  'attahc id '.$attachment_id;
+        if ( $attachment_id ) {
+            set_post_thumbnail($post->ID, $attachment_id);
+            echo '✔ Image ajoutée pour : <strong>' . esc_html($post->post_title) . '</strong><br>';
+        }
+    }
+}
+
+wp_reset_postdata();
+
+$next = $paged + 1;
+echo '<hr>';
+echo '<a href="?p=' . $next . '">▶ Continuer (page ' . $next . ')</a>';
+*/
+
+?>
 	<?php
 
 get_footer();

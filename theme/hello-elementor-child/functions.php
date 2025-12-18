@@ -484,7 +484,7 @@ function shortcode_menu_entreprise($atts) {
 
     ?>
     <div class="menu-entreprise-wrapper">
-        <div class="categories-row <?php echo $class_col_mega_menu;?>" style="display:grid;grid-template-columns: repeat(3, 1fr); gap:15px;">
+        <div class="categories-row <?php echo $class_col_mega_menu;?>" style="display:grid;grid-template-columns: 1.5fr 1fr 1fr; gap:15px;">
             <?php foreach ($product_cats as $cat): //pour chaque categorie du shortcode
                 ?> 
 
@@ -494,7 +494,7 @@ function shortcode_menu_entreprise($atts) {
                     'status'   => 'publish',
                     'category' => [$cat->slug],
                     'return'   => 'ids',
-                    'type' => array( 'variable-subscription','variable'),
+                    'type' => array( 'variable-subscription','subscription',),
                     'meta_query' => [
                         [
                             'key'     => 'afficher_dans_le_menu',
@@ -542,27 +542,52 @@ function shortcode_menu_entreprise($atts) {
                                     <?php }?>
                                     <?php foreach ($liste_produits as $pid): 
                                         $parent_product = wc_get_product($pid); //je cherche les fils
-                                        //$available_variations = $parent_product->get_available_variations();
-                                        $available_variations = array_slice(
-                                            $parent_product->get_available_variations(),
-                                            0,
-                                            1 // limiter à 3 variations
-                                        );
                                         ?>
-                                        <?php foreach ($available_variations as $key => $value): 
-                                            $variation_id = $value['variation_id']; // <-- Correct
-                                            $variation = wc_get_product($variation_id);
+                                        <?php if ( $parent_product && $parent_product->is_type( 'variable-subscription' ) ) : 
+                                            // type variable-subscription
+
+                                        
+                    
+                                            //$available_variations = $parent_product->get_available_variations();
+                                            $available_variations = array_slice(
+                                                $parent_product->get_available_variations(),
+                                                0,
+                                                1 // limiter à 3 variations
+                                            );
                                         ?>
+                                            <?php foreach ($available_variations as $key => $value): 
+                                                $variation_id = $value['variation_id']; // <-- Correct
+                                                $variation = wc_get_product($variation_id);
+                                            ?>
+                                                <div class="produit-item" style="margin-bottom:5px;">
+                                                    <a href="<?php echo get_permalink($variation_id); ?>" class="link-mega-menu" style="text-decoration:none;color:#000;">
+                                                        <?php if($cat->slug!="antivirus-pour-android"){?>
+                                                            <?php echo $variation->get_name(); ?>
+                                                        <?php }else{?>
+                                                            <span style="font-family: 'Raleway'; font-weight: 800; font-size: 17px;"><?php echo $variation->get_name(); ?></span>
+                                                        <?php }?>
+                                                    </a>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
+
+                                        <?php if ( $parent_product && $parent_product->is_type( 'subscription' ) ) : 
+                                            // type subscription c'est pas un parent il a les donnees
+
+                                        ?>
+                                            
                                             <div class="produit-item" style="margin-bottom:5px;">
-                                                <a href="<?php echo get_permalink($variation_id); ?>" class="link-mega-menu" style="text-decoration:none;color:#000;">
+                                                <a href="<?php echo get_permalink($parent_product->get_id()); ?>" class="link-mega-menu" style="text-decoration:none;color:#000;">
                                                     <?php if($cat->slug!="antivirus-pour-android"){?>
-                                                        <?php echo $variation->get_name(); ?>
+                                                        <?php echo $parent_product->get_name(); ?>
                                                     <?php }else{?>
-                                                        <span style="font-family: 'Raleway'; font-weight: 800; font-size: 17px;"><?php echo $variation->get_name(); ?></span>
+                                                        <span style="font-family: 'Raleway'; font-weight: 800; font-size: 17px;"><?php echo $parent_product->get_name(); ?></span>
                                                     <?php }?>
                                                 </a>
                                             </div>
-                                        <?php endforeach; ?>
+                                            
+                                        <?php endif; ?>
+
                                     <?php endforeach; ?>
 
                                 </div>
@@ -685,6 +710,23 @@ function handle_custom_product_meta_query( $wp_query_args, $query_vars, $data_st
 
 
 
+/*
+// TEMPORAIRE — à supprimer après exécution
+add_action('init', function () {
 
+    if ( ! current_user_can('administrator') ) {
+        return;
+    }
 
+    $taxonomy = 'pa_number_of_computers';
+
+    for ( $i = 1; $i <= 200; $i++ ) {
+        if ( ! term_exists( (string) $i, $taxonomy ) ) {
+            wp_insert_term( (string) $i, $taxonomy, [
+                'slug' => (string) $i
+            ]);
+        }
+    }
+});
+*/
 

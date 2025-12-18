@@ -17,12 +17,14 @@ class ALM_Commandes_Panier {
        
        // add_action( 'woocommerce_update_cart_action_cart_updated', [$this, 'save_custom_cart_item_data']);
 
+       /*
        add_filter(
             'woocommerce_subscriptions_product_sign_up_fee',
             [$this, 'cw_replace_signup_fee_with_prix_force'],
             10,
             2
         );
+        */
 
 
 

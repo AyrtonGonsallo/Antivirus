@@ -19,6 +19,19 @@ $user_id = get_current_user_id();
 
 echo wp_kses_post( wc_get_stock_html( $product ) );
 
+$regular_price = $product->get_regular_price();
+$sale_price    = $product->get_sale_price();
+$current_price = $product->get_price();
+$product_id   = $product->get_id();
+$product_type = get_field('type', $product_id);
+
+// Champs ACF
+$show_pcs     = get_field('afficher_selecteur_pcs', $product_id);
+$max_pcs      = (int) get_field('valeur_maximale_pcs', $product_id);
+
+$show_years   = get_field('afficher_selecteur_annees', $product_id);
+$years        = get_field('annees', $product_id);
+
 if ( $product->is_in_stock() ) : ?>
 
 	<?php do_action( 'woocommerce_before_add_to_cart_form' ); ?>
@@ -44,6 +57,77 @@ if ( $product->is_in_stock() ) : ?>
 			<p class="limited-subscription-notice notice"><?php esc_html_e( 'You have an active subscription to this product already.', 'woocommerce-subscriptions' ); ?></p>
 		<?php endif; ?>
 	<?php else : ?>
+
+
+	<?php if ( $product_type=="variable" ) : ?>
+		<div >
+			<?php if ( $show_years && ! empty($years) && is_array($years) ) : ?>
+				<div class="duree-annee" style="display: flex;gap: 8px;justify-content: flex-end;margin-bottom:20px" >
+					<label for="duree">Durée : </label>
+					<select name="duree" id="duree" required>
+						<?php foreach ( $years as $year ) : ?>
+							<option value="<?php echo esc_attr($year); ?>">
+								<?php echo esc_html($year); ?> 
+							</option>
+						<?php endforeach; ?>
+					</select>
+				</div>
+			<?php endif; ?>
+
+
+			<?php if ( $show_pcs && $max_pcs > 0 ) : ?>
+				<div class="duree-annee" style="display: flex;gap: 8px;justify-content: flex-end;">
+					<label for="nb_pc">Nbre de postes(s) : </label>
+					<select name="nb_pc" id="nb_pc" required>
+						<?php for ( $i = 1; $i <= $max_pcs; $i++ ) : ?>
+							<option value="<?php echo esc_attr($i); ?>">
+								<?php echo esc_html($i); ?> 
+							</option>
+						<?php endfor; ?>
+					</select>
+				</div>
+			<?php endif; ?>
+		</div>
+	<?php endif; ?>
+
+		
+	<?php if ( $sale_price > 0 && $regular_price > 0 && $sale_price < $regular_price ) : ?>
+		<div class="woocommerce-variation-price">
+			<span class="price">
+				<del aria-hidden="true">
+					<span class="woocommerce-Price-amount amount">
+						<bdi><?php echo wc_price( $regular_price ); ?></bdi>
+					</span>
+				</del>
+				<ins aria-hidden="true">
+					<span class="woocommerce-Price-amount amount">
+						<bdi><?php echo wc_price( $sale_price ); ?></bdi>
+					</span>
+				</ins>
+			</span>
+		</div>
+	<?php endif; ?>
+	<?php if ( $regular_price > 0 && ( ! $sale_price || $sale_price >= $regular_price ) ) : ?>
+		<div class="woocommerce-variation-price">
+			<span class="price">
+				<ins aria-hidden="true">
+					<span class="woocommerce-Price-amount amount">
+						<bdi><?php echo wc_price( $regular_price ); ?></bdi>
+					</span>
+				</ins>
+			</span>
+		</div>
+	<?php endif; ?>
+	<?php if ( ! $regular_price && ! $sale_price ) : ?>
+		<div class="woocommerce-variation-price">
+			<span class="price">Prix sur devis</span>
+		</div>
+	<?php endif; ?>
+
+
+
+
+
 	<form class="cart" action="<?php echo esc_url( apply_filters( 'woocommerce_add_to_cart_form_action', $product->get_permalink() ) ); ?>" method="post" enctype='multipart/form-data'>
 
 		<?php do_action( 'woocommerce_before_add_to_cart_button' ); ?>
@@ -62,7 +146,8 @@ if ( $product->is_in_stock() ) : ?>
 		do_action( 'woocommerce_after_add_to_cart_quantity' );
 		?>
 
-		<button type="submit" class="single_add_to_cart_button button alt<?php echo esc_attr( wc_wp_theme_get_element_class_name( 'button' ) ? ' ' . wc_wp_theme_get_element_class_name( 'button' ) : '' ); ?>" name="add-to-cart" value="<?php echo esc_attr( $product->get_id() ); ?>"><?php echo esc_html( $product->single_add_to_cart_text() ); ?></button>
+
+		<button type="submit" style="margin-block:20px!important;" class="single_add_to_cart_button button alt<?php echo esc_attr( wc_wp_theme_get_element_class_name( 'button' ) ? ' ' . wc_wp_theme_get_element_class_name( 'button' ) : '' ); ?>" name="add-to-cart" value="<?php echo esc_attr( $product->get_id() ); ?>"><?php echo esc_html( $product->single_add_to_cart_text() ); ?></button>
 
 		<?php do_action( 'woocommerce_after_add_to_cart_button' ); ?>
 
@@ -72,3 +157,126 @@ if ( $product->is_in_stock() ) : ?>
 	<?php do_action( 'woocommerce_after_add_to_cart_form' ); ?>
 
 <?php endif; ?>
+
+
+
+
+<div class="div-remise">
+<form id="demandeRemise" method="post" enctype="multipart/form-data">
+    <span style="font-family: 'Raleway';font-weight: 600;text-align:center;"> JE PEUX BÉNÉFICIER<br> D'UNE REMISE COMMERCIALE :</span>
+    <!-- Option 1 -->
+    <label>
+        <input type="checkbox" name="option_remise[]"  id="option1" class="optionRemise" data-group="1" data-file="file1" data-value="Changement -25%"> Je change d'antivirus pour Avast -25%
+    </label>
+    <div class="upload hidden" id="file1">
+        <input type="file" name="justificatif_changement" accept="application/pdf,image/*">
+    </div>
+
+    <!-- Option 2 -->
+    <label>
+        <input type="checkbox"  name="option_remise[]"  id="option2" class="optionRemise" data-group="2" data-file="file2" data-value="Renouvellement de licences -30%"> Renouvellement de licences -30%
+    </label>
+    
+    <div class="upload hidden" id="file2" style="display: flex;gap: 7px; align-items: center;justify-content: center;">
+        <input  style="width: 50%;padding: 0.5rem 0.4rem; height: 30px;" type="text" id="old_key" name="justificatif_text_renouvellement" placeholder="Ancienne licence"> ou
+        <input style="width: 50%;" type="file" name="justificatif_file_renouvellement" accept="application/pdf,image/*">
+    </div>
+
+    <!-- Option 3 -->
+    <label>
+        <input type="checkbox" name="option_remise[]"  id="option3" class="optionRemise" data-group="3" data-file="file3" data-value="Administrations et mairies -30%"> Administrations et mairies -30%
+    </label>
+    <div class="upload hidden" id="file3">
+        <input type="file" name="justificatif_admin" accept="application/pdf,image/*">
+    </div>
+
+    <!-- Option 4 -->
+    <label>
+        <input type="checkbox" name="option_remise[]"  id="option4" class="optionRemise" data-group="4" data-file="file4" data-value="Établissements scolaires et associations -50%"> Établissements scolaires et associations -50%
+    </label>
+    <div class="upload hidden" id="file4">
+        <input type="file" name="justificatif_association" accept="application/pdf,image/*">
+    </div>
+
+    <input type="hidden" name="remise_type" id="remise_type">
+
+    <button class="btn-remise" style="font-family:'Raleway';font-weight:700;margin-top:17px;border-style: solid; border-width: 3px 3px 3px 3px; border-radius: 8px 8px 8px 8px; padding: 12px 30px 12px 30px; color: #FFFFFF; background-color: var(--e-global-color-primary); border-color: var(--e-global-color-primary); transition: all 0.2s;width: fit-content;margin: auto; text-transform: unset;" class="button product_type_simple" type="submit" name="submit_demande_remise">Appliquer ma remise</button>
+
+</form>
+</div>
+
+<style>
+    .hidden { display:none !important; }
+    .block-option { margin-bottom: 12px; }
+    label { font-weight: 500; cursor:pointer; }
+</style>
+<script>
+jQuery(document).ready(function($) {
+
+    $('.optionRemise').on('change', function() {
+
+        const $this = $(this);
+        const group = parseInt($this.data('group'));
+
+        // logique de combinaison
+        if (group === 1) {
+            // Option 1 seule → décocher toutes les autres
+            $('.optionRemise').not($this).prop('checked', false);
+        } else if (group === 2) {
+            // Option 2 peut être combinée avec 3 ou 4 → décocher 1
+            $('.optionRemise').each(function() {
+                if (parseInt($(this).data('group')) === 1) $(this).prop('checked', false);
+            });
+        } else if (group === 3) {
+            // décocher 1 et 4
+            $('.optionRemise').each(function() {
+                const g = parseInt($(this).data('group'));
+                if (g === 1 || g === 4) $(this).prop('checked', false);
+            });
+        } else if (group === 4) {
+            // décocher 1 et 3
+            $('.optionRemise').each(function() {
+                const g = parseInt($(this).data('group'));
+                if (g === 1 || g === 3) $(this).prop('checked', false);
+            });
+        }
+
+        // afficher tous les uploads correspondant aux cases cochées
+        $('.upload').addClass('hidden');
+        $('.optionRemise:checked').each(function() {
+            const fileId = $(this).data('file');
+            $('#' + fileId).removeClass('hidden');
+        });
+
+        // reconstruire hidden
+        let values = [];
+        $('.optionRemise:checked').each(function() {
+            values.push($(this).data('value'));
+        });
+        $('#remise_type').val(values.join(', '));
+        console.log("remises courantes",values.length,values.join(', '))
+        if(values.length<1 || $(".single_add_to_cart_button").hasClass("disabled")){
+            console.log("pas de remise")
+            $(".btn-remise").prop("disabled", true);
+        }else{
+            $(".btn-remise").prop("disabled", false);
+        }
+        
+    });
+
+    
+
+    //  désactiver au départ !
+    $(".btn-remise").prop("disabled", true);
+
+});
+</script>
+<style>
+    .btn-remise:disabled {
+    background-color: #999 !important;
+    border-color: #777 !important;
+    cursor: not-allowed;
+    opacity: 0.5;
+	margin-block: 10px !important;
+}
+</style>

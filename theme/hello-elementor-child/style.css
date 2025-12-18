@@ -227,6 +227,9 @@ section.addify-quote-details table.quote_details th, section.addify-quote-detail
 div.af_quote_fields_template_two input[type=text], div.af_quote_fields_template_two input[type=url], div.af_quote_fields_template_two select, div.af_quote_fields_template_two textarea {border-radius: 10px !important;}
 .afrfq-continue-button{background-color:var(--e-global-color-primary) !important;color: var(--e-global-color-1ac87de) !important;}
 body .afrfq-continue-button:hover{ background-color: var(--e-global-color-secondary)!important;border-color: var(--e-global-color-secondary)!important;color: var(--e-global-color-1ac87de) !important;}
+
+.dataTables_wrapper .dataTables_length select {font-family: 'Raleway' !important;}
+
 /**************************************** page devis ******************************************/
 .devis-form .alm-devis-form h2, .alm-revendeur-form h2{font-size:45px !important;}
 .alm-devis-form h2:after, .alm-revendeur-form h2:after{
@@ -717,7 +720,7 @@ button{text-transform: unset !important;}
     border: 1px solid #BDBDBD !important;
     background: #D9D9D9 !important;
     border-radius: 0px;
-    width: /*63px*/ 138px!important;
+    width: 63px/* 138px*/!important;
     height: 29px !important;
     padding: 0px 6px !important;
     margin: 0px !important;
@@ -735,7 +738,7 @@ button{text-transform: unset !important;}
     gap: 0px;
 }
 .woocommerce div.product form.cart .variations td.label{ padding-right: 0em;}
-.duree-annee .variations select option[value=""] {display: none !important;}
+
 .woocommerce div.product span.price ins{
     color: var(--e-global-color-accent);
     font-family: "Raleway", Raleway;
@@ -758,7 +761,7 @@ a.woocommerce-product-gallery__trigger {
 	z-index: 1 !important;
 }
 
-
+.variables-prodct .price:not(:has(del)) .woocommerce-Price-amount{font-size: 84px;}
 /************************************** page contact - forms*******************************************/
 .elementor-form .elementor-field-type-text.elementor-field-group.elementor-column, .elementor-form .elementor-field-type-email.elementor-field-group.elementor-column, .elementor-form .elementor-field-type-textarea.elementor-field-group.elementor-column {
     display: grid;
@@ -769,13 +772,12 @@ a.woocommerce-product-gallery__trigger {
 .woocommerce:where(body:not(.woocommerce-uses-block-theme)) div.product .stock{color: #00bbff !important;}
 
 
-
 /******************************* menu *******************************/
 .categories-row.col-mega-menu2{grid-template-columns: 2fr 1fr !important;}
 .categories-row.col-mega-menu2 .col-categorie.col1:nth-child(2) .row-marques{grid-template-columns: repeat(1, 1fr) !important;}
 .row-marques{margin-top:20px !important;}
 .elementor-widget-theme-site-logo img { width: auto !important;height: auto !important;}
-
+.col-categorie.col1:nth-child(2) .row-marques, .col-categorie.col1:nth-child(3) .row-marques{grid-template-columns: 1fr !important;}
 /****************************************** responsive menu ******************************************/
 @media only screen and (max-width:1380px){
 .menu-li-hdr #mega-menu-wrap-menu-1 #mega-menu-menu-1 > li.mega-menu-item > a.mega-menu-link { padding: 0px 10px !important;}	
@@ -1033,4 +1035,22 @@ span.elementor-field-option {
 div.cart_totals .recurring-total{
     display: none !important;
 }
+/*********************** hover des blocs produits sur tout le site ****************************/
+.related.products .product, .archive .product, .page-id-1329 .product{ transition-duration: .5s; transition-property: border, background, transform; will-change: transform;}
+.related.products .product:hover, .archive .product:hover, .page-id-1329 .product:hover{box-shadow: 0px 0px 11px 0px #C0EBFA !important;transform: translateY(-11px);}
+
+
+
+
+
+.chosen-container-single .chosen-single div b {background: url(chosen-sprite.png) no-repeat 0 4px;}
+
+.woocommerce-MyAccount-navigation-link.woocommerce-MyAccount-navigation-link--tax-exemption a{
+   pointer-events: none;
+}
+.woocommerce-MyAccount-navigation-link.woocommerce-MyAccount-navigation-link--tax-exemption {
+   display: none !important;
+}
+
+
 
