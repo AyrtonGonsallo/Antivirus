@@ -100,10 +100,29 @@ if ( $product->is_in_stock() ) : ?>
 					</span>
 				</del>
 				<ins aria-hidden="true">
-					<span class="woocommerce-Price-amount amount">
+					<span class="woocommerce-Price-amount amount remisable">
 						<bdi><?php echo wc_price( $sale_price ); ?></bdi>
+						<?php 
+							$reduction = (($regular_price - $sale_price) / $regular_price) * 100;
+							// arrondi à l'entier
+							$reduction = round($reduction);
+
+						echo "<span class='reduction-percentage'>- ".$reduction." %</span>"; ?>
 					</span>
 				</ins>
+				<?php
+				 $date = $product->get_date_on_sale_to();
+
+				if ($date) {
+					echo '<p class="promo-end">';
+					echo 'Promotion valable jusqu’au <strong>' . wc_format_datetime($date) . '</strong>';
+					echo '</p>';
+				}
+
+				?>
+				
+				<span class="prix-remise-depart"><?php echo $sale_price;?></span>
+				<span class="prix-remise">prix remisé</span>
 			</span>
 		</div>
 	<?php endif; ?>
@@ -111,10 +130,13 @@ if ( $product->is_in_stock() ) : ?>
 		<div class="woocommerce-variation-price">
 			<span class="price">
 				<ins aria-hidden="true">
-					<span class="woocommerce-Price-amount amount">
+					<span class="woocommerce-Price-amount amount remisable">
 						<bdi><?php echo wc_price( $regular_price ); ?></bdi>
 					</span>
 				</ins>
+
+				<span class="prix-remise-depart"><?php echo $regular_price;?></span>
+				<span class="prix-remise">prix remisé</span>
 			</span>
 		</div>
 	<?php endif; ?>
@@ -258,8 +280,33 @@ jQuery(document).ready(function($) {
         if(values.length<1 || $(".single_add_to_cart_button").hasClass("disabled")){
             console.log("pas de remise")
             $(".btn-remise").prop("disabled", true);
+			$(".prix-remise").hide();
+			$(".remisable bdi").css("text-decoration", "none");
         }else{
             $(".btn-remise").prop("disabled", false);
+			let prixDepart = parseFloat($(".prix-remise-depart").text().replace(',', '.'));
+			let totalPourcentage = 0;
+			values.forEach(v => {
+				const match = v.match(/-([0-9]+)%/);
+				if (match) {
+					totalPourcentage += parseInt(match[1], 10);
+				}
+			});
+			console.log("Pourcentage total :", totalPourcentage + "%");
+
+			// Appliquer la réduction
+			let prixFinal = prixDepart - (prixDepart * totalPourcentage / 100);
+			// Sécurité (pas négatif)
+			prixFinal = Math.max(0, prixFinal);
+			// Arrondi (à l’entier ou 2 décimales selon ton besoin)
+			prixFinal = (prixFinal.toFixed(2)); // ou toFixed(2)
+			// Affichage
+			$(".prix-remise").text(prixFinal+" €");
+			
+
+			$(".remisable bdi").css("text-decoration", "line-through");
+
+			$(".prix-remise").show();
         }
         
     });
@@ -273,10 +320,16 @@ jQuery(document).ready(function($) {
 </script>
 <style>
     .btn-remise:disabled {
-    background-color: #999 !important;
-    border-color: #777 !important;
-    cursor: not-allowed;
-    opacity: 0.5;
-	margin-block: 10px !important;
-}
+		background-color: #999 !important;
+		border-color: #777 !important;
+		cursor: not-allowed;
+		opacity: 0.5;
+		margin-block: 10px !important;
+	}
+	.prix-remise-depart{
+		display:none;
+	}
+	.prix-remise{
+		display:none;
+	}
 </style>

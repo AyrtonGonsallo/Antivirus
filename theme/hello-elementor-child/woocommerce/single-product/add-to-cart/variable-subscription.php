@@ -77,6 +77,7 @@ do_action( 'woocommerce_before_add_to_cart_form' ); ?>
 					</tbody>
 				</table>
 			</div>
+			
 			<?php
 			/**
 			 * Post WC 3.4 the woocommerce_before_add_to_cart_button hook is triggered by the callback @see woocommerce_single_variation_add_to_cart_button() hooked onto woocommerce_single_variation.

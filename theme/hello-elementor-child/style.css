@@ -155,7 +155,7 @@ li.active-result.highlighted:hover, li.active-result.result-selected.highlighted
 
 /********************************************************************************************************************************/
 /* .woocommerce div.product, .col-product, .sec-produit .e-con-inner {overflow: visible !important;} */
-.woocommerce div.product{overflow: visible !important;padding-top: 107px!important;}
+.woocommerce div.product{overflow: visible !important;padding-top: 35px!important;}
 .sec-produit .swiper.elementor-loop-container.elementor-grid.swiper-initialized.swiper-horizontal.swiper-android {padding-inline: 13px !important;}
 .sec-produit p.price {
 	display: flex;
@@ -294,6 +294,10 @@ button.cr-all-reviews-add-review{font-family: 'Raleway';font-weight: 600; margin
 a.cr-review-form-continue{font-family: 'Raleway';font-weight: 600; margin-bottom: 10px !important; border-radius: 7px 7px 7px 7px !important;}
 a.cr-review-form-continue:hover{background-color: #00bbff !important;}
 /******************************* page single product ************************************/
+.variables-prodct ins { text-decoration: none !important;}
+.variables-prodct .woocommerce-Price-amount.amount.remisable .reduction-percentage{font-size: 0.4em !important;}
+.variables-prodct .prix-remise {color: #000000 !important;}
+.variables-prodct p.promo-end {font-size: 0.8em !important;margin-top: 15px!important;color:#000 !important;}
 body .single-product .quantity .qty {min-height: 51px !important;}
 ins { text-decoration: none !important;}
 .single-product .col-dtls-product .prod-shop ins bdi{font-size: 76px !important;}
@@ -1052,5 +1056,21 @@ div.cart_totals .recurring-total{
    display: none !important;
 }
 
-
-
+.reduction-percentage {
+    font-size: 50px;
+    font-weight: bold;
+    color: #00a800;
+}
+.variation-reduction-percentage {
+    font-size: 50px;
+    font-weight: bold;
+    color: #00a800;
+}
+.prix-remise{
+    color: #958e09;
+    font-size: 1.25em;
+    font-family: "Raleway", Raleway;
+    font-size: 84px;
+    font-weight: 800 !important;
+    line-height: 1.2;
+}

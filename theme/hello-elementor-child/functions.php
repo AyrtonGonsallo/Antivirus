@@ -267,6 +267,7 @@ function shortcode_upsell_produit() {
                     foreach ($upsell_ids as $id):
 
                         $p = wc_get_product($id);
+                        
                         if (!$p) continue;
 
                         // --- SI PRODUIT VARIABLE : récupérer ses variations enfants ---
@@ -297,7 +298,7 @@ function shortcode_upsell_produit() {
                         }
 
                         // --- SI PRODUIT FILS DIRECT ---
-                        if ($p->is_type('variation')) {
+                        if ($p->is_type('variation') || $p->is_type('subscription')) {
                             global $product;
                             $product = $p;
                             ?>
@@ -402,7 +403,7 @@ function shortcode_cross_sell() {
                     }
 
                     // 2) SI PRODUIT FILS DIRECT → l’afficher
-                    if ($p->is_type('variation')) {
+                    if ($p->is_type('variation') || $p->is_type('subscription')) {
                         global $product;
                         $product = $p;
                         ?>
@@ -730,3 +731,45 @@ add_action('init', function () {
 });
 */
 
+
+
+add_filter('woocommerce_available_variation', function ($variation_data, $product, $variation) {
+
+  
+
+  if ($variation->is_on_sale()) {
+
+    $regular = (float) $variation->get_regular_price();
+    $sale    = (float) $variation->get_sale_price();
+
+    if ($regular > 0 && $sale > 0 && $sale < $regular) {
+        $percent = round((($regular - $sale) / $regular) * 100);
+
+        
+
+      $variation_data['discount_percent'] =  "<span class='variation-reduction-percentage'>- ".$percent." %</span>"; 
+    }
+
+    $date = $variation->get_date_on_sale_to();
+
+    if ($date) {
+
+        $res_string = '<p class="promo-end">';
+        $res_string .= 'Promotion valable jusqu’au <strong>' . wc_format_datetime($date) . '</strong>';
+        $res_string .= '</p>';
+
+        $variation_data['sale_end_date'] = $res_string;
+    } else {
+        $variation_data['sale_end_date'] = '';
+    }
+
+    $variation_data['prix_remise_depart'] = $sale;
+
+  }else{
+    $regular = (float) $variation->get_regular_price();
+    $variation_data['prix_remise_depart'] = $regular;
+  }
+
+  return $variation_data;
+
+}, 10, 3);
