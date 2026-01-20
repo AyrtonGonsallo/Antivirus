@@ -280,6 +280,7 @@ class ALM_Revendeur {
                                 <input  type="text" title="Dénomination sociale" alt="text" name="new_revendeur_account_societe" size="40" value="" >
                             </div>
                             <div>
+                                
                             <label>Genre : <span class="required">*</span></label>
                             <select title="Genre" id="genre" class="input_required" name="new_revendeur_account_genre"  alt="Genre">
                                 <option value="m" alt="Genre">Monsieur</option>
@@ -298,6 +299,10 @@ class ALM_Revendeur {
                             <label>Prénom : <span class="required">*</span></label>
                             <input class="input_required" type="text" title="prenom" alt="text" name="new_revendeur_account_prenom" size="30" maxlength="50" value="" >
                             </div>
+                            <div>
+                            <label>Numéro de SIRET : <span class="required">*</span></label>
+                            <input class="input_required" type="text" title="SIRET" alt="text" name="new_revendeur_account_siret" size="30" maxlength="50" value="" >
+                        </div>
                             <div>
                             <label>Téléphone : <span class="required">*</span></label>
                             <input class="input_required" type="text" title="telephone" alt="text" name="new_revendeur_account_telephone" maxlength="20" size="30" value="" >

@@ -75,6 +75,7 @@ function create_faq_post_type() {
         'capability_type'    => 'post',
         'has_archive'        => true,
         'hierarchical'       => false,
+        'posts_per_page' => 21,
         'menu_position'      => 5,
         'menu_icon'          => 'dashicons-editor-help',
         'supports'           => array('title', 'editor', 'excerpt', 'thumbnail'),
@@ -486,16 +487,16 @@ function shortcode_menu_entreprise($atts) {
     ?>
     <div class="menu-entreprise-wrapper">
         <div class="categories-row <?php echo $class_col_mega_menu;?>" style="display:grid;grid-template-columns: 1.5fr 1fr 1fr; gap:15px;">
-            <?php foreach ($product_cats as $cat): //pour chaque categorie du shortcode
-                ?> 
+            <?php foreach ($product_cats as $cat): // pour chaque catégorie du shortcode ?> 
 
-                <?php //je prends les produits avec ce champ afficher_dans_le_menu coché a vrai et de type abonnement variable
+                <?php
+                // 1️⃣ Récupération des produits affichés dans le menu
                 $products = wc_get_products([
-                    'limit'    => -1,
-                    'status'   => 'publish',
-                    'category' => [$cat->slug],
-                    'return'   => 'ids',
-                    'type' => array( 'variable-subscription','subscription',),
+                    'limit'      => -1,
+                    'status'     => 'publish',
+                    'category'   => [$cat->slug],
+                    'return'     => 'ids',
+                    'type'       => ['variable-subscription','subscription'],
                     'meta_query' => [
                         [
                             'key'     => 'afficher_dans_le_menu',
@@ -504,100 +505,133 @@ function shortcode_menu_entreprise($atts) {
                         ]
                     ]
                 ]);
+
                 if (empty($products)) continue;
 
-                // Regrouper par marque
-                $marques = []; 
+                // 2️⃣ Regroupement par marque + récupération du champ ACF ordre
+                $marques = [];
+
                 foreach ($products as $pid) {
+
+                    $ordre = get_field('ordre', $pid);
+                    $ordre = ($ordre !== '' && $ordre !== null) ? (int)$ordre : 9999;
+
                     $terms = wp_get_post_terms($pid, 'product_brand');
+
                     if (!empty($terms)) {
                         foreach ($terms as $t) {
-                            $marques[$t->name][] = $pid;
+                            $marques[$t->name][] = [
+                                'id'    => $pid,
+                                'ordre' => $ordre
+                            ];
                         }
                     } else {
-                        $marques['Sans marque'][] = $pid;
+                        $marques['Sans marque'][] = [
+                            'id'    => $pid,
+                            'ordre' => $ordre
+                        ];
                     }
                 }
-                ksort($marques, SORT_NATURAL | SORT_FLAG_CASE); //je les tri
 
+                // 3️⃣ Tri alphabétique des marques
+                ksort($marques, SORT_NATURAL | SORT_FLAG_CASE);
+
+                // 4️⃣ Tri des produits par champ ACF "ordre" dans chaque marque
+                foreach ($marques as &$liste_produits) {
+                    usort($liste_produits, function ($a, $b) {
+                        return $a['ordre'] <=> $b['ordre'];
+                    });
+                }
+                unset($liste_produits);
                 ?>
-                
-                    <div class="col-categorie col1" style="margin-bottom:30px;">
-                        <span style="color:#ff7700;font-family: 'Raleway'; font-weight: 800; font-size: 18px;text-transform:uppercase">
-                            <a href="<?php echo get_category_link($cat->term_id); ?>" style="color:#ff7700;font-family: 'Raleway'; font-weight: 800; font-size: 17px;text-transform:uppercase"> 
-                                <?php echo $cat->name; ?>
-                            </a>
-                        </span>
 
-                        <div class="row-marques" style="display:grid;grid-template-columns: repeat(2, 1fr); gap:20px;">
-                            
-                            <?php foreach ($marques as $marque => $liste_produits): 
-                                $term = get_term_by('name', $marque, 'product_brand');
-                                $marque_link = $term ? get_term_link($term) : '#';
-                            ?>
-                                <div class="col-marque">
-                                    <?php if($cat->slug!="antivirus-pour-android"){?>
-                                        <a href="<?php echo esc_url($marque_link); ?>" style="text-decoration:none;color:#000;font-family: 'Raleway'; font-weight: 800; font-size: 17px;">
-                                            <?php echo $marque; ?>
-                                        </a>
-                                    <?php }?>
-                                    <?php foreach ($liste_produits as $pid): 
-                                        $parent_product = wc_get_product($pid); //je cherche les fils
+                <div class="col-categorie col1" style="margin-bottom:30px;">
+                    <span style="color:#ff7700;font-family:'Raleway';font-weight:800;font-size:18px;text-transform:uppercase">
+                        <a href="<?php echo get_category_link($cat->term_id); ?>"
+                        style="color:#ff7700;font-family:'Raleway';font-weight:800;font-size:17px;text-transform:uppercase">
+                            <?php echo $cat->name; ?>
+                        </a>
+                    </span>
+
+                    <div class="row-marques" style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px;">
+
+                        <?php foreach ($marques as $marque => $liste_produits): 
+                            $term = get_term_by('name', $marque, 'product_brand');
+                            $marque_link = $term ? get_term_link($term) : '#';
+                        ?>
+                            <div class="col-marque">
+
+                                <?php if ($cat->slug !== "antivirus-pour-android"): ?>
+                                    <a href="<?php echo esc_url($marque_link); ?>"
+                                    style="text-decoration:none;color:#000;font-family:'Raleway';font-weight:800;font-size:17px;">
+                                        <?php echo esc_html($marque); ?>
+                                    </a>
+                                <?php endif; ?>
+
+                                <?php foreach ($liste_produits as $item): 
+                                    $pid = $item['id'];
+                                    $parent_product = wc_get_product($pid);
+                                    if (!$parent_product) continue;
+                                ?>
+
+                                    <?php if ($parent_product->is_type('variable-subscription')): ?>
+
+                                        <?php
+                                        $available_variations = array_slice(
+                                            $parent_product->get_available_variations(),
+                                            0,
+                                            1
+                                        );
                                         ?>
-                                        <?php if ( $parent_product && $parent_product->is_type( 'variable-subscription' ) ) : 
-                                            // type variable-subscription
 
-                                        
-                    
-                                            //$available_variations = $parent_product->get_available_variations();
-                                            $available_variations = array_slice(
-                                                $parent_product->get_available_variations(),
-                                                0,
-                                                1 // limiter à 3 variations
-                                            );
+                                        <?php foreach ($available_variations as $value): 
+                                            $variation_id = $value['variation_id'];
+                                            $variation = wc_get_product($variation_id);
+                                            if (!$variation) continue;
                                         ?>
-                                            <?php foreach ($available_variations as $key => $value): 
-                                                $variation_id = $value['variation_id']; // <-- Correct
-                                                $variation = wc_get_product($variation_id);
-                                            ?>
-                                                <div class="produit-item" style="margin-bottom:5px;">
-                                                    <a href="<?php echo get_permalink($variation_id); ?>" class="link-mega-menu" style="text-decoration:none;color:#000;">
-                                                        <?php if($cat->slug!="antivirus-pour-android"){?>
-                                                            <?php echo $variation->get_name(); ?>
-                                                        <?php }else{?>
-                                                            <span style="font-family: 'Raleway'; font-weight: 800; font-size: 17px;"><?php echo $variation->get_name(); ?></span>
-                                                        <?php }?>
-                                                    </a>
-                                                </div>
-                                            <?php endforeach; ?>
-                                        <?php endif; ?>
-
-                                        <?php if ( $parent_product && $parent_product->is_type( 'subscription' ) ) : 
-                                            // type subscription c'est pas un parent il a les donnees
-
-                                        ?>
-                                            
                                             <div class="produit-item" style="margin-bottom:5px;">
-                                                <a href="<?php echo get_permalink($parent_product->get_id()); ?>" class="link-mega-menu" style="text-decoration:none;color:#000;">
-                                                    <?php if($cat->slug!="antivirus-pour-android"){?>
-                                                        <?php echo $parent_product->get_name(); ?>
-                                                    <?php }else{?>
-                                                        <span style="font-family: 'Raleway'; font-weight: 800; font-size: 17px;"><?php echo $parent_product->get_name(); ?></span>
-                                                    <?php }?>
+                                                <a href="<?php echo get_permalink($variation_id); ?>"
+                                                class="link-mega-menu"
+                                                style="text-decoration:none;color:#000;">
+                                                    <?php if ($cat->slug !== "antivirus-pour-android"): ?>
+                                                        <?php echo ($variation->get_name()); ?>
+                                                    <?php else: ?>
+                                                        <span style="font-family:'Raleway';font-weight:800;font-size:17px;">
+                                                            <?php echo ($variation->get_name()); ?>
+                                                        </span>
+                                                    <?php endif; ?>
                                                 </a>
                                             </div>
-                                            
-                                        <?php endif; ?>
+                                        <?php endforeach; ?>
 
-                                    <?php endforeach; ?>
+                                    <?php elseif ($parent_product->is_type('subscription')): ?>
 
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
+                                        <div class="produit-item" style="margin-bottom:5px;">
+                                            <a href="<?php echo get_permalink($parent_product->get_id()); ?>"
+                                            class="link-mega-menu"
+                                            style="text-decoration:none;color:#000;">
+                                                <?php if ($cat->slug !== "antivirus-pour-android"): ?>
+                                                    <?php echo esc_html($parent_product->get_name()); ?>
+                                                <?php else: ?>
+                                                    <span style="font-family:'Raleway';font-weight:800;font-size:17px;">
+                                                        <?php echo esc_html($parent_product->get_name()); ?>
+                                                    </span>
+                                                <?php endif; ?>
+                                            </a>
+                                        </div>
+
+                                    <?php endif; ?>
+
+                                <?php endforeach; ?>
+
+                            </div>
+                        <?php endforeach; ?>
+
                     </div>
-                
+                </div>
 
             <?php endforeach; ?>
+
         </div>
     </div>
     <?php
@@ -773,3 +807,87 @@ add_filter('woocommerce_available_variation', function ($variation_data, $produc
   return $variation_data;
 
 }, 10, 3);
+
+
+add_action('wp_enqueue_scripts', function () {
+    wp_enqueue_script(
+        'faq-load-more',
+        get_stylesheet_directory_uri() . '/js/faq.js',
+        ['jquery'],
+        null,
+        true
+    );
+
+    wp_localize_script('faq-load-more', 'faqAjax', [
+        'ajaxurl' => admin_url('admin-ajax.php')
+    ]);
+});
+
+add_action('wp_ajax_faq_load_more', 'faq_load_more');
+add_action('wp_ajax_nopriv_faq_load_more', 'faq_load_more');
+
+function faq_load_more() {
+    $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+    $keyword = isset($_POST['keyword']) ? sanitize_text_field($_POST['keyword']) : '';
+
+    $args = [
+        'post_type' => 'faq',
+        'posts_per_page' => 21, // nombre par bloc
+        'paged' => $page,
+        'orderby'        => 'title',   // ✅
+        'order'          => 'ASC', 
+    ];
+
+    if($keyword) $args['s'] = $keyword;
+
+    $query = new WP_Query($args);
+
+    if($query->have_posts()):
+        while($query->have_posts()): $query->the_post(); ?>
+           <article class="faq-item">
+                <h4><?php the_title(); ?></h4>
+                <a class="" href="<?php the_permalink();?>">
+                    <span class="">En savoir plus</span>
+                    
+                </a>
+            </article>
+            <?php endwhile;
+    endif;
+
+    wp_reset_postdata();
+    wp_die();
+}
+
+
+add_action('wp_ajax_faq_search', 'faq_search');
+add_action('wp_ajax_nopriv_faq_search', 'faq_search');
+
+function faq_search() {
+    $keyword = isset($_POST['keyword']) ? sanitize_text_field($_POST['keyword']) : '';
+
+    if(!$keyword) wp_die(''); // sécurité
+
+    $query = new WP_Query([
+        'post_type'      => 'faq',
+        'posts_per_page' => -1, // toutes les correspondances
+        's'              => $keyword, // recherche WP standard
+        'orderby'        => 'title',   // ✅
+        'order'          => 'ASC', 
+    ]);
+
+    if($query->have_posts()) :
+        while($query->have_posts()): $query->the_post(); ?>
+           <article class="faq-item">
+                <h4><?php the_title(); ?></h4>
+                <a class="" href="<?php the_permalink();?>">
+                    <span class="">En savoir plus</span>
+                    
+                </a>
+            </article>
+        <?php endwhile;
+    else:
+        echo '<p>Aucune question trouvée pour "<strong>'.esc_html($keyword).'</strong>"</p>';
+    endif;
+
+    wp_die();
+}
