@@ -145,6 +145,9 @@ class ALM_Gestion_De_Comptes {
         if ($source === "WordPress Core") {
             $args = $this->override_mails($args);
         }
+        $subject = utf8_decode($args['subject']);
+
+
 
         // 📄 Log
         $log_entry = sprintf(
@@ -152,7 +155,7 @@ class ALM_Gestion_De_Comptes {
             date('Y-m-d H:i:s'),
             $source,
             is_array($args['to']) ? implode(',', $args['to']) : $args['to'],
-            $args['subject']
+            $subject 
         );
 
         error_log($log_entry, 3, WP_CONTENT_DIR . '/email-log.txt');

@@ -1033,6 +1033,9 @@ span.subscription-details {
 	text-align: left;
 }
 span.subscription-details .woocommerce-Price-currencySymbol{font-size: 15px!important;}
+.woocommerce-cart-form__cart-item.cart_item span.subscription-details {
+	display: none;
+}
 .subscription-details .woocommerce-Price-amount {display: inline !important; font-weight: 800 !important;}
 span.elementor-field-option {
     display: flex;
@@ -1212,13 +1215,12 @@ div.cart_totals .recurring-total{
 }
 
 /* styles faq */
-
-.archive-faq {
-    max-width: 1200px;
-    margin: auto;
-    padding: 40px 20px;
+.faq-search-result-container {
+    margin-block: 4%;
+    max-width: 100%;
+    width: 73%;
+    margin-inline: auto;
 }
-
 .faq-item h4{
     font-family: "Raleway", Raleway;
     font-size: 23px;
@@ -1258,10 +1260,6 @@ div.cart_totals .recurring-total{
 .faq-item a:hover span {
     color: white
 }
-.faq-search-result-container{
-    margin: 50px 0 50px 0;
-}
-
 .faq-search-wrapper {
     display: flex;
     justify-content: center;
