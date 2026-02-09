@@ -280,6 +280,10 @@ class ALM_Revendeur {
                                 <input  type="text" title="Dénomination sociale" alt="text" name="new_revendeur_account_societe" size="40" value="" >
                             </div>
                             <div>
+                                <label>Numéro de SIRET : <span class="required">*</span></label>
+                                <input class="input_required" type="text" title="SIRET" alt="text" name="new_revendeur_account_siret" size="30" maxlength="50" value="" >
+                            </div>
+                            <div>
                                 
                             <label>Genre : <span class="required">*</span></label>
                             <select title="Genre" id="genre" class="input_required" name="new_revendeur_account_genre"  alt="Genre">
@@ -299,10 +303,7 @@ class ALM_Revendeur {
                             <label>Prénom : <span class="required">*</span></label>
                             <input class="input_required" type="text" title="prenom" alt="text" name="new_revendeur_account_prenom" size="30" maxlength="50" value="" >
                             </div>
-                            <div>
-                            <label>Numéro de SIRET : <span class="required">*</span></label>
-                            <input class="input_required" type="text" title="SIRET" alt="text" name="new_revendeur_account_siret" size="30" maxlength="50" value="" >
-                        </div>
+                            
                             <div>
                             <label>Téléphone : <span class="required">*</span></label>
                             <input class="input_required" type="text" title="telephone" alt="text" name="new_revendeur_account_telephone" maxlength="20" size="30" value="" >
@@ -323,7 +324,7 @@ class ALM_Revendeur {
                             <label>Pays : <span class="required">*</span></label>
                             <select name="new_revendeur_account_pays" id="pays" required class="">
                                 <?php foreach ( $pays_liste as $code => $nom ) : ?>
-                                    <option value="<?php echo esc_attr($code); ?>" >
+                                    <option value="<?php echo esc_attr($code); ?>" <?php selected($code, 'FR'); ?>>
                                         <?php echo esc_html($nom); ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -660,7 +661,9 @@ class ALM_Revendeur {
 
     function alm_handle_revendeur_form() {
         if ( $_SERVER['REQUEST_METHOD'] !== 'POST' ) return;
-        if ( $_POST['goal'] !== 'devenir_revendeur' ) return;
+        if ( isset($_POST['goal'])   )
+            if ( $_POST['goal'] !== 'devenir_revendeur' ) return;
+        if ( !isset($_POST['goal'])   ) return;
         
         /*
 
@@ -708,6 +711,7 @@ class ALM_Revendeur {
         $new_revendeur_account_nom = sanitize_text_field($_POST['new_revendeur_account_nom'] ?? '');
         $new_revendeur_account_prenom = sanitize_text_field($_POST['new_revendeur_account_prenom'] ?? '');
         $new_revendeur_account_societe = sanitize_text_field($_POST['new_revendeur_account_societe'] ?? '');
+        $new_revendeur_account_siret = sanitize_text_field($_POST['new_revendeur_account_siret'] ?? '');
         $new_revendeur_account_genre = sanitize_text_field($_POST['new_revendeur_account_genre'] ?? '');
         $new_revendeur_account_telephone = sanitize_text_field($_POST['new_revendeur_account_telephone'] ?? '');
         $new_revendeur_account_adresse = sanitize_text_field($_POST['new_revendeur_account_adresse'] ?? '');
@@ -752,7 +756,8 @@ class ALM_Revendeur {
                 update_field('account_nom', $new_revendeur_account_nom, $demande_id);
                 update_field('account_prenom', $new_revendeur_account_prenom, $demande_id);
                 update_field('account_societe', $new_revendeur_account_societe, $demande_id);
-                update_field('account_genre', $new_revendeur_account_genre, $demande_id);
+                update_field('account_societe', $new_revendeur_account_siret, $demande_id);
+                update_field('account_siret', $new_revendeur_account_genre, $demande_id);
                 update_field('account_telephone', $new_revendeur_account_telephone, $demande_id);
                 update_field('account_adresse', $new_revendeur_account_adresse, $demande_id);
                 update_field('status', 'en_attente', $demande_id);

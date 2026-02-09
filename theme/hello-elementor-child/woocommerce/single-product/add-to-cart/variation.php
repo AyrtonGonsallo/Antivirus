@@ -18,11 +18,26 @@ defined( 'ABSPATH' ) || exit;
 	
 	<div class="woocommerce-variation-description">{{{ data.variation.variation_description }}}</div>
 	<div class="prix-remise-variable-subs">
-		<div class="woocommerce-variation-price remisable">{{{ data.variation.price_html }}}</div>
+		<div class="woocommerce-variation-price remisable {{{ data.variation.class_remise_revendeur }}}">{{{ data.variation.price_html }}}</div>
 		<div class="woocommerce-variation-percent">{{{ data.variation.discount_percent }}}</div>
 	</div>
 	<div class="woocommerce-variation-availability">{{{ data.variation.availability_html }}}</div>
 	<div class="woocommerce-variation-my-custom-data">{{{ data.variation.sale_end_date }}}</div>
+	
+	
+	<span class="variation-reduction-percentage has-remise-revendeur {{{ data.variation.class_hide_remise_revendeur }}}">{{{ data.variation.remise_revendeur_txt }}}</span>
+	<span class="prix-remise-revendeur {{{ data.variation.class_hide_remise_revendeur }}}">
+		<div class="woocommerce-variation-price remisable ">
+			<span class="price">
+				<span class="woocommerce-Price-amount amount">
+					<bdi>{{{ data.variation.prix_remise_revendeur }}}&nbsp;
+						<span class="woocommerce-Price-currencySymbol">€</span>
+					</bdi>
+				</span> 
+			</span>
+		</div>
+	</span>
+
 	<span class="prix-remise-depart">{{{ data.variation.prix_remise_depart }}}</span>
 	<span class="prix-remise">prix remisé</span>
 

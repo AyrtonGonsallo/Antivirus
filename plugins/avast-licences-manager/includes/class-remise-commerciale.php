@@ -17,6 +17,11 @@ class ALM_Remise_Commerciale {
         
     }
 
+
+    
+
+   
+
     /**
      * Sauvegarde des champs quand l'utilisateur soumet le formulaire
      */

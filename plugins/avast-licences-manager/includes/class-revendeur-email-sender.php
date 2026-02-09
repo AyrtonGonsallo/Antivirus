@@ -58,6 +58,26 @@ class RevendeurEmailSender {
 
         }
 
+        // 1️⃣ Créer la remise CPT
+        $remise_id = wp_insert_post([
+            'post_type'   => 'remise',
+            'post_title'  => "Demande de remise : revendeur - Utilisateur $user_id",
+            'post_status' => 'publish',
+            'post_author' => $user_id,
+        ]);
+
+       
+
+        // 2️⃣ Champs ACF
+        update_field('utilisateur', $user_id, $remise_id);
+        update_field('compte', [$user_id], $remise_id);
+        update_field('statut', 'validee', $remise_id);
+        update_field('type', 'revendeur - 25 %', $remise_id);
+        update_field('pourcentage', 25, $remise_id);
+        update_field('date_de_creation', current_time('d/m/Y g:i a'), $remise_id);
+        $expiration = date('Y-m-d H:i:s', strtotime('+1 year'));
+        update_field('date_dexpiration', $expiration, $remise_id);
+
 
         $lien_auto_connect_compte = site_url('/mon-compte/');
         $lien_blog = site_url('/blog/');
@@ -135,6 +155,7 @@ class RevendeurEmailSender {
         $headers = array(
             'Content-Type: text/html; charset=UTF-8'
         );
+        
 
 
         // 4️⃣ Envoyer avec wp_mail et pièce jointe

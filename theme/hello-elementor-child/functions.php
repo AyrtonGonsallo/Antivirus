@@ -765,44 +765,92 @@ add_action('init', function () {
 });
 */
 
+function get_revendeur_remise($user_id) {
+    $today = current_time('Y-m-d H:i:s');
 
+    $args = [
+        'post_type'      => 'remise',
+        'post_status'    => 'publish',
+        'posts_per_page' => 1,
+        'meta_query'     => [
+            [
+                'key'   => 'utilisateur',
+                'value' => $user_id,
+            ],
+            [
+                'key'   => 'statut',
+                'value' => 'validee',
+            ],
+            [
+                'key'   => 'type',
+                'value' => 'revendeur - 25 %',
+            ],
+            [
+                'key'     => 'date_dexpiration',
+                'value'   => $today,
+                'compare' => '>=',
+                'type'    => 'DATETIME',
+            ],
+        ],
+    ];
+
+    $posts = get_posts($args);
+    return $posts[0] ?? null;
+}
 
 add_filter('woocommerce_available_variation', function ($variation_data, $product, $variation) {
 
-  
+    $user_id = get_current_user_id();
+    $bloquer_remise_revendeur = get_field('bloquer_remise_revendeur', $product->get_id());       // true / false
+    $bloquer_remise_commerciale = get_field('bloquer_remise_commerciale', $product->get_id());
 
-  if ($variation->is_on_sale()) {
+    if ($variation->is_on_sale()) {
 
-    $regular = (float) $variation->get_regular_price();
-    $sale    = (float) $variation->get_sale_price();
+        $regular = (float) $variation->get_regular_price();
+        $sale    = (float) $variation->get_sale_price();
 
-    if ($regular > 0 && $sale > 0 && $sale < $regular) {
-        $percent = round((($regular - $sale) / $regular) * 100);
+        if ($regular > 0 && $sale > 0 && $sale < $regular) {
+            $percent = round((($regular - $sale) / $regular) * 100);
 
-        
+            
 
-      $variation_data['discount_percent'] =  "<span class='variation-reduction-percentage'>- ".$percent." %</span>"; 
+        $variation_data['discount_percent'] =  "<span class='variation-reduction-percentage'>- ".$percent." %</span>"; 
+        }
+
+        $date = $variation->get_date_on_sale_to();
+
+        if ($date) {
+
+            $res_string = '<p class="promo-end">';
+            $res_string .= 'Promotion valable jusqu’au <strong>' . wc_format_datetime($date) . '</strong>';
+            $res_string .= '</p>';
+
+            $variation_data['sale_end_date'] = $res_string;
+        } else {
+            $variation_data['sale_end_date'] = '';
+        }
+
+        $variation_data['prix_remise_depart'] = $sale;
+
+    }else{
+        $regular = (float) $variation->get_regular_price();
+        $variation_data['prix_remise_depart'] = $regular;
     }
+    $remise = get_revendeur_remise($user_id);
+    if (!empty($remise) && !$bloquer_remise_revendeur){
+        $percent = (float) get_field('pourcentage', $remise->ID);
 
-    $date = $variation->get_date_on_sale_to();
+        $variation_data['class_remise_revendeur'] = "has-remise-revendeur";
+        $variation_data['pourcentage_remise_revendeur'] = $percent;
+        $variation_data['remise_revendeur_txt'] = "Remise revendeur - ".$percent." %";
+        $prix_base = $variation->is_on_sale() ? $sale : $regular;
+        $prix_remise_revendeur = $prix_base - ($prix_base * $percent / 100);
+        $variation_data['prix_remise_revendeur'] = round($prix_remise_revendeur, 2);
+        $variation_data['prix_remise_depart'] = $prix_remise_revendeur;
 
-    if ($date) {
-
-        $res_string = '<p class="promo-end">';
-        $res_string .= 'Promotion valable jusqu’au <strong>' . wc_format_datetime($date) . '</strong>';
-        $res_string .= '</p>';
-
-        $variation_data['sale_end_date'] = $res_string;
-    } else {
-        $variation_data['sale_end_date'] = '';
+    }else{
+        $variation_data['class_hide_remise_revendeur'] = 'hide_remise_revendeur';
     }
-
-    $variation_data['prix_remise_depart'] = $sale;
-
-  }else{
-    $regular = (float) $variation->get_regular_price();
-    $variation_data['prix_remise_depart'] = $regular;
-  }
 
   return $variation_data;
 
@@ -891,3 +939,4 @@ function faq_search() {
 
     wp_die();
 }
+

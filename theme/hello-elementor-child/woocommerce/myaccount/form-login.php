@@ -171,7 +171,7 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 				
 				<select name="pays" id="pays" required class="woocommerce-Input woocommerce-Input--text input-text">
 					<?php foreach ( $pays_liste as $code => $nom ) : ?>
-						<option value="<?php echo esc_attr($code); ?>" >
+						<option value="<?php echo esc_attr($code); ?>" <?php selected($code, 'FR'); ?>>
 							<?php echo esc_html($nom); ?>
 						</option>
 					<?php endforeach; ?>

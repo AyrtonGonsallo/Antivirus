@@ -15,7 +15,17 @@ if ( ! $product->is_purchasable() && ( ! is_user_logged_in() || 'no' === wcs_get
 	return;
 }
 
+
+
 $user_id = get_current_user_id();
+$bloquer_remise_revendeur = get_field('bloquer_remise_revendeur', $product->get_id());       // true / false
+$bloquer_remise_commerciale = get_field('bloquer_remise_commerciale', $product->get_id());
+
+$remise = get_revendeur_remise($user_id);
+
+
+
+
 
 echo wp_kses_post( wc_get_stock_html( $product ) );
 
@@ -24,6 +34,21 @@ $sale_price    = $product->get_sale_price();
 $current_price = $product->get_price();
 $product_id   = $product->get_id();
 $product_type = get_field('type', $product_id);
+
+if (!empty($remise) && !$bloquer_remise_revendeur){
+	$percent = (float) get_field('pourcentage', $remise->ID);
+
+	$class_remise_revendeur = "has-remise-revendeur";
+	$pourcentage_remise_revendeur = $percent;
+	$remise_revendeur_txt = "Remise revendeur - ".$percent." %";
+	$prix_base = $product->is_on_sale() ? $sale_price : $regular_price;
+	$prix_remise_revendeur = $prix_base - ($prix_base * $percent / 100);
+	$prix_remise_revendeur = round($prix_remise_revendeur, 2);
+	$prix_remise_depart = $prix_remise_revendeur;
+
+}else{
+	$class_hide_remise_revendeur = 'hide_remise_revendeur';
+}
 
 // Champs ACF
 $show_pcs     = get_field('afficher_selecteur_pcs', $product_id);
@@ -100,7 +125,7 @@ if ( $product->is_in_stock() ) : ?>
 					</span>
 				</del>
 				<ins aria-hidden="true">
-					<span class="woocommerce-Price-amount amount remisable">
+					<span class="woocommerce-Price-amount amount remisable  <?php echo $class_remise_revendeur;?>">
 						<bdi><?php echo wc_price( $sale_price ); ?></bdi>
 						<?php 
 							$reduction = (($regular_price - $sale_price) / $regular_price) * 100;
@@ -119,26 +144,55 @@ if ( $product->is_in_stock() ) : ?>
 					echo '</p>';
 				}
 
+				echo '<span class="variation-reduction-percentage has-remise-revendeur <?php echo $class_hide_remise_revendeur;?>">';
+				echo $remise_revendeur_txt;
+				echo '</span>';
+
 				?>
+
+				<ins aria-hidden="true" class="<?php echo $class_hide_remise_revendeur;?>">
+					<span class="woocommerce-Price-amount amount remisable ">
+						<bdi><?php echo wc_price( $prix_remise_revendeur ); ?></bdi>
+					</span>
+				</ins>
 				
-				<span class="prix-remise-depart"><?php echo $sale_price;?></span>
+				<span class="prix-remise-depart"><?php echo $prix_remise_revendeur;?></span>
 				<span class="prix-remise">prix remisé</span>
+
+				
 			</span>
 		</div>
 	<?php endif; ?>
 	<?php if ( $regular_price > 0 && ( ! $sale_price || $sale_price >= $regular_price ) ) : ?>
-		<div class="woocommerce-variation-price">
+		<div class="woocommerce-variation-price ">
 			<span class="price">
 				<ins aria-hidden="true">
-					<span class="woocommerce-Price-amount amount remisable">
+					<span class="woocommerce-Price-amount amount remisable <?php echo $class_remise_revendeur;?>">
 						<bdi><?php echo wc_price( $regular_price ); ?></bdi>
 					</span>
 				</ins>
 
-				<span class="prix-remise-depart"><?php echo $regular_price;?></span>
+				
+			</span>
+		</div>
+
+		<span class="variation-reduction-percentage has-remise-revendeur <?php echo $class_hide_remise_revendeur;?>">
+			<?php echo $remise_revendeur_txt;?>
+		</span>
+
+		<div class="woocommerce-variation-price ">
+			<span class="price">
+				<ins aria-hidden="true" class="<?php echo $class_hide_remise_revendeur;?>" >
+					<span class="woocommerce-Price-amount amount remisable ">
+						<bdi><?php echo wc_price( $prix_remise_revendeur ); ?></bdi>
+					</span>
+				</ins>
+
+				<span class="prix-remise-depart"><?php echo $prix_remise_revendeur;?></span>
 				<span class="prix-remise">prix remisé</span>
 			</span>
 		</div>
+
 	<?php endif; ?>
 	<?php if ( ! $regular_price && ! $sale_price ) : ?>
 		<div class="woocommerce-variation-price">
@@ -181,143 +235,151 @@ if ( $product->is_in_stock() ) : ?>
 <?php endif; ?>
 
 
-
-
-<div class="div-remise">
-<form id="demandeRemise" method="post" enctype="multipart/form-data">
-    <span style="font-family: 'Raleway';font-weight: 600;text-align:center;"> JE PEUX BÉNÉFICIER<br> D'UNE REMISE COMMERCIALE :</span>
-    <!-- Option 1 -->
-    <label>
-        <input type="checkbox" name="option_remise[]"  id="option1" class="optionRemise" data-group="1" data-file="file1" data-value="Changement -25%"> Je change d'antivirus pour Avast -25%
-    </label>
-    <div class="upload hidden" id="file1">
-        <input type="file" name="justificatif_changement" accept="application/pdf,image/*">
-    </div>
-
-    <!-- Option 2 -->
-    <label>
-        <input type="checkbox"  name="option_remise[]"  id="option2" class="optionRemise" data-group="2" data-file="file2" data-value="Renouvellement de licences -30%"> Renouvellement de licences -30%
-    </label>
+<?php 
     
-    <div class="upload hidden" id="file2" style="display: flex;gap: 7px; align-items: center;justify-content: center;">
-        <input  style="width: 50%;padding: 0.5rem 0.4rem; height: 30px;" type="text" id="old_key" name="justificatif_text_renouvellement" placeholder="Ancienne licence"> ou
-        <input style="width: 50%;" type="file" name="justificatif_file_renouvellement" accept="application/pdf,image/*">
-    </div>
+    if(!$bloquer_remise_commerciale){
+?>
+	<div class="div-remise">
+		<form id="demandeRemise" method="post" enctype="multipart/form-data">
+			<span style="font-family: 'Raleway';font-weight: 600;text-align:center;"> JE PEUX BÉNÉFICIER<br> D'UNE REMISE COMMERCIALE :</span>
+			<!-- Option 1 -->
+			<label>
+				<input type="checkbox" name="option_remise[]"  id="option1" class="optionRemise" data-group="1" data-file="file1" data-value="Changement -25%"> Je change d'antivirus pour Avast -25%
+			</label>
+			<div class="upload hidden" id="file1">
+				<input type="file" name="justificatif_changement" accept="application/pdf,image/*">
+			</div>
 
-    <!-- Option 3 -->
-    <label>
-        <input type="checkbox" name="option_remise[]"  id="option3" class="optionRemise" data-group="3" data-file="file3" data-value="Administrations et mairies -30%"> Administrations et mairies -30%
-    </label>
-    <div class="upload hidden" id="file3">
-        <input type="file" name="justificatif_admin" accept="application/pdf,image/*">
-    </div>
+			<!-- Option 2 -->
+			<label>
+				<input type="checkbox"  name="option_remise[]"  id="option2" class="optionRemise" data-group="2" data-file="file2" data-value="Renouvellement de licences -30%"> Renouvellement de licences -30%
+			</label>
+			
+			<div class="upload hidden" id="file2" style="display: flex;gap: 7px; align-items: center;justify-content: center;">
+				<input  style="width: 50%;padding: 0.5rem 0.4rem; height: 30px;" type="text" id="old_key" name="justificatif_text_renouvellement" placeholder="Ancienne licence"> ou
+				<input style="width: 50%;" type="file" name="justificatif_file_renouvellement" accept="application/pdf,image/*">
+			</div>
 
-    <!-- Option 4 -->
-    <label>
-        <input type="checkbox" name="option_remise[]"  id="option4" class="optionRemise" data-group="4" data-file="file4" data-value="Établissements scolaires et associations -50%"> Établissements scolaires et associations -50%
-    </label>
-    <div class="upload hidden" id="file4">
-        <input type="file" name="justificatif_association" accept="application/pdf,image/*">
-    </div>
+			<!-- Option 3 -->
+			<label>
+				<input type="checkbox" name="option_remise[]"  id="option3" class="optionRemise" data-group="3" data-file="file3" data-value="Administrations et mairies -30%"> Administrations et mairies -30%
+			</label>
+			<div class="upload hidden" id="file3">
+				<input type="file" name="justificatif_admin" accept="application/pdf,image/*">
+			</div>
 
-    <input type="hidden" name="remise_type" id="remise_type">
+			<!-- Option 4 -->
+			<label>
+				<input type="checkbox" name="option_remise[]"  id="option4" class="optionRemise" data-group="4" data-file="file4" data-value="Établissements scolaires et associations -50%"> Établissements scolaires et associations -50%
+			</label>
+			<div class="upload hidden" id="file4">
+				<input type="file" name="justificatif_association" accept="application/pdf,image/*">
+			</div>
 
-    <button class="btn-remise" style="font-family:'Raleway';font-weight:700;margin-top:17px;border-style: solid; border-width: 3px 3px 3px 3px; border-radius: 8px 8px 8px 8px; padding: 12px 30px 12px 30px; color: #FFFFFF; background-color: var(--e-global-color-primary); border-color: var(--e-global-color-primary); transition: all 0.2s;width: fit-content;margin: auto; text-transform: unset;" class="button product_type_simple" type="submit" name="submit_demande_remise">Appliquer ma remise</button>
+			<input type="hidden" name="remise_type" id="remise_type">
 
-</form>
-</div>
+			<button class="btn-remise" style="font-family:'Raleway';font-weight:700;margin-top:17px;border-style: solid; border-width: 3px 3px 3px 3px; border-radius: 8px 8px 8px 8px; padding: 12px 30px 12px 30px; color: #FFFFFF; background-color: var(--e-global-color-primary); border-color: var(--e-global-color-primary); transition: all 0.2s;width: fit-content;margin: auto; text-transform: unset;" class="button product_type_simple" type="submit" name="submit_demande_remise">Appliquer ma remise</button>
 
+		</form>
+	</div>
+<?php } ?>
 <style>
     .hidden { display:none !important; }
     .block-option { margin-bottom: 12px; }
     label { font-weight: 500; cursor:pointer; }
 </style>
-<script>
-jQuery(document).ready(function($) {
+<?php 
+    if(!$bloquer_remise_commerciale){
+?>
+	<script>
+	jQuery(document).ready(function($) {
 
-    $('.optionRemise').on('change', function() {
+		$('.optionRemise').on('change', function() {
 
-        const $this = $(this);
-        const group = parseInt($this.data('group'));
+			const $this = $(this);
+			const group = parseInt($this.data('group'));
 
-        // logique de combinaison
-        if (group === 1) {
-            // Option 1 seule → décocher toutes les autres
-            $('.optionRemise').not($this).prop('checked', false);
-        } else if (group === 2) {
-            // Option 2 peut être combinée avec 3 ou 4 → décocher 1
-            $('.optionRemise').each(function() {
-                if (parseInt($(this).data('group')) === 1) $(this).prop('checked', false);
-            });
-        } else if (group === 3) {
-            // décocher 1 et 4
-            $('.optionRemise').each(function() {
-                const g = parseInt($(this).data('group'));
-                if (g === 1 || g === 4) $(this).prop('checked', false);
-            });
-        } else if (group === 4) {
-            // décocher 1 et 3
-            $('.optionRemise').each(function() {
-                const g = parseInt($(this).data('group'));
-                if (g === 1 || g === 3) $(this).prop('checked', false);
-            });
-        }
+			// logique de combinaison
+			if (group === 1) {
+				// Option 1 seule → décocher toutes les autres
+				$('.optionRemise').not($this).prop('checked', false);
+			} else if (group === 2) {
+				// Option 2 peut être combinée avec 3 ou 4 → décocher 1
+				$('.optionRemise').each(function() {
+					if (parseInt($(this).data('group')) === 1) $(this).prop('checked', false);
+				});
+			} else if (group === 3) {
+				// décocher 1 et 4
+				$('.optionRemise').each(function() {
+					const g = parseInt($(this).data('group'));
+					if (g === 1 || g === 4) $(this).prop('checked', false);
+				});
+			} else if (group === 4) {
+				// décocher 1 et 3
+				$('.optionRemise').each(function() {
+					const g = parseInt($(this).data('group'));
+					if (g === 1 || g === 3) $(this).prop('checked', false);
+				});
+			}
 
-        // afficher tous les uploads correspondant aux cases cochées
-        $('.upload').addClass('hidden');
-        $('.optionRemise:checked').each(function() {
-            const fileId = $(this).data('file');
-            $('#' + fileId).removeClass('hidden');
-        });
-
-        // reconstruire hidden
-        let values = [];
-        $('.optionRemise:checked').each(function() {
-            values.push($(this).data('value'));
-        });
-        $('#remise_type').val(values.join(', '));
-        console.log("remises courantes",values.length,values.join(', '))
-        if(values.length<1 || $(".single_add_to_cart_button").hasClass("disabled")){
-            console.log("pas de remise")
-            $(".btn-remise").prop("disabled", true);
-			$(".prix-remise").hide();
-			$(".remisable bdi").css("text-decoration", "none");
-        }else{
-            $(".btn-remise").prop("disabled", false);
-			let prixDepart = parseFloat($(".prix-remise-depart").text().replace(',', '.'));
-			let totalPourcentage = 0;
-			values.forEach(v => {
-				const match = v.match(/-([0-9]+)%/);
-				if (match) {
-					totalPourcentage += parseInt(match[1], 10);
-				}
+			// afficher tous les uploads correspondant aux cases cochées
+			$('.upload').addClass('hidden');
+			$('.optionRemise:checked').each(function() {
+				const fileId = $(this).data('file');
+				$('#' + fileId).removeClass('hidden');
 			});
-			console.log("Pourcentage total :", totalPourcentage + "%");
 
-			// Appliquer la réduction
-			let prixFinal = prixDepart - (prixDepart * totalPourcentage / 100);
-			// Sécurité (pas négatif)
-			prixFinal = Math.max(0, prixFinal);
-			// Arrondi (à l’entier ou 2 décimales selon ton besoin)
-			prixFinal = (prixFinal.toFixed(2)); // ou toFixed(2)
-			// Affichage
-			$(".prix-remise").text(prixFinal+" €");
+			// reconstruire hidden
+			let values = [];
+			$('.optionRemise:checked').each(function() {
+				values.push($(this).data('value'));
+			});
+			$('#remise_type').val(values.join(', '));
+			console.log("remises courantes",values.length,values.join(', '))
+			if(values.length<1 || $(".single_add_to_cart_button").hasClass("disabled")){
+				console.log("pas de remise")
+				$(".btn-remise").prop("disabled", true);
+				$(".prix-remise").hide();
+				$(".remisable bdi").css("text-decoration", "none");
+			}else{
+				$(".btn-remise").prop("disabled", false);
+				let prixDepart = parseFloat($(".prix-remise-depart").text().replace(',', '.'));
+				let totalPourcentage = 0;
+				values.forEach(v => {
+					const match = v.match(/-([0-9]+)%/);
+					if (match) {
+						totalPourcentage += parseInt(match[1], 10);
+					}
+				});
+				console.log("Pourcentage total :", totalPourcentage + "%");
+
+				// Appliquer la réduction
+				let prixFinal = prixDepart - (prixDepart * totalPourcentage / 100);
+				// Sécurité (pas négatif)
+				prixFinal = Math.max(0, prixFinal);
+				// Arrondi (à l’entier ou 2 décimales selon ton besoin)
+				prixFinal = (prixFinal.toFixed(2)); // ou toFixed(2)
+				// Affichage
+				$(".prix-remise").text(prixFinal+" €");
+				
+
+				$(".remisable bdi").css("text-decoration", "line-through");
+
+				$(".prix-remise").show();
+			}
 			
+		});
 
-			$(".remisable bdi").css("text-decoration", "line-through");
+		
 
-			$(".prix-remise").show();
-        }
-        
-    });
+		//  désactiver au départ !
+		$(".btn-remise").prop("disabled", true);
 
-    
-
-    //  désactiver au départ !
-    $(".btn-remise").prop("disabled", true);
-
-});
-</script>
+	});
+	</script>
+<?php 
+    }
+?>
 <style>
     .btn-remise:disabled {
 		background-color: #999 !important;

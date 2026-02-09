@@ -298,9 +298,9 @@ a.cr-review-form-continue:hover{background-color: #00bbff !important;}
 .variables-prodct .woocommerce-Price-amount.amount.remisable{display: flex;}
 .variables-prodct .woocommerce-Price-amount.amount.remisable .reduction-percentage{    
     display: flex;
-    font-size: 32px !important;
+    font-size: 20px !important;
     flex-direction: column;
-    justify-content: flex-end;}
+    justify-content: flex-start;}
 .variables-prodct .prix-remise {color: #000000 !important;}
 .variables-prodct p.promo-end {font-size: 0.8em !important;margin-top: 15px!important;color:#000 !important;}
 body .single-product .quantity .qty {min-height: 51px !important;}
@@ -751,7 +751,7 @@ button{text-transform: unset !important;}
 .woocommerce div.product span.price ins{
     color: var(--e-global-color-accent);
     font-family: "Raleway", Raleway;
-    font-size: 84px;
+    font-size: 50px;
     font-weight: 800 !important;
 	line-height: 1.2;
 }
@@ -770,7 +770,7 @@ a.woocommerce-product-gallery__trigger {
 	z-index: 1 !important;
 }
 
-.variables-prodct .price:not(:has(del)) .woocommerce-Price-amount{font-size: 84px;}
+.variables-prodct .price:not(:has(del)) .woocommerce-Price-amount{font-size: 50px;}
 /************************************** page contact - forms*******************************************/
 .elementor-form .elementor-field-type-text.elementor-field-group.elementor-column, .elementor-form .elementor-field-type-email.elementor-field-group.elementor-column, .elementor-form .elementor-field-type-textarea.elementor-field-group.elementor-column {
     display: grid;
@@ -1033,10 +1033,10 @@ span.subscription-details {
 	text-align: left;
 }
 span.subscription-details .woocommerce-Price-currencySymbol{font-size: 15px!important;}
+.subscription-details .woocommerce-Price-amount {display: inline !important; font-weight: 800 !important;}
 .woocommerce-cart-form__cart-item.cart_item span.subscription-details {
 	display: none;
 }
-.subscription-details .woocommerce-Price-amount {display: inline !important; font-weight: 800 !important;}
 span.elementor-field-option {
     display: flex;
     align-items: center;
@@ -1070,15 +1070,14 @@ div.cart_totals .recurring-total{
     color: #00a800;
 }
 .variation-reduction-percentage {
-    font-size: 34px;
+    font-size: 20px;
     font-weight: bold;
     color: #00a800;
 }
 .woocommerce-variation-percent{
     display: flex;
-    align-content: flex-end;
     flex-direction: column;
-    justify-content: flex-end;
+    justify-content: flex-start;
 }
 .prix-remise-variable-subs,.woocommerce-Price-amount .amount.remisable{
     display: flex;
@@ -1088,7 +1087,7 @@ div.cart_totals .recurring-total{
     color: #958e09;
     font-size: 1.25em;
     font-family: "Raleway", Raleway;
-    font-size: 84px;
+    font-size: 50px;
     font-weight: 800 !important;
     line-height: 1.2;
 }
@@ -1247,9 +1246,8 @@ div.cart_totals .recurring-total{
     border-color: var(--e-global-color-secondary);
     display: flex;
     flex-direction: column;
-    
-    border-radius: 20px 20px 20px 20px;
-        padding: 16px 25px 16px 25px;
+    border-radius: 7px 7px 7px 7px;
+    padding: 16px 25px 16px 25px;
 }
 .faq-item a span {
     color: var(--e-global-color-secondary);
@@ -1312,7 +1310,74 @@ div.cart_totals .recurring-total{
 }
 
 #faq-load-more {
+    font-weight:700;
     padding: 12px 24px;
     font-size: 16px;
     cursor: pointer;
 }
+#faq-load-more:hover, .btn-detail-faq:hover {
+   border-color:var(--e-global-color-secondary) !important;
+}
+/**************** tableau ******************/
+@media (max-width: 600px) {
+.tab-respv.clmns-5 .elementor-element.e-con-full.e-flex.e-con.e-child {
+        width: 100% !important;
+        padding: 5px !important;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 69px));
+        gap: 7px;
+  }
+.tab-respv.clmns-3 .elementor-element.e-con-full.e-flex.e-con.e-child {
+        width: 100% !important;
+        padding: 5px !important;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 105px));
+        gap: 7px;
+  }
+.tab-respv .elementor-heading-title {font-size: 11px !important;}
+.dis-b{display:flex !important;}
+.dis-b .elementor-heading-title{line-height: 1.8 !important;}
+
+
+}
+/* account page - tabs*/
+td.woocommerce-orders-table__cell.woocommerce-orders-table__cell-order-actions {
+    display: flex;
+    gap: 5px;
+}
+.woocommerce-MyAccount-content-wrapper a{font-weight: 700 !important;}
+.woocommerce-MyAccount-subscriptions.woocommerce-orders-table--subscriptions, .woocommerce-MyAccount-content table{border-radius: 15px!important;padding:16px 30px!important; border-color: #c0ebfa!important;}
+.shop_table.subscription_details tr:nth-child(1) td{border-top: 0px !important;}
+.e-my-account-tabs-vertical #add_payment_method #payment div.payment_box{background-color: #ff780017 !important;}
+.e-my-account-tabs-vertical fieldset#wc-stripe-upe-form {
+    padding: 0px !important;
+    border: 0px !important;
+    margin-block: 10px;
+}
+.logged-in input#place_order{background-color: var(--e-global-color-primary) !important;}
+.logged-in input#place_order:hover{background-color: transparent !important;color: var(--e-global-color-primary) !important;}
+#payment, #payment div.payment_box{background-color: #ff780017 !important;}
+.payment_box.payment_method_stripe{background-color: #fff !important;border-radius:9px;}
+#update_all_subscriptions_payment_method_field{padding:1em !important;}
+form#order_review table td, form#order_review thead th, form#order_review tfoot th{
+    border-left: none !important;
+    border-right: none!important;
+    border-top: none!important;
+    border-bottom: 1px solid #c0ebfa !important;
+}
+form#order_review tfoot th:last-child(), form#order_review tfoot td:last-child(){border-bottom:none !important;}
+form#order_review table.shop_table{ border-color:#c0ebfa !important; padding: 12px 30px!important; border-radius: 15px!important;}
+
+
+
+
+div.woocommerce-variation-price.remisable.has-remise-revendeur bdi, span.remisable.has-remise-revendeur  bdi{
+    text-decoration: line-through;
+}
+.hide_remise_revendeur{
+    display: none !important;
+}
+
+
+
+

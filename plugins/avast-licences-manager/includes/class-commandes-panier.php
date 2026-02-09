@@ -98,54 +98,86 @@ class ALM_Commandes_Panier {
 
         foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
 
-            $duration = isset($_POST['alm_Software_duration'][$cart_item_key]) ? sanitize_text_field($_POST['alm_Software_duration'][$cart_item_key]) : null;
-            $pc       = isset($_POST['alm_Number_of_computers'][$cart_item_key]) ? sanitize_text_field($_POST['alm_Number_of_computers'][$cart_item_key]) : null;
+            /*
+            * 1️⃣ Sauvegarde simple (toujours)
+            */
+            if ( isset($_POST['alm_client'][$cart_item_key]) ) {
+                WC()->cart->cart_contents[$cart_item_key]['alm_client'] =
+                    intval($_POST['alm_client'][$cart_item_key]);
+            }
 
-            if ($duration === null && $pc === null) continue; // rien à faire
+            /*
+            * 2️⃣ Champs uniquement pour variable-subscription
+            */
+            $duration = $_POST['alm_Software_duration'][$cart_item_key] ?? null;
+            $pc       = $_POST['alm_Number_of_computers'][$cart_item_key] ?? null;
+
+            if (!$duration && !$pc) {
+                continue;
+            }
+
+            $duration = sanitize_text_field($duration);
+            $pc       = sanitize_text_field($pc);
 
             $product_id = $cart_item['product_id'];
 
-            // retrouver la variation correspondant aux attributs fournis
+            /*
+            * 3️⃣ Trouver la bonne variation
+            */
             $variation_id = $this->alm_select_variation($product_id, $duration, $pc);
 
-            if ($variation_id) {
-                $qty = $cart_item['quantity'];
-
-                // conserver les méta si besoin
-                $cart_item_data = [];
-
-                // recopier alm_client si existe
-                if (!empty($cart_item['alm_client'])) 
-                    $cart_item_data['alm_client'] = $cart_item['alm_client'];
-
-                // recopier prix_force si existe
-                if (!empty($cart_item['prix_force'])) 
-                    $cart_item_data['prix_force'] = $cart_item['prix_force'];
-
-                WC()->cart->remove_cart_item($cart_item_key);
-
-                $new_key = WC()->cart->add_to_cart(
-                    $product_id,
-                    $qty,
-                    $variation_id,
-                    array_filter([
-                        'attribute_pa_software_duration' => $duration,
-                        'attribute_pa_number_of_computers' => $pc
-                    ]),
-                    $cart_item_data
-                );
-                if ( isset($_POST['alm_client'][$cart_item_key]) ) {
-                    if ($new_key) {
-                        if (isset($_POST['alm_client'][$cart_item_key])) {
-                            WC()->cart->cart_contents[$new_key]['alm_client'] = intval($_POST['alm_client'][$cart_item_key]);
-                        }
-                    }
-                }
+            if (!$variation_id) {
+                continue;
             }
 
-            
-          
-            
+            /*
+            * 4️⃣ Si la variation est déjà la bonne → rien à faire
+            */
+            if (!empty($cart_item['variation_id']) && $cart_item['variation_id'] == $variation_id) {
+                continue;
+            }
+
+            /*
+            * 5️⃣ Sauvegarde des données avant suppression
+            */
+            $cart_item_data = [];
+
+            if (!empty($cart_item['alm_client'])) {
+                $cart_item_data['alm_client'] = $cart_item['alm_client'];
+            }
+
+            if (!empty($cart_item['prix_force'])) {
+                $cart_item_data['prix_force'] = $cart_item['prix_force'];
+            }
+
+            $qty = $cart_item['quantity'];
+
+            /*
+            * 6️⃣ Remplacer la ligne du panier
+            */
+            WC()->cart->remove_cart_item($cart_item_key);
+
+            $new_key = WC()->cart->add_to_cart(
+                $product_id,
+                $qty,
+                $variation_id,
+                [
+                    'attribute_pa_software_duration' => $duration,
+                    'attribute_pa_number_of_computers' => $pc,
+                ],
+                $cart_item_data
+            );
+
+            /*
+            * 7️⃣ Sécurité : si ajout OK, on force les données
+            */
+            if ($new_key) {
+                WC()->cart->cart_contents[$new_key]['alm_client'] =
+                    $cart_item_data['alm_client'] ?? null;
+
+                WC()->cart->cart_contents[$new_key]['prix_force'] =
+                    $cart_item_data['prix_force'] ?? null;
+            }
         }
 
         WC()->cart->set_session();

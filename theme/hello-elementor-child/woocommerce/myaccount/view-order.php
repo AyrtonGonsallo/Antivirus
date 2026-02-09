@@ -68,4 +68,3 @@ echo wp_kses_post(
 <?php endif; ?>
 
 <?php do_action( 'woocommerce_view_order', $order_id ); ?>
-xx

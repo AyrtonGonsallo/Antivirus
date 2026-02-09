@@ -478,10 +478,22 @@ class ALM_Gestion_De_Comptes {
         // Récupération et nettoyage des champs
         $type_client   = sanitize_text_field($_POST['type_client'] ?? '');
         $denomination  = sanitize_text_field($_POST['denomination'] ?? '');
-        $genre         = sanitize_text_field($_POST['genre'] ?? '');
         $nom           = sanitize_text_field($_POST['nom'] ?? '');
         $prenom        = sanitize_text_field($_POST['prenom'] ?? '');
         $civilite        = sanitize_text_field($_POST['civilite'] ?? '');
+        // Déduction du genre depuis la civilité
+        $genre = '';
+
+        switch ($civilite) {
+            case 'Monsieur':
+                $genre = 'm';
+                break;
+
+            case 'Madame':
+            case 'Mademoiselle':
+                $genre = 'f';
+                break;
+        }
         $email         = sanitize_email($_POST['email'] ?? '');
         $billing_phone     = sanitize_text_field($_POST['billing_phone'] ?? '');
         $fax           = sanitize_text_field($_POST['fax'] ?? '');
@@ -544,10 +556,12 @@ class ALM_Gestion_De_Comptes {
         update_user_meta( $user_id, 'billing_country', sanitize_text_field( $pays ) );
         update_user_meta( $user_id, 'shipping_country', sanitize_text_field( $pays ) );
 
+        /*
         // Envoi email au client avec ses identifiants
         $subject = 'Votre compte client';
         $message = "Bonjour $prenom,\n\nVotre compte a été créé par votre revendeur.\n\nEmail : $email\nMot de passe : $password\n\nVous pouvez vous connecter ici : " . wp_login_url();
         wp_mail( $email, $subject, $message );
+        */
 
         // Redirection vers la même page avec paramètre pour afficher le message
         wp_safe_redirect( add_query_arg( 'client_added', 'true', wc_get_account_endpoint_url('clients') ) );

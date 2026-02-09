@@ -62,74 +62,72 @@ class ALM_Devis {
 
 
     function alm_get_products_grouped() {
-        $categories = get_terms([
-            'taxonomy' => 'product_cat',
-            'hide_empty' => true
+
+    $categories = get_terms([
+        'taxonomy'   => 'product_cat',
+        'hide_empty' => true
+    ]);
+
+    $output = '';
+
+    foreach ($categories as $cat) {
+
+        $products = wc_get_products([
+            'status'   => 'publish',
+            'limit'    => -1,
+            'category' => [$cat->slug],
+            'type'     => ['subscription', 'variable-subscription'],
         ]);
 
-        $output = '';
-
-        foreach ($categories as $cat) {
-            $products = wc_get_products([
-                'status' => 'publish',
-                'limit'  => -1,
-                'category' => [$cat->slug],
-                'type'   => 'variable-subscription'
-            ]);
-
-            $variations = [];
-
-            foreach ($products as $parent) {
-                $children_ids = $parent->get_children();  // IDs des variations
-
-                foreach ($children_ids as $child_id) {
-                    $child = wc_get_product($child_id);
-                    if ($child && $child->is_type('variation')) {
-                        $variations[] = $child;  // On stocke seulement les enfants
-                    }
-                }
-            }
-
-
-            $output .= '<h3 class="alm-cat-title">' . $cat->name . '</h3>';
-            $output .= '<table class="alm-table"><tr>
-                            <th>Image</th>
-                            <th>Produit</th>
-                            <th>Quantité</th>
-                        </tr>';
-
-            foreach ($variations as $prod) {
-
-                $image = wp_get_attachment_image_src( $prod->get_image_id(), 'thumbnail' );
-                $imgURL = $image ? $image[0] : '';
-                $regular = (float) $prod->get_regular_price();
-                $sale    = (float) $prod->get_sale_price();
-                $promo_display = "";
-
-                if ($sale && $regular && $sale < $regular) {
-                    $discount = round((($regular - $sale) / $regular) * 100);
-                    $promo_display = " <span style='color:green;font-weight:bold;'>Promo -$discount% *</span>";
-                }
-
-
-                $output .= '<tr>
-                    <td><img src="' . $imgURL . '" style="max-width:50px;"></td>
-                    <td>' . $prod->get_name() . '<br>'.$promo_display.'</td>
-                    <td>
-                        <input type="number" 
-                            min="0" 
-                            name="prod_qty[' . $prod->get_id() . ']" 
-                            value="0" 
-                            class="alm-qty">
-                    </td>
-                </tr>';
-            }
-
-            $output .= '</table><br>';
+        if (empty($products)) {
+            continue;
         }
 
-        return $output;
+        $output .= '<h3 class="alm-cat-title">' . esc_html($cat->name) . '</h3>';
+        $output .= '<table class="alm-table">
+            <tr>
+                <th>Image</th>
+                <th>Produit</th>
+                <th>Quantité</th>
+            </tr>';
+
+        foreach ($products as $prod) {
+
+            // 🔒 Sécurité : on ignore toute variation si jamais elle passe
+            if ($prod->is_type('variation')) {
+                continue;
+            }
+
+            $image   = wp_get_attachment_image_src($prod->get_image_id(), 'thumbnail');
+            $imgURL  = $image ? $image[0] : '';
+            $regular = (float) $prod->get_regular_price();
+            $sale    = (float) $prod->get_sale_price();
+
+            $promo_display = '';
+            if ($sale && $regular && $sale < $regular) {
+                $discount = round((($regular - $sale) / $regular) * 100);
+                $promo_display = " <span style='color:green;font-weight:bold;'>Promo -{$discount}% *</span>";
+            }
+
+            $output .= '<tr>
+                <td><img src="' . esc_url($imgURL) . '" style="max-width:50px;"></td>
+                <td>' . esc_html($prod->get_name()) . '<br>' . $promo_display . '</td>
+                <td>
+                    <input type="number"
+                        min="0"
+                        name="prod_qty[' . esc_attr($prod->get_id()) . ']"
+                        value="0"
+                        class="alm-qty">
+                </td>
+            </tr>';
+        }
+
+        $output .= '</table><br>';
     }
+
+    return $output;
+}
+
 
 
 

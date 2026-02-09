@@ -196,16 +196,16 @@ jQuery(document).ready(function($) {
         <input type="text" maxlength="100" name="denomination" id="denomination" class="woocommerce-Input woocommerce-Input--text input-text"/>
     </p>
     <div class="clear"></div>
-
-    <p class="form-row ">
-        <label for="genre">Genre</label>
-        <select name="genre" id="genre" class="woocommerce-Input woocommerce-Input--text input-text">
-            <option value="">--</option>
-            <option value="m">Masculin</option>
-            <option value="f">Féminin</option>
-        </select>
-    </p>
-
+    <!--
+        <p class="form-row ">
+            <label for="genre">Genre</label>
+            <select name="genre" id="genre" class="woocommerce-Input woocommerce-Input--text input-text">
+                <option value="">--</option>
+                <option value="m">Masculin</option>
+                <option value="f">Féminin</option>
+            </select>
+        </p>
+    -->
     <p class="form-row ">
         <label for="civilite">Civilité <span class="required">*</span></label>
         <select name="civilite" id="civilite" required >
@@ -264,7 +264,7 @@ jQuery(document).ready(function($) {
         
         <select name="pays" id="pays" required class="woocommerce-Input woocommerce-Input--text input-text">
 			<?php foreach ( $pays_liste as $code => $nom ) : ?>
-				<option value="<?php echo esc_attr($code); ?>" >
+				<option value="<?php echo esc_attr($code); ?>" <?php selected($code, 'FR'); ?>>
 					<?php echo esc_html($nom); ?>
 				</option>
 			<?php endforeach; ?>
