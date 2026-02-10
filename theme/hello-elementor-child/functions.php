@@ -46,6 +46,7 @@ function theme_enfant_enqueue_scripts() {
     );
 }
 add_action('wp_enqueue_scripts', 'theme_enfant_enqueue_scripts');
+/*
 // === Custom Post Type : FAQ ===
 function create_faq_post_type() {
     $labels = array(
@@ -96,7 +97,7 @@ function pre_handle_404($preempt, $wp_query)
 }
 add_filter( 'pre_handle_404', 'pre_handle_404', 10, 2 );
 
-
+*/
 
 
 // Tableau de langues exemple : ['en_GB', 'fr_FR', 'es_ES']
@@ -447,6 +448,9 @@ function shortcode_cross_sell() {
 }
 add_shortcode('cross_sell', 'shortcode_cross_sell');
 
+/*
+
+
 function shortcode_menu_entreprise($atts) {
     ob_start();
 
@@ -641,7 +645,9 @@ function shortcode_menu_entreprise($atts) {
 add_shortcode('menu_entreprise', 'shortcode_menu_entreprise');
 
 add_filter( 'wp_calculate_image_srcset', '__return_false' );
-/******************************************************************************************/
+
+
+
 add_action('wp_footer', function () {
 ?>
 <script>
@@ -745,24 +751,6 @@ function handle_custom_product_meta_query( $wp_query_args, $query_vars, $data_st
 
 
 
-/*
-// TEMPORAIRE — à supprimer après exécution
-add_action('init', function () {
-
-    if ( ! current_user_can('administrator') ) {
-        return;
-    }
-
-    $taxonomy = 'pa_number_of_computers';
-
-    for ( $i = 1; $i <= 200; $i++ ) {
-        if ( ! term_exists( (string) $i, $taxonomy ) ) {
-            wp_insert_term( (string) $i, $taxonomy, [
-                'slug' => (string) $i
-            ]);
-        }
-    }
-});
 */
 
 function get_revendeur_remise($user_id) {
@@ -784,6 +772,40 @@ function get_revendeur_remise($user_id) {
             [
                 'key'   => 'type',
                 'value' => 'revendeur - 25 %',
+            ],
+            [
+                'key'     => 'date_dexpiration',
+                'value'   => $today,
+                'compare' => '>=',
+                'type'    => 'DATETIME',
+            ],
+        ],
+    ];
+
+    $posts = get_posts($args);
+    return $posts[0] ?? null;
+}
+
+
+function get_user_remise_by_type($user_id,$type) {
+    $today = current_time('Y-m-d H:i:s');
+
+    $args = [
+        'post_type'      => 'remise',
+        'post_status'    => 'publish',
+        'posts_per_page' => 1,
+        'meta_query'     => [
+            [
+                'key'   => 'utilisateur',
+                'value' => $user_id,
+            ],
+            [
+                'key'   => 'statut',
+                'value' => 'validee',
+            ],
+            [
+                'key'   => 'type',
+                'value' => $type,
             ],
             [
                 'key'     => 'date_dexpiration',
@@ -830,7 +852,7 @@ add_filter('woocommerce_available_variation', function ($variation_data, $produc
             $variation_data['sale_end_date'] = '';
         }
 
-        $variation_data['prix_remise_depart'] = $sale;
+        $variation_data['prix_remise_depart'] = $regular;//toujour sur le prix regulier
 
     }else{
         $regular = (float) $variation->get_regular_price();
@@ -843,10 +865,11 @@ add_filter('woocommerce_available_variation', function ($variation_data, $produc
         $variation_data['class_remise_revendeur'] = "has-remise-revendeur";
         $variation_data['pourcentage_remise_revendeur'] = $percent;
         $variation_data['remise_revendeur_txt'] = "Remise revendeur - ".$percent." %";
-        $prix_base = $variation->is_on_sale() ? $sale : $regular;
+        $prix_base = $variation->is_on_sale() ? $regular : $regular;  //remise toujours sur prix de base
         $prix_remise_revendeur = $prix_base - ($prix_base * $percent / 100);
         $variation_data['prix_remise_revendeur'] = round($prix_remise_revendeur, 2);
         $variation_data['prix_remise_depart'] = $prix_remise_revendeur;
+        $variation_data['prix_base'] = $prix_base;
 
     }else{
         $variation_data['class_hide_remise_revendeur'] = 'hide_remise_revendeur';
@@ -938,5 +961,34 @@ function faq_search() {
     endif;
 
     wp_die();
+}
+
+
+function user_has_remise($user_id) {
+    $today = current_time('Y-m-d H:i:s');
+
+    $args = [
+        'post_type'      => 'remise',
+        'post_status'    => 'publish',
+        'posts_per_page' => 1, // 1 suffit
+        'meta_query'     => [
+            [
+                'key'   => 'utilisateur',
+                'value' => $user_id,
+            ],
+            [
+                'key'   => 'statut',
+                'value' => 'validee',
+            ],
+            [
+                'key'     => 'date_dexpiration',
+                'value'   => $today,
+                'compare' => '>=',
+                'type'    => 'DATETIME',
+            ],
+        ],
+    ];
+
+    return !empty(get_posts($args)); // 🔥 true si au moins une
 }
 

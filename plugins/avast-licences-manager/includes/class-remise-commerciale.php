@@ -8,6 +8,7 @@ class ALM_Remise_Commerciale {
         // Lors du submit du formulaire → on crée la remise
         add_action('init', [$this, 'handle_demande_remise_creation']);
         add_action('woocommerce_cart_calculate_fees', [$this, 'apply_remises_and_tva_to_user'],5);
+        add_action( 'woocommerce_before_calculate_totals', [$this, 'force_regular_price_if_user_has_remise'],  5  );
 
         /**
          * Désactive la TVA si l'utilisateur est revendeur HT.
@@ -45,6 +46,8 @@ class ALM_Remise_Commerciale {
                 "Établissements scolaires et associations -50%" => 50
             ];
 
+          
+
             if ( !empty($_POST['remise_type']) ) {
 
                 $userdata = get_userdata( $user_id );
@@ -74,6 +77,7 @@ class ALM_Remise_Commerciale {
                     update_field('compte', [$user_id], $remise_id);
                     update_field('statut', 'validee', $remise_id);
                     update_field('pourcentage', $percentage_fields_map[$option], $remise_id);
+                    update_field('type', $option, $remise_id);
                     update_field('date_de_creation', current_time('d/m/Y g:i a'), $remise_id);
                     $expiration = date('Y-m-d H:i:s', strtotime('+1 month'));
                     update_field('date_dexpiration', $expiration, $remise_id);
@@ -197,6 +201,95 @@ class ALM_Remise_Commerciale {
         return get_posts($args);
     }
 
+
+    public function force_regular_price_if_user_has_remise($cart) {
+
+        if (is_admin() && !defined('DOING_AJAX')) return;
+        if (!$cart || did_action('woocommerce_before_calculate_totals') >= 2) return;
+
+        $user_id = get_current_user_id();
+        if (!$user_id) return;
+
+        $remises = $this->get_user_remises($user_id);
+        if (empty($remises)) return; //  PAS DE REMISE → PRIX PROMO NORMAL
+
+        foreach ($cart->get_cart() as $cart_item) {
+            if ( isset($item['source_devis']) ) {
+                continue;
+            }
+            $product = $cart_item['data'];
+
+            $regular_price = (float) $product->get_regular_price();
+
+            if ($regular_price > 0) {
+                $product->set_price($regular_price); //  clé ici
+            }
+        }
+    }
+
+    /**
+     * Appliquer les remises validées au panier
+    */
+    /*public function apply_remises_and_tva_to_user($cart) {
+
+        if (is_admin() && !defined('DOING_AJAX')) return;
+        if ($cart->is_empty()) return;
+
+        $user_id = get_current_user_id();
+        if (!$user_id) return;
+
+        $remises = $this->get_user_remises($user_id);
+
+        // 🔹 PAS DE REMISE → WooCommerce gère promos & prix normaux
+        if (empty($remises)) {
+            return;
+        }
+
+       
+        $base_total = 0;
+
+        foreach ($cart->get_cart() as $cart_item) {
+            $product  = $cart_item['data'];
+            $qty      = $cart_item['quantity'];
+
+            $regular_price = (float) $product->get_regular_price();
+
+            if ($regular_price > 0) {
+                $base_total += $regular_price * $qty;
+            }
+        }
+
+       
+        foreach ($remises as $remise) {
+
+            $percent = (float) get_field('pourcentage', $remise);
+            $type    = get_field('type', $remise);
+
+            if ($percent > 0 && $base_total > 0) {
+
+                $discount_amount = ($percent / 100) * $base_total;
+
+                $cart->add_fee(
+                    $type ?: __('Remise', 'woocommerce'),
+                    -$discount_amount,
+                    false
+                );
+            }
+        }
+
+      
+        $user = get_user_by('id', $user_id);
+
+        if (in_array('customer_revendeur', (array) $user->roles)) {
+
+            $regime = get_user_meta($user_id, 'new_revendeur_account_regime_tva', true);
+
+            if (strtoupper($regime) === 'HT') {
+                $cart->remove_taxes();
+            }
+        }
+    }*/
+
     /**
      * Appliquer les remises validées au panier
      */
@@ -210,17 +303,26 @@ class ALM_Remise_Commerciale {
              $remises = $this->get_user_remises($user_id);
             if (empty($remises)) return;
 
-            $total_discount_percent = 0;
+           
+
+            $base_total = $cart->get_subtotal();
+
 
             foreach ($remises as $remise) {
-                $percent = get_field('pourcentage', $remise);
-                if ($percent) $total_discount_percent += floatval($percent);
-            }
 
-            if ($total_discount_percent > 0) {
-                $cart_total = $cart->get_subtotal();
-                $discount_amount = ($total_discount_percent / 100) * $cart_total;
-                $cart->add_fee("Remises commerciales", -$discount_amount, false); // false = non taxable
+                $percent = (float) get_field('pourcentage', $remise);
+                $type    = get_field('type', $remise);
+
+                if ($percent > 0 && $base_total > 0) {
+
+                    $discount_amount = ($percent / 100) * $base_total;
+
+                    $cart->add_fee(
+                        $type ?: __('Remise', 'woocommerce'),
+                        -$discount_amount,
+                        false
+                    );
+                }
             }
 
             $user = get_user_by( 'id', $user_id );

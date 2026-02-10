@@ -43,11 +43,60 @@ class ALM_Gestion_De_Comptes {
 
         add_filter('wp_mail',  [$this, 'log_source'], 1, 1);
 
-        
+        add_action('woocommerce_before_edit_address_form_billing', [$this, 'wc_add_custom_edit_address_form_billing']);
 
+        add_action('woocommerce_customer_save_address',[$this, 'wc_save_custom_edit_address_form_billing'], 10, 2);
 
     }
 
+
+    public function wc_add_custom_edit_address_form_billing( ) {
+
+        // Checkbox
+        woocommerce_form_field('billing_infos_entreprise', [
+            'type'  => 'checkbox',
+            'label' => __('Entreprise', 'woocommerce'),
+            'class' => ['form-row-wide'],
+        ], get_user_meta(get_current_user_id(), 'billing_infos_entreprise', true));
+
+        echo '<div id="billing-entreprise-fields" style="display:none;">';
+
+        // Champ 1
+        woocommerce_form_field('billing_societe', [
+            'type'  => 'text',
+            'label' => __('Nom de l\'entreprise', 'woocommerce'),
+            'class' => ['form-row-wide'],
+        ], get_user_meta(get_current_user_id(), 'billing_societe', true));
+
+        // Champ 2
+        woocommerce_form_field('billing_numero_siret', [
+            'type'  => 'text',
+            'label' => __('N° de SIRET', 'woocommerce'),
+            'class' => ['form-row-wide'],
+        ], get_user_meta(get_current_user_id(), 'billing_numero_siret', true));
+
+        echo '</div>';
+    }
+
+    public function wc_save_custom_edit_address_form_billing($user_id, $load_address) {
+
+        if ($load_address !== 'billing') return;
+
+        update_user_meta(
+            $user_id,
+            'billing_infos_entreprise',
+            isset($_POST['billing_infos_entreprise']) ? 1 : 0
+        );
+
+        if (isset($_POST['billing_societe'])) {
+            update_user_meta($user_id, 'billing_societe', sanitize_text_field($_POST['billing_societe']));
+        }
+
+        if (isset($_POST['billing_numero_siret'])) {
+            update_user_meta($user_id, 'billing_numero_siret', sanitize_text_field($_POST['billing_numero_siret']));
+        }
+
+    }
 
     public function wc_save_custom_registration_field( $user_id ) {
 

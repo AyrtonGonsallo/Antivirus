@@ -1379,5 +1379,6 @@ div.woocommerce-variation-price.remisable.has-remise-revendeur bdi, span.remisab
 }
 
 
-
-
+.woocommerce-Price-amount.amount.remisable.has-remise-revendeur, .has-remise-revendeur.promo-end, .has-remise-revendeur ins, .has-remise-revendeur .variation-reduction-percentage{
+    display: none !important;
+}

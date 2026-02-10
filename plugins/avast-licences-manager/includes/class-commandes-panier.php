@@ -88,13 +88,53 @@ class ALM_Commandes_Panier {
                 }
             }
 
-            if ($match) return $variation_id;
+            if ($match) return $variation;
         }
 
         return false;
     }
 
+    private function get_user_remises($user_id) {
+        $today = current_time('d/m/Y g:i a'); // même format que date_de_creation
+
+        $args = [
+            'post_type' => 'remise',
+            'post_status' => 'publish',
+            'numberposts' => -1,
+            'meta_query' => [
+                [
+                    'key' => 'utilisateur',
+                    'value' => $user_id,
+                    'compare' => '='
+                ],
+                [
+                    'key' => 'statut',
+                    'value' => 'validee',
+                    'compare' => '='
+                ],
+                [
+                    'key' => 'date_dexpiration',
+                    'value' => $today,
+                    'compare' => '>=',
+                    'type' => 'DATETIME'
+                ]
+            ]
+        ];
+
+        return get_posts($args);
+    }
+
     function sauver_champs_perso_panier() {
+
+        $has_remises=false;
+        $user_id = get_current_user_id();
+        if ($user_id){
+            $remises = $this->get_user_remises($user_id);
+            if (!empty($remises)){
+                $has_remises=true;
+            }
+        }
+     
 
         foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
 
@@ -124,7 +164,9 @@ class ALM_Commandes_Panier {
             /*
             * 3️⃣ Trouver la bonne variation
             */
-            $variation_id = $this->alm_select_variation($product_id, $duration, $pc);
+            $variation = $this->alm_select_variation($product_id, $duration, $pc);
+            $regular_price = (float) $variation->get_regular_price();
+            $variation_id = $variation->get_id();
 
             if (!$variation_id) {
                 continue;
@@ -145,10 +187,13 @@ class ALM_Commandes_Panier {
             if (!empty($cart_item['alm_client'])) {
                 $cart_item_data['alm_client'] = $cart_item['alm_client'];
             }
-
-            if (!empty($cart_item['prix_force'])) {
-                $cart_item_data['prix_force'] = $cart_item['prix_force'];
+            if($has_remises){
+                if (!empty($cart_item['prix_force'])) {
+                    $cart_item_data['prix_force'] = $regular_price; //prendre le prix regulier du nouveau meme si promo
+                }
             }
+
+            
 
             $qty = $cart_item['quantity'];
 
@@ -171,7 +216,10 @@ class ALM_Commandes_Panier {
             /*
             * 7️⃣ Sécurité : si ajout OK, on force les données
             */
+            error_log('changement de produit.');
             if ($new_key) {
+                error_log('alm_client: '.$cart_item_data['alm_client']);
+                error_log('prix_force: '.$cart_item_data['prix_force']);
                 WC()->cart->cart_contents[$new_key]['alm_client'] =
                     $cart_item_data['alm_client'] ?? null;
 

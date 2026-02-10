@@ -67,7 +67,21 @@ do_action( 'woocommerce_before_account_orders', $has_orders ); ?>
 								<?php
 								/* translators: 1: formatted order total 2: total order items */
 								echo wp_kses_post( sprintf( _n( '%1$s for %2$s item', '%1$s for %2$s items', $item_count, 'woocommerce' ), $order->get_formatted_order_total(), $item_count ) );
-								?> dd
+								?> 
+
+								<?php
+									$est_revendeur = current_user_can('customer_revendeur');
+									if($est_revendeur){
+
+										echo  '<br>Clients<br>';
+										foreach ($order->get_items('line_item') as $item) {
+											foreach ($item->get_meta_data() as $meta) {
+												echo  $meta->value . '<br>';
+											}
+										}
+									}
+								
+								?>
 
 							<?php elseif ( 'order-actions' === $column_id ) : ?>
 								<?php

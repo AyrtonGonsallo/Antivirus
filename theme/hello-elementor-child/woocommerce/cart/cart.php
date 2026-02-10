@@ -17,7 +17,11 @@
 
 defined( 'ABSPATH' ) || exit;
 
-do_action( 'woocommerce_before_cart' ); ?>
+do_action( 'woocommerce_before_cart' ); 
+
+$has_remise = user_has_remise(get_current_user_id());
+
+?>
 
 <form class="woocommerce-cart-form" action="<?php echo esc_url( wc_get_cart_url() ); ?>" method="post">
 	<?php do_action( 'woocommerce_before_cart_table' ); ?>
@@ -141,6 +145,15 @@ do_action( 'woocommerce_before_cart' ); ?>
 							echo wp_kses_post( apply_filters( 'woocommerce_cart_item_backorder_notification', '<p class="backorder_notification">' . esc_html__( 'Available on backorder', 'woocommerce' ) . '</p>', $product_id ) );
 						}
 						?>
+						<?php 
+								$price_regular = $_product->get_regular_price();
+								$price_sale    = $_product->get_sale_price();
+								$is_promo = $price_sale && $price_sale < $price_regular;
+								if ($is_promo && !$has_remise) {
+									$pourcentage = round(100 - ($price_sale / $price_regular * 100));
+									echo '<br><span style="color:green;font-weight:bold;">Promo -'.$pourcentage.' %</span>';
+								}
+								?>
 						</td>
 
 						<td class="product-software_duration product-name" data-title="software_duration">
@@ -251,9 +264,19 @@ do_action( 'woocommerce_before_cart' ); ?>
 
 
 						<td class="product-price" data-title="<?php esc_attr_e( 'Price', 'woocommerce' ); ?>">
+							<?php 
+								$price_regular = $_product->get_regular_price();
+								$price_sale    = $_product->get_sale_price();
+								$is_promo = $price_sale && $price_sale < $price_regular;
+								if ($is_promo && !$has_remise) {
+									$pourcentage = round(100 - ($price_final / $price_regular * 100));
+									echo '<del>'.$price_regular.' €</del><br>';
+								}
+								?>
 							<?php
 								echo apply_filters( 'woocommerce_cart_item_price', WC()->cart->get_product_price( $_product ), $cart_item, $cart_item_key ); // PHPCS: XSS ok.
 							?>
+							
 						</td>
 
 						<td class="product-quantity" data-title="<?php esc_attr_e( 'Quantity', 'woocommerce' ); ?>">
@@ -283,6 +306,14 @@ do_action( 'woocommerce_before_cart' ); ?>
 						</td>
 
 						<td class="product-subtotal" data-title="<?php esc_attr_e( 'Subtotal', 'woocommerce' ); ?>">
+							<?php 
+								$price_regular = $_product->get_regular_price()*$cart_item['quantity'];
+								$price_sale    = $_product->get_sale_price();
+								$is_promo = $price_sale && $price_sale < $price_regular;
+								if ($is_promo && !$has_remise) {
+									echo '<del>'.$price_regular.' €</del><br>';
+								}
+							?>
 							<?php
 								echo apply_filters( 'woocommerce_cart_item_subtotal', WC()->cart->get_product_subtotal( $_product, $cart_item['quantity'] ), $cart_item, $cart_item_key ); // PHPCS: XSS ok.
 							?>

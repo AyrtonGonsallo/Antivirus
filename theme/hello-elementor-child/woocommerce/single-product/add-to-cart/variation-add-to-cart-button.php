@@ -11,6 +11,21 @@ defined( 'ABSPATH' ) || exit;
 
 global $product;
 $bloquer_remise_commerciale = get_field('bloquer_remise_commerciale', $product->get_id());
+$current_remises="";
+$user_id = get_current_user_id();
+
+if($user_id){
+	$remise_c = get_user_remise_by_type($user_id,"Changement -25%");
+	$remise_r = get_user_remise_by_type($user_id,"Renouvellement de licences -30%");
+	$remise_a = get_user_remise_by_type($user_id,"Administrations et mairies -30%");
+	$remise_e = get_user_remise_by_type($user_id,"Établissements scolaires et associations -50%");
+	
+	$current_remises .= ($remise_c)?get_field('type', $remise_c):"";
+	$current_remises .= ($remise_r)?get_field('type', $remise_r):"";
+	$current_remises .= ($remise_a)?get_field('type', $remise_a):"";
+	$current_remises .= ($remise_e)?get_field('type', $remise_e):"";
+}
+
 ?>
 <div style="display: flex; flex-direction: column;gap:7px;align-items: center;" class="woocommerce-variation-add-to-cart variations_button">
 	<?php do_action( 'woocommerce_before_add_to_cart_button' ); ?>
@@ -48,7 +63,7 @@ $bloquer_remise_commerciale = get_field('bloquer_remise_commerciale', $product->
             <span style="font-family: 'Raleway';font-weight: 600;text-align:center;"> JE PEUX BÉNÉFICIER<br> D'UNE REMISE COMMERCIALE :</span>
             <!-- Option 1 -->
             <label>
-                <input type="checkbox" name="option_remise[]"  id="option1" class="optionRemise" data-group="1" data-file="file1" data-value="Changement -25%"> Je change d'antivirus pour Avast -25%
+                <input type="checkbox" <?php if ($remise_c) echo 'checked disabled'; ?>  name="option_remise[]"  id="option1" class="optionRemise" data-group="1" data-file="file1" data-value="Changement -25%"> Je change d'antivirus pour Avast -25%
             </label>
             <div class="upload hidden" id="file1">
                 <input type="file" name="justificatif_changement" accept="application/pdf,image/*">
@@ -56,7 +71,7 @@ $bloquer_remise_commerciale = get_field('bloquer_remise_commerciale', $product->
 
             <!-- Option 2 -->
             <label>
-                <input type="checkbox"  name="option_remise[]"  id="option2" class="optionRemise" data-group="2" data-file="file2" data-value="Renouvellement de licences -30%"> Renouvellement de licences -30%
+                <input type="checkbox" <?php if ($remise_r) echo 'checked disabled'; ?>  name="option_remise[]"  id="option2" class="optionRemise" data-group="2" data-file="file2" data-value="Renouvellement de licences -30%"> Renouvellement de licences -30%
             </label>
             
             <div class="upload hidden" id="file2" style="display: flex;gap: 7px; align-items: center;justify-content: center;">
@@ -66,7 +81,7 @@ $bloquer_remise_commerciale = get_field('bloquer_remise_commerciale', $product->
 
             <!-- Option 3 -->
             <label>
-                <input type="checkbox" name="option_remise[]"  id="option3" class="optionRemise" data-group="3" data-file="file3" data-value="Administrations et mairies -30%"> Administrations et mairies -30%
+                <input type="checkbox" <?php if ($remise_a) echo 'checked disabled'; ?> name="option_remise[]"  id="option3" class="optionRemise" data-group="3" data-file="file3" data-value="Administrations et mairies -30%"> Administrations et mairies -30%
             </label>
             <div class="upload hidden" id="file3">
                 <input type="file" name="justificatif_admin" accept="application/pdf,image/*">
@@ -74,13 +89,13 @@ $bloquer_remise_commerciale = get_field('bloquer_remise_commerciale', $product->
 
             <!-- Option 4 -->
             <label>
-                <input type="checkbox" name="option_remise[]"  id="option4" class="optionRemise" data-group="4" data-file="file4" data-value="Établissements scolaires et associations -50%"> Établissements scolaires et associations -50%
+                <input type="checkbox" <?php if ($remise_e) echo 'checked disabled'; ?>  name="option_remise[]"  id="option4" class="optionRemise" data-group="4" data-file="file4" data-value="Établissements scolaires et associations -50%"> Établissements scolaires et associations -50%
             </label>
             <div class="upload hidden" id="file4">
                 <input type="file" name="justificatif_association" accept="application/pdf,image/*">
             </div>
 
-            <input type="hidden" name="remise_type" id="remise_type">
+            <input type="hidden" name="remise_type" id="remise_type" value="<?php echo $current_remises; ?>">
 
             <button class="btn-remise" style="font-family:'Raleway';font-weight:700;margin-top:17px;border-style: solid; border-width: 3px 3px 3px 3px; border-radius: 8px 8px 8px 8px; padding: 12px 30px 12px 30px; color: #FFFFFF; background-color: var(--e-global-color-primary); border-color: var(--e-global-color-primary); transition: all 0.2s;width: fit-content;margin: auto; text-transform: unset;" class="button product_type_simple" type="submit" name="submit_demande_remise">Appliquer ma remise</button>
 
@@ -101,11 +116,7 @@ $bloquer_remise_commerciale = get_field('bloquer_remise_commerciale', $product->
     <script>
     jQuery(document).ready(function($) {
 
-
-
-
-        $('.optionRemise').on('change', function() {
-
+        function  apply_reduction(){
             const $this = $(this);
             const group = parseInt($this.data('group'));
 
@@ -150,10 +161,13 @@ $bloquer_remise_commerciale = get_field('bloquer_remise_commerciale', $product->
                 console.log("pas de remise")
                 $(".btn-remise").prop("disabled", true);
                 $(".prix-remise").hide();
+                $(".hide-if-rem-comm").show();
                 $(".remisable bdi").css("text-decoration", "none");
+                $(".hide-if-rem-comm  .variation-reduction-percentage").show();
+                $(".hide-if-rem-comm ins").show();
+                $(".hide-if-rem-comm  .promo-end").show();
             }else{
                 $(".btn-remise").prop("disabled", false);
-                let prixDepart = parseFloat($(".prix-remise-depart").text().replace(',', '.'));
                 let totalPourcentage = 0;
                 values.forEach(v => {
                     const match = v.match(/-([0-9]+)%/);
@@ -163,10 +177,42 @@ $bloquer_remise_commerciale = get_field('bloquer_remise_commerciale', $product->
                 });
                 console.log("Pourcentage total :", totalPourcentage + "%");
 
-                // Appliquer la réduction
-                let prixFinal = prixDepart - (prixDepart * totalPourcentage / 100);
-                console.log("prixDepart :", prixDepart );
-                console.log("prixFinal :", prixFinal );
+                let prixFinal = 0
+
+                var hasRemise = $(".pourcentage-remise-depart").filter(function() {
+                    return $(this).text().trim() !== "";
+                }).length > 0;
+
+                // Vérifier si le prix total contient un texte
+                var hasPrix = $(".prix-total").filter(function() {
+                    return $(this).text().trim() !== "";
+                }).length > 0;
+
+                console.log("Contient remise :", hasRemise);
+                console.log("Contient prix :", hasPrix);
+
+                // Exemple de condition
+                if (hasRemise && hasPrix) {
+					let prixDepart = parseFloat($(".prix-total").text().replace(',', '.'));
+					let pourcentageRemise = parseFloat($(".pourcentage-remise-depart").text().replace(',', '.'));
+					let prixRemiseRevendeur =  (prixDepart * pourcentageRemise / 100);
+					let prixRemiseCom =  (prixDepart * totalPourcentage / 100);
+					// Appliquer la réduction
+					 prixFinal = prixDepart - prixRemiseRevendeur - prixRemiseCom;
+					 console.log("prixDepart",prixDepart)
+					 console.log("pourcentageRemise",pourcentageRemise)
+					 console.log("prixRemiseRevendeur",prixRemiseRevendeur)
+					 console.log("prixRemiseCom",prixRemiseCom)
+					 console.log("prixFinal",prixFinal)
+				}else{
+					let prixDepart = parseFloat($(".prix-remise-depart").text().replace(',', '.'));
+					
+					// Appliquer la réduction
+					prixFinal = prixDepart - (prixDepart * totalPourcentage / 100);
+				}
+                
+
+               
                 // Sécurité (pas négatif)
                 prixFinal = Math.max(0, prixFinal);
                 // Arrondi (à l’entier ou 2 décimales selon ton besoin)
@@ -176,11 +222,28 @@ $bloquer_remise_commerciale = get_field('bloquer_remise_commerciale', $product->
                 
 
                 $(".remisable bdi").css("text-decoration", "line-through");
-
+                $(".hide-if-rem-comm  .variation-reduction-percentage").hide();
+                $(".hide-if-rem-comm  .promo-end").hide();
+                $(".hide-if-rem-comm ins").hide();
                 $(".prix-remise").show();
             }
-            
-        });
+
+        }
+
+
+        $('.optionRemise').on('change', function() {
+            apply_reduction();
+		});
+        $('#pa_software_duration').on('change', function() {
+            setTimeout(() => {
+                apply_reduction();
+            }, 2000); 
+		});
+        $('#pa_number_of_computers').on('change', function() {
+		    setTimeout(() => {
+                apply_reduction();
+            }, 2000); 
+		});
 
         
 
@@ -200,7 +263,7 @@ $bloquer_remise_commerciale = get_field('bloquer_remise_commerciale', $product->
             opacity: 0.5;
             margin-block: 10px !important;
         }
-        .prix-remise-depart{
+        .prix-remise-depart,.prix-total,.pourcentage-remise-depart{
             display:none;
         }
         .prix-remise{

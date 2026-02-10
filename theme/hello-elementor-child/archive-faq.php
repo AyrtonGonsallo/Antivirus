@@ -58,7 +58,7 @@
 <script>
     jQuery(function ($) {
 
-        jQuery(function($){
+      
 
     function loadMore(page, keyword = '') {
         $.ajax({
@@ -109,7 +109,7 @@
         loadMore(nextPage, keyword);
     });
 
-});
+
 
 
     });

@@ -18,17 +18,19 @@ class ALM_Devis {
         add_action('init', [$this, 'alm_handle_devis_form']);
 
         //convertir le devis en panier
+        
         add_action( 'woocommerce_before_calculate_totals', function($cart) {
 
             if ( is_admin() && !defined('DOING_AJAX') ) 
                 return;
 
             foreach ( $cart->get_cart() as $item ) {
-                if ( isset($item['prix_force']) ) {
+                if ( isset($item['prix_force']) && isset($item['source_devis']) ) {
                     $item['data']->set_price( $item['prix_force'] );
                 }
             }
         });
+        
 
         // 1. Ajouter les colonnes
         add_filter( 'manage_devis-en-ligne_posts_columns', [$this, 'alm_devis_en_ligne_posts_columns'], 10, 1);
