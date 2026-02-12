@@ -35,6 +35,8 @@ class ALM_Devis {
         // 1. Ajouter les colonnes
         add_filter( 'manage_devis-en-ligne_posts_columns', [$this, 'alm_devis_en_ligne_posts_columns'], 10, 1);
         add_action( 'manage_devis-en-ligne_posts_custom_column', [$this, 'alm_devis_en_ligne_posts_datas'], 10, 2);
+         add_filter( 'manage_variation-devis_posts_columns', [$this, 'alm_variation_devis_posts_columns'], 10, 1);
+        add_action( 'manage_variation-devis_posts_custom_column', [$this, 'alm_variation_devis_posts_datas'], 10, 2);
         add_action('admin_post_generer_pdf_devis', function() {
 
             if (!current_user_can('manage_options')) {
@@ -46,9 +48,12 @@ class ALM_Devis {
             }
 
             $id = intval($_GET['id']);
+            $variations  = get_field('variations', $id);
 
-            // Générer le PDF et l'enregistrer dans le champ ACF
-            DevisPDFGenerator::generate_pdf($id);
+            foreach ( $variations as $variation ) : 
+                // Générer le PDF et l'enregistrer dans le champ ACF de chqaue variation
+                DevisPDFGenerator::generate_pdf($id,$variation->ID);
+            endforeach; 
 
             // Rediriger avec un message
             wp_safe_redirect(admin_url("edit.php?post_type=devis-en-ligne&pdf=ok"));
@@ -58,9 +63,241 @@ class ALM_Devis {
 
       
 
+        add_action('add_meta_boxes', [$this, 'meta_boxex_variation_details']);
+
+        add_action('admin_post_calculer_variation_total', [$this, 'calculer_variation_total']);
+
+
 
 
     }
+
+    function meta_boxex_variation_details(){
+        add_meta_box(
+            'alm_calcul_variation',
+            'Calcul personnalisé',
+            [$this, 'alm_render_calcul_total_devis_variation_button'],
+            'variation-devis',
+            'side',
+            'high'
+        );
+    }
+
+
+    function alm_render_calcul_total_devis_variation_button($post) {
+
+        $url = wp_nonce_url(
+            admin_url('admin-post.php?action=calculer_variation_total&post_id=' . $post->ID),
+            'calcul_variation_' . $post->ID
+        );
+
+        echo '<a href="'.$url.'" class="button button-primary" style="width:100%; text-align:center;">
+                Calculer le total
+            </a>';
+    }
+
+    public function calculer_variation_total() {
+
+        if (!current_user_can('edit_posts')) {
+            wp_die('Permission refusée');
+        }
+
+        if (!isset($_GET['post_id'])) {
+            wp_die('ID manquant');
+        }
+
+        $post_id = intval($_GET['post_id']);
+
+        check_admin_referer('calcul_variation_' . $post_id);
+
+        // 🔥 On lance ton calcul
+        $this->alm_calcul_variation($post_id);
+
+        // 🔄 Redirection propre vers la page édition
+        wp_safe_redirect(
+            admin_url('post.php?post=' . $post_id . '&action=edit&calcul=ok')
+        );
+
+        exit;
+    }
+
+
+    function alm_calcul_variation($post_id)
+    {
+        $formule = "";
+        $formule_html = '<table class="produits" style="border-spacing: 0px;">
+                    <thead>
+                        <tr>
+                            <th style="border:1px solid #ccc;padding:5px;;">Désignation</th>
+                            <th style="border:1px solid #ccc;padding:5px;;">Quantité</th>
+                            <th style="border:1px solid #ccc;padding:5px;;">Durée</th>
+                            <th style="border:1px solid #ccc;padding:5px;;">PU HT</th>
+                            <th style="border:1px solid #ccc;padding:5px;;">Total HT</th>
+                        </tr>
+                    </thead>
+                    <tbody>';
+        $sous_total_ht = 0;
+        $total_ht = 0;
+
+        $rows = get_field('produits_de_la_variation', $post_id);
+
+        if (!$rows) {
+            return [
+                'formule' => "Aucun produit\n",
+                'ht'      => 0,
+                'ttc'     => 0
+            ];
+        }
+
+        /**
+         * 1️⃣ Calcul total HT initial
+         */
+        foreach ($rows as $row) {
+
+            $product_id = $row['produit'];
+            if (is_array($product_id) && isset($product_id[0])) {
+                $produit_post = $product_id[0];
+                $product_id = $produit_post->ID;
+                $product_obj = wc_get_product($product_id);
+
+                if ($product_obj) {
+
+                    $product_name = $product_obj->get_name();
+                    $product_price = $product_obj->get_price();
+                    $product_img = wp_get_attachment_image_src( $product_obj->get_image_id(), 'thumbnail' );
+                    $product_img_url = $product_img ? $product_img[0] : '';
+                    $duree = $row['duree'];
+                     $nom = '
+                    <div class= style="white-space:nowrap;">
+                        <img src="'.esc_url($product_img_url).'" width="50" height="50" style="vertical-align:middle; border-radius:4px; margin-right:10px;">
+                        <a href="'.get_permalink($product_id).'" class="product-link"><span style="vertical-align:middle;">'.wp_kses_post($product_name).'</span></a>
+                    </div>';
+                }
+            }
+            $quantite   = (float) $row['quantite'];
+
+            
+            $prix = (float) ($row['prix_propose'])?$row['prix_propose']:0;
+
+            $ligne_total = $prix * $quantite;
+
+           // $formule .= "{$prix} x {$quantite} = {$ligne_total}\n";
+           $formule .= "Total HT : {$sous_total_ht}\n";
+           $formule_html .="
+            <tr>
+                <td style='display:flex;align-items:center;gap:10px;border:1px solid #ccc;padding:5px;;'>
+                $nom
+                </td>
+                <td style='border:1px solid #ccc;padding:5px;;'>$quantite</td>
+                <td style='border:1px solid #ccc;padding:5px;;'>$duree</td>
+                <td style='border:1px solid #ccc;padding:5px;;'>".$prix." €</td>
+                <td style='border:1px solid #ccc;padding:5px;;'>$ligne_total €</td>
+            </tr>";
+
+            $sous_total_ht += $ligne_total;
+        }
+        $total_ht =$sous_total_ht;
+
+        $formule .= "Total HT : {$sous_total_ht}\n";
+
+        $formule_html .= '<tr>';
+        $formule_html .= '<td colspan="4" style="text-align:right;border:1px solid #ccc;padding:5px;"> Total HT</td>';
+        $formule_html .= '<td style="border:1px solid #ccc;padding:5px;">'.number_format($sous_total_ht, 2, ',', ' ').' €</td>';
+        $formule_html .= '</tr>';
+        
+
+        /**
+         * 2️⃣ Application des remises successives
+         */
+        $remise_fields = [
+            'remise_renewal',
+            'remise_cumulee',
+            'remise_statutaire',
+            'remise_commerciale',
+            'remise_revendeur',
+            'remise_administration_mairie',
+            'remise_etalissements',
+            'remise_changer_avast'
+        ];
+
+        $remise_fields_map = [
+            "remise_changer_avast" => 'Remise changement',
+            "remise_renewal"        => 'Remise renouvellement de licences',
+            "remise_administration_mairie"       => 'Remise administrations et mairies',
+            "remise_etalissements" => 'Remise établissements scolaires et associations',
+            "remise_cumulee" => 'Autre remise',
+            "remise_statutaire" => 'Autre remise',
+            "remise_commerciale" => 'Autre remise',
+            "remise_revendeur" => 'Remise revendeur',
+        ];
+
+        foreach ($remise_fields as $field) {
+
+            $percent = (float) get_field($field, $post_id);
+
+            if ($percent > 0) {
+
+                $montant_remise = ($percent / 100) * $sous_total_ht;
+
+                $titre_remise = $remise_fields_map[$field];
+
+                $formule .= "{$titre_remise} {$percent}% = -{$montant_remise}\n";
+                $formule_html .= '<tr>';
+                $formule_html .= '<td colspan="4" style="text-align:right;border:1px solid #ccc;padding:5px;">'.$titre_remise.' '.$percent.'%</td>';
+                $formule_html .= '<td style="border:1px solid #ccc;padding:5px;">-'.number_format($montant_remise, 2, ',', ' ').' €</td>';
+                $formule_html .= '</tr>';
+
+                $sous_total_ht -= $montant_remise;
+
+                
+                $formule .= "Sous-total HT : {$sous_total_ht}\n";
+                $formule_html .= '<tr>';
+                $formule_html .= '<td colspan="4" style="text-align:right;border:1px solid #ccc;padding:5px;">Sous-total HT</td>';
+                $formule_html .= '<td style="border:1px solid #ccc;padding:5px;">'.number_format($sous_total_ht, 2, ',', ' ').' €</td>';
+                $formule_html .= '</tr>';
+            }
+        }
+
+        /**
+         * 3️⃣ TVA
+         */
+        $taux_tva = (float) get_field('taux_tva', $post_id);
+
+        $montant_tva = ($taux_tva / 100) * $sous_total_ht;
+
+        $total_ttc = $sous_total_ht + $montant_tva;
+
+        $formule .= "TVA {$taux_tva}% : {$montant_tva}\n";
+        $formule .= "Total TTC : {$total_ttc}\n";
+
+        $formule_html .= '<tr>';
+        $formule_html .= '<td colspan="4" style="text-align:right;border:1px solid #ccc;padding:5px;">TVA '.$taux_tva.'% </td>';
+        $formule_html .= '<td style="border:1px solid #ccc;padding:5px;">'.number_format($montant_tva, 2, ',', ' ').' €</td>';
+        $formule_html .= '</tr>';
+
+        $formule_html .= '<tr>';
+        $formule_html .= '<td colspan="4" style="text-align:right;border:1px solid #ccc;padding:5px;">Total TTC</td>';
+        $formule_html .= '<td style="border:1px solid #ccc;padding:5px;">'.number_format($total_ttc, 2, ',', ' ').' €</td>';
+        $formule_html .= '</tr></tbody></table>';
+
+        $prix_public_alwil = (float) get_field('prix_public_alwil', $post_id);
+        
+        $marge = $sous_total_ht - $prix_public_alwil;
+        update_field('marge', $marge, $post_id);
+
+        update_field('sous_total_ht', $sous_total_ht, $post_id);
+        update_field('total_ht', $total_ht, $post_id);
+        update_field('formule', $formule_html, $post_id);
+        update_field('total_ttc', $total_ttc, $post_id);
+
+        return [
+            'formule' => $formule,
+            'ht'      => $sous_total_ht,
+            'ttc'     => $total_ttc
+        ];
+    }
+
+
 
 
     function alm_get_products_grouped() {
@@ -153,6 +390,25 @@ class ALM_Devis {
         return $new;
     }
 
+    function alm_variation_devis_posts_columns($columns) {
+
+        $new = [];
+
+        // On garde le titre avant d’insérer nos colonnes
+        foreach( $columns as $key => $label ) {
+
+            $new[$key] = $label;
+
+            if ($key === 'title') {
+                $new['sous_total_ht']       = 'Sous total HT';
+                $new['prix_ttc']       = 'Prix TTC';
+                $new['actions']       = 'Actions';
+            }
+        }
+
+        return $new;
+    }
+
     // 2. Remplir les colonnes
     function alm_devis_en_ligne_posts_datas( $column, $post_id ) {
 
@@ -182,28 +438,57 @@ class ALM_Devis {
 
 
             case 'actions':
-                $recapitulatif_pdf  = get_field('recapitulatif_pdf', $post_id);
+                $variations  = get_field('variations', $post_id);
                 $type_value = get_field('type_de_devis', $post_id)['value'];
-                $lien_fichier = ($recapitulatif_pdf)?$recapitulatif_pdf["link"]:null;
                 $pdf_url   = admin_url("admin-post.php?action=generer_pdf_devis&id=$post_id");
                 $mail_url  = admin_url("admin-post.php?action=envoyer_mail_devis&id=$post_id");
                 $status_value = get_field('status', $post_id)['value'];
                 echo '<div style="display:flex; gap:8px; flex-wrap:wrap;">';
-                if(($type_value=="admin" || $type_value=="corrige") && ($status_value=="en_attente") ){
-                    echo '<a class="button button-primary" href="'.esc_url($pdf_url).'">Générer le pdf</a>';
-                }
-                
 
+                foreach ( $variations as $variation ) : 
+                    echo '<a class="button"  target="_blank" href="/wp-admin/post.php?post='.$variation->ID.'&action=edit">'.$variation->post_title.'</a>';
+                endforeach; 
+                echo '<a class="button button-primary" href="'.esc_url($pdf_url).'">Générer les PDF des variations</a>';
+                echo '<a class="button" href="'.esc_url($mail_url).'">Envoyer le mail</a>';
+                
+                echo '</div>';
+                break;
+        }
+
+    }
+
+
+    function alm_variation_devis_posts_datas( $column, $post_id ) {
+
+        switch ( $column ) {
+            case 'actions':
+                $recapitulatif_pdf  = get_field('recapitulatif_pdf', $post_id);
+                $lien_fichier = ($recapitulatif_pdf)?$recapitulatif_pdf["link"]:null;
+                
+                echo '<div style="display:flex; gap:8px; flex-wrap:wrap;">';
+                
                 if ($lien_fichier) {
                     echo '<a class="button" href="'.esc_url($lien_fichier).'" target="_blank">Télécharger le pdf</a>';
-                    echo '<a class="button" href="'.esc_url($mail_url).'">Envoyer Mail</a>';
                 }
-
-                
-
                 echo '</div>';
-
+                break;
+            case 'prix_ttc':
+                $total_ttc  = (float) get_field('total_ttc', $post_id);
                 
+                echo '<div style="display:flex; gap:8px; flex-wrap:wrap;">';
+                
+                echo $total_ttc.' €';
+                
+                echo '</div>';
+                break;
+            case 'sous_total_ht':
+                $sous_total_ht  = (float) get_field('sous_total_ht', $post_id);
+                
+                echo '<div style="display:flex; gap:8px; flex-wrap:wrap;">';
+                
+                echo $sous_total_ht.' €';
+                
+                echo '</div>';
                 break;
         }
 
@@ -226,6 +511,7 @@ class ALM_Devis {
 
         // 5️⃣ Redirection avec info
         if ($sent) {
+            update_field('status', '3', $id);
             wp_safe_redirect(admin_url("edit.php?post_type=devis-en-ligne&mail=ok"));
         } else {
             wp_safe_redirect(admin_url("edit.php?post_type=devis-en-ligne&mail=error"));
@@ -282,6 +568,51 @@ class ALM_Devis {
                         <textarea class="" name="compt2save" maxlength="200" id="compt2save" rows="4"></textarea>				
                     </div>
                 </div>
+
+                <?php 
+                $user_id = get_current_user_id();
+                $est_revendeur = current_user_can('customer_revendeur');
+                if ( $est_revendeur ) : 
+                    $args = [
+                        'role'       => 'customer_particulier',
+                        'meta_key'   => 'revendeur_id',
+                        'meta_value' => $user_id
+                    ];
+
+                    $clients = get_users($args);
+                ?>
+                    <div class="">
+                        Client final
+                        <select name="client_final" required class="automatic-sent">
+                            <!-- Option par défaut -->
+                            <option value="" disabled>Sélectionnez un client</option>
+
+                            <?php foreach ( $clients as $c ) : ?>
+                                <option value="<?php echo $c->ID; ?>" >
+                                    <?php echo esc_html($c->display_name); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                <?php endif; ?>
+
+
+                        <?php
+                        
+                            $customer = new WC_Customer( $user_id );
+                            $tax_rates = WC_Tax::get_rates("",$customer );
+                            $first_rate = reset($tax_rates);
+                            $percent_tva = $first_rate['rate'];
+                            $title_tva = $first_rate['label'];
+
+                            echo '<input type="hidden" name="title_tva" id="title_tva" value="'.$title_tva.'">';
+                            echo '<input type="hidden" name="percent_tva" id="percent_tva" value="'.$percent_tva.'">';
+
+                        ?>
+
+
+
                 <div id="iknowForm">
                     Composez votre demande de devis avec les produits ci dessous
                     <?php echo $this->alm_get_products_grouped(); ?>
@@ -823,59 +1154,8 @@ class ALM_Devis {
         if ( $_SERVER['REQUEST_METHOD'] !== 'POST' ) return;
         if ( !isset($_POST['goal']) ) return;
         if ( isset($_POST['goal']) && $_POST['goal'] !== 'devis_en_ligne' ) return;
-        //var_dump($_POST); 
-       // return;
-        /*
-
-        array(23) {
-            ["choixavis"] => string(37) "Je ne sais pas quelle version choisir"
-            ["compt2save"] => string(13) "erwrrwerewrew"
-            ["prod_qty"] => array(21) {
-                [4682] => string(1) "2"
-                [4683] => string(1) "3"
-                [4684] => string(1) "5"
-                [4685] => string(1) "6"
-                [4686] => string(1) "0"
-                [4704] => string(1) "0"
-                [4687] => string(1) "0"
-                [4691] => string(1) "0"
-                [4692] => string(1) "0"
-                [4654] => string(1) "8"
-                [4655] => string(1) "0"
-                [4656] => string(1) "0"
-                [4695] => string(1) "0"
-                [4696] => string(1) "0"
-                [4693] => string(1) "0"
-                [4694] => string(1) "0"
-                [4699] => string(1) "0"
-                [4700] => string(1) "0"
-                [4688] => string(1) "0"
-                [4689] => string(1) "0"
-                [4690] => string(1) "0"
-            }
-            ["alm_software_duration"] => string(10) "many-years"
-            ["comment"] => string(14) "rewerewwrewrew"
-            ["choice_login"] => string(7) "nouveau"
-            ["new_account_type_compte"] => string(3) "PRO"
-            ["new_account_societe"] => string(9) "rewrerewr"
-            ["new_account_genre"] => string(3) "MME"
-            ["new_account_nom"] => string(6) "fwerer"
-            ["new_account_prenom"] => string(8) "werwerwe"
-            ["new_account_telephone"] => string(12) "443424234242"
-            ["new_account_adresse"] => string(9) "fewrewrew"
-            ["new_account_ville"] => string(7) "werrwer"
-            ["new_account_code_postal"] => string(6) "213212"
-            ["new_account_pays"] => string(2) "FR"
-            ["new_account_charte"] => string(44) "Acceptation de la charte de confidentialité"
-            ["new_account_email"] => string(22) "afdfdsfdsfdf@gmail.com"
-            ["new_account_confirm_email"] => string(22) "afdfdsfdsfdf@gmail.com"
-            ["new_account_password_1"] => string(12) "afdfdsfdsfdf"
-            ["new_account_password_2"] => string(12) "afdfdsfdsfdf"
-            ["existing_account_email"] => string(22) "afdfdsfdsfdf@gmail.com"
-            ["existing_account_password"] => string(12) "afdfdsfdsfdf"
-            }
-
-        */
+        
+       
 
         // Connexion WordPress
         if ( !function_exists('wp_get_current_user') ) return;
@@ -885,6 +1165,11 @@ class ALM_Devis {
         // 1️⃣ Utilisateur connecté
         if ( is_user_logged_in() ) {
             $user_id = get_current_user_id();
+            if(isset($_POST['client_final'])){
+                $client_final_id = $_POST['client_final'];                   
+            }
+             
+            
         } else {
             // 2️⃣ Non connecté
             $choice_login = sanitize_text_field($_POST['choice_login'] ?? '');
@@ -927,6 +1212,8 @@ class ALM_Devis {
                 $new_account_ville = sanitize_text_field($_POST['new_account_ville'] ?? '');
                 $new_account_code_postal = sanitize_text_field($_POST['new_account_code_postal'] ?? '');
                 $new_account_pays = sanitize_text_field($_POST['new_account_pays'] ?? '');
+               
+             
                 
 
                 if ( $new_account_email && $new_account_password_1 && $new_account_nom && $new_account_prenom ) {
@@ -1006,6 +1293,10 @@ class ALM_Devis {
             'post_title' => 'Devis du ' . date('d/m/Y H:i'),
         ]);
 
+       
+
+        
+
         if ( is_wp_error($post_id) ) {
             wp_die("Erreur lors de la création du devis : " . $post_id->get_error_message());
         }
@@ -1018,12 +1309,15 @@ class ALM_Devis {
         update_field('date_expiration', $expiration_mysql, $post_id);
         update_field('option', $choix_av, $post_id);
         update_field('software_duration', $duration, $post_id);
-        update_field('status', 'en_attente', $post_id);
+        update_field('status', '0', $post_id);
+        update_field('field_692ec6324ed14', '0', $post_id);
         update_field('note_client', $comment, $post_id);
         update_field('field_692eaafe3985a', $comment, $post_id);
         update_field('type_de_devis', 'client', $post_id);
         update_field('utilisateur', $user_id, $post_id);
-         update_field('field_692eab163985b', $user_id, $post_id);
+        update_field('client_final', $client_final_id, $post_id);
+        update_field('field_698c460ac6d81', $client_final_id, $post_id);
+        update_field('field_692eab163985b', $user_id, $post_id);
 
         // 3) choix → "je ne sais pas quelle version"
         if ( $choix_av === 'idkn' ) {
@@ -1033,93 +1327,265 @@ class ALM_Devis {
         // 4) choix → "je sais ce dont j’ai besoin" (RÉPÉTEUR ACF)
         if ( $choix_av === 'ikn' && !empty($prod_qty)) {
 
-            // reset propre ACF
-            delete_field('produits_de_la_commande', $post_id);
+            // 5) remises
 
-            foreach ($prod_qty as $product_id => $qty) {
-                $qty = intval($qty);
-                if ($qty > 0) {
+            // Tableau pour associer option → input file
+            $file_fields_map = [
+                "Changement -25%" => 'justificatif_changement',
+                "Renouvellement de licences -30%"        => 'justificatif_text_renouvellement|justificatif_file_renouvellement',
+                "Administrations et mairies -30%"       => 'justificatif_admin',
+                "Établissements scolaires et associations -50%" => 'justificatif_association'
+            ];
 
-                    add_row('produits_de_la_commande', [
-                        'produit'  => $product_id,
-                        'quantite' => $qty,
-                    ], $post_id);
-                }
-            }
-        }
+            $percentage_fields_map = [
+                "Changement -25%" => 25,
+                "Renouvellement de licences -30%"        => 30,
+                "Administrations et mairies -30%"       => 30,
+                "Établissements scolaires et associations -50%" => 50
+            ];
 
+            $remise_fields_map = [
+                "Changement -25%" => 'remise_changer_avast',
+                "Renouvellement de licences -30%"        => 'remise_renewal',
+                "Administrations et mairies -30%"       => 'remise_administration_mairie',
+                "Établissements scolaires et associations -50%" => 'remise_etalissements'
+            ];
 
+            if ( !empty($_POST['remise_type']) ) {
 
-        // 5) remises
+                // Split sur la virgule pour récupérer chaque option
+                $remises_options = array_map('trim', explode(',', $_POST['remise_type']));
 
-        // Tableau pour associer option → input file
-        $file_fields_map = [
-            "Changement -25%" => 'justificatif_changement',
-            "Renouvellement de licences -30%"        => 'justificatif_text_renouvellement|justificatif_file_renouvellement',
-            "Administrations et mairies -30%"       => 'justificatif_admin',
-            "Établissements scolaires et associations -50%" => 'justificatif_association'
-        ];
+                foreach ($remises_options as $option) {
 
-        $percentage_fields_map = [
-            "Changement -25%" => 25,
-            "Renouvellement de licences -30%"        => 30,
-            "Administrations et mairies -30%"       => 30,
-            "Établissements scolaires et associations -50%" => 50
-        ];
+                    // 1️⃣ Créer la remise CPT
+                    $remise_id = wp_insert_post([
+                        'post_type'   => 'remise',
+                        'post_title'  => "Demande de remise sur devis : $option - Utilisateur $user_id",
+                        'post_status' => 'publish',
+                        'post_author' => $user_id,
+                    ]);
 
-        if ( !empty($_POST['remise_type']) ) {
+                    if ( is_wp_error($remise_id) ) continue;
 
-            // Split sur la virgule pour récupérer chaque option
-            $options = array_map('trim', explode(',', $_POST['remise_type']));
+                    // 2️⃣ Champs ACF
+                    update_field('utilisateur', $user_id, $remise_id);
+                    update_field('compte', [$user_id], $remise_id);
+                    update_field('statut', 'appliquee au devis', $remise_id);
+                    update_field('pourcentage', $percentage_fields_map[$option], $remise_id);
+                    update_field('date_de_creation', current_time('d/m/Y g:i a'), $remise_id);
+                    $expiration = date('Y-m-d H:i:s', strtotime('-1 month'));
+                    update_field('date_dexpiration', $expiration, $remise_id);
 
-            foreach ($options as $option) {
+                    // 3️⃣ Upload du fichier correspondant
+                    $fields  = $file_fields_map[$option] ?? '';
+                    $fieldnames = explode('|', $fields); // permet de gérer plusieurs champs
+                    foreach ($fieldnames as $fieldname) {
+                        // Champ texte
+                        if (isset($_POST[$fieldname]) && !empty($_POST[$fieldname])) {
+                            update_field("justificatif_texte", sanitize_text_field($_POST[$fieldname]), $remise_id);
+                        }
 
-                // 1️⃣ Créer la remise CPT
-                $remise_id = wp_insert_post([
-                    'post_type'   => 'remise',
-                    'post_title'  => "Demande de remise : $option - Utilisateur $user_id",
-                    'post_status' => 'publish',
-                    'post_author' => $user_id,
-                ]);
+                        // Champ fichier
+                        if (isset($_FILES[$fieldname]) && !empty($_FILES[$fieldname]['name'])) {
+                            require_once(ABSPATH . 'wp-admin/includes/file.php');
+                            require_once(ABSPATH . 'wp-admin/includes/media.php');
+                            require_once(ABSPATH . 'wp-admin/includes/image.php');
 
-                if ( is_wp_error($remise_id) ) continue;
-
-                // 2️⃣ Champs ACF
-                update_field('utilisateur', $user_id, $remise_id);
-                update_field('compte', [$user_id], $remise_id);
-                update_field('statut', 'en attente', $remise_id);
-                update_field('pourcentage', $percentage_fields_map[$option], $remise_id);
-                update_field('date_de_creation', current_time('d/m/Y g:i a'), $remise_id);
-                $expiration = date('Y-m-d H:i:s', strtotime('+1 month'));
-                update_field('date_dexpiration', $expiration, $remise_id);
-
-                // 3️⃣ Upload du fichier correspondant
-                $fields  = $file_fields_map[$option] ?? '';
-                $fieldnames = explode('|', $fields); // permet de gérer plusieurs champs
-                foreach ($fieldnames as $fieldname) {
-                    // Champ texte
-                    if (isset($_POST[$fieldname]) && !empty($_POST[$fieldname])) {
-                        update_field("justificatif_texte", sanitize_text_field($_POST[$fieldname]), $remise_id);
-                    }
-
-                    // Champ fichier
-                    if (isset($_FILES[$fieldname]) && !empty($_FILES[$fieldname]['name'])) {
-                        require_once(ABSPATH . 'wp-admin/includes/file.php');
-                        require_once(ABSPATH . 'wp-admin/includes/media.php');
-                        require_once(ABSPATH . 'wp-admin/includes/image.php');
-
-                        $file_id = media_handle_upload($fieldname, $remise_id);
-                        if (!is_wp_error($file_id)) {
-                            update_field("justificatif", $file_id, $remise_id);
+                            $file_id = media_handle_upload($fieldname, $remise_id);
+                            if (!is_wp_error($file_id)) {
+                                update_field("justificatif", $file_id, $remise_id);
+                            }
                         }
                     }
+                    
                 }
+
                 
             }
 
-            wc_add_notice("Votre demande a été envoyée. Vous allez recevoir un email de confirmation.", "success");
+            $percent_tva = $_POST['percent_tva'];
+            $title_tva = $_POST['title_tva'];
+            $variations_ids = [];
+
+            
+            switch ($duration) {
+                case '1-year':
+                    $variation_id = wp_insert_post([
+                        'post_type'  => 'variation-devis',
+                        'post_status'=> 'publish',
+                        'post_author'=> $user_id,
+                        'post_title' => 'Variation 1 an - Devis #'.$post_id,
+                    ]);
+                    // reset propre ACF
+                    delete_field('produits_de_la_variation', $variation_id);
+
+                    foreach ($prod_qty as $product_id => $qty) {
+                        $qty = intval($qty);
+                        if ($qty > 0) {
+
+                            add_row('produits_de_la_variation', [
+                                'produit'  => $product_id,
+                                'quantite' => $qty,
+                                'duree' => 1,
+                            ], $variation_id);
+                        }
+                    }
+                    foreach ($remises_options as $option) {
+                        update_field($remise_fields_map[$option], $percentage_fields_map[$option], $variation_id);
+                    }
+                    update_field('tva', $title_tva, $variation_id);
+                    update_field('taux_tva', $percent_tva, $variation_id);
+                    $variations_ids[] = $variation_id;
+                    break;
+                case '2-years':
+                    $variation_id = wp_insert_post([
+                        'post_type'  => 'variation-devis',
+                        'post_status'=> 'publish',
+                        'post_author'=> $user_id,
+                        'post_title' => 'Variation 2 ans - Devis #'.$post_id,
+                    ]);
+                    // reset propre ACF
+                    delete_field('produits_de_la_variation', $variation_id);
+
+                    foreach ($prod_qty as $product_id => $qty) {
+                        $qty = intval($qty);
+                        if ($qty > 0) {
+
+                            add_row('produits_de_la_variation', [
+                                'produit'  => $product_id,
+                                'quantite' => $qty,
+                                'duree' => 2,
+                            ], $variation_id);
+                        }
+                    }
+                    foreach ($remises_options as $option) {
+                        update_field($remise_fields_map[$option], $percentage_fields_map[$option], $variation_id);
+                    }
+                    update_field('tva', $title_tva, $variation_id);
+                    update_field('taux_tva', $percent_tva, $variation_id);
+                    $variations_ids[] = $variation_id;
+                    break;
+                case '3-years':
+                    $variation_id = wp_insert_post([
+                        'post_type'  => 'variation-devis',
+                        'post_status'=> 'publish',
+                        'post_author'=> $user_id,
+                        'post_title' => 'Variation 3 ans - Devis #'.$post_id,
+                    ]);
+                    // reset propre ACF
+                    delete_field('produits_de_la_variation', $variation_id);
+
+                    foreach ($prod_qty as $product_id => $qty) {
+                        $qty = intval($qty);
+                        if ($qty > 0) {
+
+                            add_row('produits_de_la_variation', [
+                                'produit'  => $product_id,
+                                'quantite' => $qty,
+                                'duree' => 3,
+                            ], $variation_id);
+                        }
+                    }
+                    foreach ($remises_options as $option) {
+                        update_field($remise_fields_map[$option], $percentage_fields_map[$option], $variation_id);
+                    }
+                    update_field('tva', $title_tva, $variation_id);
+                    update_field('taux_tva', $percent_tva, $variation_id);
+                    $variations_ids[] = $variation_id;
+                    break;
+                case 'many-years':
+                    $variation1_id = wp_insert_post([
+                        'post_type'  => 'variation-devis',
+                        'post_status'=> 'publish',
+                        'post_author'=> $user_id,
+                        'post_title' => 'Variation 1 an - Devis #'.$post_id,
+                    ]);
+                    // reset propre ACF
+                    delete_field('produits_de_la_variation', $variation1_id);
+                    foreach ($prod_qty as $product_id => $qty) {
+                        $qty = intval($qty);
+                        if ($qty > 0) {
+
+                            add_row('produits_de_la_variation', [
+                                'produit'  => $product_id,
+                                'quantite' => $qty,
+                                'duree' => 1,
+                            ], $variation1_id);
+                        }
+                    }
+                    foreach ($remises_options as $option) {
+                        update_field($remise_fields_map[$option], $percentage_fields_map[$option], $variation1_id);
+                    }
+                    update_field('tva', $title_tva, $variation1_id);
+                    update_field('taux_tva', $percent_tva, $variation1_id);
+
+                    $variation2_id = wp_insert_post([
+                        'post_type'  => 'variation-devis',
+                        'post_status'=> 'publish',
+                        'post_author'=> $user_id,
+                        'post_title' => 'Variation 2 ans - Devis #'.$post_id,
+                    ]);
+                    // reset propre ACF
+                    delete_field('produits_de_la_variation', $variation2_id);
+                    foreach ($prod_qty as $product_id => $qty) {
+                        $qty = intval($qty);
+                        if ($qty > 0) {
+
+                            add_row('produits_de_la_variation', [
+                                'produit'  => $product_id,
+                                'quantite' => $qty,
+                                'duree' => 2,
+                            ], $variation2_id);
+                        }
+                    }
+                    foreach ($remises_options as $option) {
+                        update_field($remise_fields_map[$option], $percentage_fields_map[$option], $variation2_id);
+                    }
+                    update_field('tva', $title_tva, $variation2_id);
+                    update_field('taux_tva', $percent_tva, $variation2_id);
+
+                    $variation3_id = wp_insert_post([
+                        'post_type'  => 'variation-devis',
+                        'post_status'=> 'publish',
+                        'post_author'=> $user_id,
+                        'post_title' => 'Variation 3 ans - Devis #'.$post_id,
+                    ]);
+                    // reset propre ACF
+                    delete_field('produits_de_la_variation', $variation3_id);
+                    foreach ($prod_qty as $product_id => $qty) {
+                        $qty = intval($qty);
+                        if ($qty > 0) {
+
+                            add_row('produits_de_la_variation', [
+                                'produit'  => $product_id,
+                                'quantite' => $qty,
+                                'duree' => 3,
+                            ], $variation3_id);
+                        }
+                    }
+                    foreach ($remises_options as $option) {
+                        update_field($remise_fields_map[$option], $percentage_fields_map[$option], $variation3_id);
+                    }
+                    update_field('tva', $title_tva, $variation3_id);
+                    update_field('taux_tva', $percent_tva, $variation3_id);
+                    $variations_ids[] = $variation1_id;
+                    $variations_ids[] = $variation2_id;
+                    $variations_ids[] = $variation3_id;
+                    break;
+                
+                default:
+                    # code...
+                    break;
+            }
+
+            update_field('variations', $variations_ids, $post_id);
+
+        
         }
 
+
+        wc_add_notice("Votre demande a été envoyée. Vous allez recevoir un email de confirmation.", "success");
 
         $sent = DevisEmailSender::send_email_devis_created($post_id);
 

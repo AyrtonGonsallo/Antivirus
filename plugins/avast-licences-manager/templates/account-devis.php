@@ -139,8 +139,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
         <?php foreach ($devis_liste as $devis) : 
             $date_de_creation   = get_field('date_de_creation', $devis->ID);
             $date_expiration  = get_field('date_expiration', $devis->ID);
-            $recapitulatif_pdf  = get_field('recapitulatif_pdf', $devis->ID);
-            $lien_fichier = $recapitulatif_pdf["link"];
+            $variations  = get_field('variations', $devis->ID);
+           
           // var_dump($recapitulatif_pdf);
             $status           = get_field('status', $devis->ID)["label"];
             $type_de_devis        = get_field('type_de_devis', $devis->ID)["label"];
@@ -161,11 +161,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
                 <div class="flex-btns">
                     <a href="<?php echo esc_url(get_permalink($devis->ID)); ?>" class="devis-btn tbn-see">voir</a> 
                     <?php
-                    if($lien_fichier){ ?>
-                        <a href="<?php echo $lien_fichier; ?>" target="_blank" class="devis-btn tbn-see">Télécharger</a> 
-                    <?php }?>
+
+                    foreach ( $variations as $variation ) : 
+                        $recapitulatif_pdf  = get_field('recapitulatif_pdf', $variation->ID);
+                        $lien_fichier = $recapitulatif_pdf["link"];
+                        $nom_fichier = $recapitulatif_pdf['filename'];;
+                        $parts_name = explode("-", $nom_fichier);
+                        //var_dump($recapitulatif_pdf);
+
+                        if($lien_fichier){ ?>
+                            <a href="<?php echo $lien_fichier; ?>" target="_blank" class="devis-btn tbn-see">Télécharger fichier devis <?php echo $parts_name[1].' '.$parts_name[2];?></a> 
+                        <?php }
+                    endforeach; 
+
+                     ?>
+                        
                     <?php if($type_de_devis_value=="admin" || $type_de_devis_value=="corrige"){?>
-                        <?php if ($status_value === 'en_attente') : ?>
+                        <?php if ($status_value === 4454464) : //jamais?>
                             
                         
                             <form method="POST">

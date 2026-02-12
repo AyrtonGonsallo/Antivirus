@@ -9,20 +9,20 @@ class DevisEmailSender {
 
         // 1️⃣ Récupérer les informations du devis
         $user = get_field('utilisateur', $post_id); // champ ACF user
-        $recapitulatif_pdf = get_field('recapitulatif_pdf', $post_id); // champ ACF type "File"
-
-        if (!$user || !$recapitulatif_pdf) {
+        
+        if (!$user) {
             wp_safe_redirect(admin_url("edit.php?post_type=devis-en-ligne&mail=error"));
             exit;
         }
 
+        $variations  = get_field('variations', $post_id);
+        $pdf_files = [];
         $user_email = $user->user_email;
         $user_id = $user->ID;
         $prenom = get_user_meta($user_id, 'first_name', true);
         $nom = get_user_meta($user_id, 'last_name', true);
         $civilite = get_user_meta($user_id, 'civilite', true); 
-        $pdf_id  = $recapitulatif_pdf["ID"];
-        $pdf_path = get_attached_file($pdf_id);
+        
         $note_admin     =    get_field('note_admin', $post_id);
         $lien_auto_connect_devis = site_url()."/mon-compte/mes-devis/";
         $date_de_creation   = get_field('date_de_creation', $post_id);
@@ -32,174 +32,38 @@ class DevisEmailSender {
         $produits_de_la_commande     =    get_field('produits_de_la_commande', $post_id);
          $today = current_time('d/m/Y g:i a'); // même format que date_de_creation
 
-        $args = [
-            'post_type' => 'remise',
-            'post_status' => 'publish',
-            'numberposts' => -1,
-            'meta_query' => [
-                [
-                    'key' => 'utilisateur',
-                    'value' => $user_id,
-                    'compare' => '='
-                ],
-                [
-                    'key' => 'statut',
-                    'value' => 'validee',
-                    'compare' => '='
-                ],
-                [
-                    'key' => 'date_dexpiration',
-                    'value' => $today,
-                    'compare' => '>=',
-                    'type' => 'DATETIME'
-                ]
-            ]
-        ];
-
-       
-
-        $remises = get_posts($args);
-        $percent_tva = 20;
-        $has_tva=true;
-
-        if (  in_array( 'customer_revendeur', (array) $user->roles ) ) {
-            // Vérifier le régime TVA stocké par ton formulaire
-            $regime = get_user_meta( $user_id, 'new_revendeur_account_regime_tva', true );
-
-            // Si le revendeur est en régime HT => pas de TVA
-            if ( strtoupper( $regime ) === 'HT' ) {
-                //$cart->remove_taxes( );
-                $has_tva=false;
-            }else{
-                //trouver sa taxe sur le pays
-                //les classes
-                $percent_tva  = get_field('taux_tva', $post_id);
-                $tva  = get_field('tva', $post_id);
-            }
-            
-        }else{
-            //trouver sa taxe sur le pays
-            if(get_field('taux_tva', $post_id)){
-                $percent_tva  = get_field('taux_tva', $post_id);
-                $tva  = get_field('tva', $post_id);
-            }
-        }
-        /*
-        // 1. On récupère le pays du client via ACF
-        $user_country = get_user_meta($user_id, 'pays', true);
-        if (!$user_country) return;
-
-        // 2. On récupère le taux dans le CPT taux_tva
-        $args = [
-            'post_type' => 'tva_par_pays',
-            'meta_query' => [
-                [
-                    'key' => 'code_pays',
-                    'value' => $user_country,
-                    'compare' => '='
-                ]
-            ],
-            'posts_per_page' => 1,
-        ];
-
-        $tva_posts = get_posts($args);
-        if (!empty($tva_posts)){
-             $tva_post_id = $tva_posts[0]->ID;
-
-            // 3. On récupère le taux %
-            $percent_tva = get_field('pourcentage', $tva_post_id); // ex: 20
-            
-        }
-        */
         $total_produits=0;
         $devis_content_html = "";
-        if ($produits_de_la_commande) {
-            foreach ($produits_de_la_commande as $ligne) {
-                $produit_relation = $ligne['produit'];
-                $prix_propose = ($ligne['prix_propose'])?($ligne['prix_propose'].'€'):"en attente";
-                $quantite = $ligne['quantite'];
 
-                if (is_array($produit_relation) && isset($produit_relation[0])) {
-                    $produit_post = $produit_relation[0];
-                    $product_id = $produit_post->ID;
-                    $product_obj = wc_get_product($product_id);
+        
+       
+        foreach ($variations as $variation) {
+            $variation_id = $variation->ID;
+            $formule = get_field('formule', $variation_id);
 
-                    if ($product_obj) {
+            
 
-                        $product_name = $product_obj->get_name();
-                        $duree = $product_obj->get_attribute('pa_software_duration');
-                    }
+            $note_admin     =    get_field('note_admin', $variation_id);
+            $variation_title     =    get_the_title( $variation_id);
+            $devis_content_html .= '<h3>'.$variation_title.'</h3>' ;
+            $devis_content_html .= '<div>'.$formule.'</div>' ;
+            $devis_content_html .= ' <h2 style="margin-top:30px; color:#444;text-transform:uppercase;text-align:center">Commentaire de notre service commercial</h2>
+                    '.$note_admin.'<br>';
+
+            $recapitulatif_pdf = get_field('recapitulatif_pdf', $variation_id); // champ ACF type "File"
+            if ($recapitulatif_pdf && !empty($recapitulatif_pdf['ID'])) {
+                $pdf_id   = $recapitulatif_pdf['ID'];
+                $pdf_path = get_attached_file($pdf_id);
+                if ($pdf_path) {
+                    $pdf_files[] = $pdf_path; // ajoute au tableau
                 }
-                
-
-                $total = number_format($prix_propose * $quantite, 2) . " €";
-                $total_produits+=number_format($prix_propose * $quantite, 2);
-                
-
-                $devis_content_html .= "
-                <div>
-                    $product_name $duree = $prix_propose x $quantite = $total
-                </div>";
             }
+
         }
+        
       
 
-                // Calcul des remises
-                    $total_discount_amount = 0;
-                    if (!empty($remises)) {
-                        foreach ($remises as $remise) {
-                            $percent = floatval(get_field('pourcentage', $remise));
-                            $total_discount_amount += ($percent / 100) * $total_produits;
-                        }
-                    }
-
-                    // Sous-total (produits - remises)
-                    $sous_total = $total_produits - $total_discount_amount;
-                    $tva = 0; 
-                    if($has_tva){
-                        $tva = ($sous_total * $percent_tva) / 100;
-                    }
-                    $total_ttc = $sous_total + $tva;
-
-                    // Ligne Total HT
-                    $devis_content_html .= '<div style="display:flex;width:50%;padding:6px 0;justify-content: space-between;">';
-                    $devis_content_html .= '<div style="padding:0px 6px 0px 0px;"> Total HT</div>';
-                    $devis_content_html .= '<div>'.number_format($total_produits, 2, ',', ' ').' €</div>';
-                    $devis_content_html .= '</div>';
-
-                    
-
-                    // Ligne Remises
-                    if ($total_discount_amount > 0) {
-                        $devis_content_html .= '<div style="display:flex;width: 50%;padding:6px 0;justify-content: space-between;">';
-                        $devis_content_html .= '<div style="padding:0px 6px 0px 0px;">Remises commerciales</div>';
-                        $devis_content_html .= '<div>-'.number_format($total_discount_amount, 2, ',', ' ').' €</div>';
-                        $devis_content_html .= '</div>';
-                    }
-
-                    // Ligne Sous-total HT
-                    $devis_content_html .= '<div style="display:flex;width: 50%;padding:6px 0;justify-content: space-between;">';
-                    $devis_content_html .= '<div style="padding:0px 6px 0px 0px;">Sous-total HT</div>';
-                    $devis_content_html .= '<div>'.number_format($sous_total, 2, ',', ' ').' €</div>';
-                    $devis_content_html .= '</div>';
-
-                    if($has_tva){
-                        // Ligne TVA
-                        $devis_content_html .= '<div style="display:flex;width: 50%;padding:6px 0;justify-content: space-between;">';
-                        $devis_content_html .= '<div style="padding:0px 6px 0px 0px;">TVA '.$percent_tva.'%</div>';
-                        $devis_content_html .= '<div>'.number_format($tva, 2, ',', ' ').' €</div>';
-                        $devis_content_html .= '</div>';
-
-                    }
-
-                    
-
-                    // Ligne Total TTC
-                    $devis_content_html .= '<div style="display:flex;width:50%;padding:6px 0;justify-content:space-between;">';
-                    $devis_content_html .= '<div style="padding:0px 6px 0px 0px;">Total TTC</div>';
-                    $devis_content_html .= '<div style="font-weight:bold;">'.number_format($total_ttc, 2, ',', ' ').' €</div>';
-                    $devis_content_html .= '</div>';
-
+               
         $lien_logo_png = site_url().'/wp-content/uploads/2025/11/avast-logo.png';
 
 
@@ -251,8 +115,7 @@ class DevisEmailSender {
                     Durée : '.$software_duration.'<br>
                     <h2 style="margin-top:30px; color:#444;text-transform:uppercase;text-align:center">Contenu de votre devis</h2>
                     '.$devis_content_html.'
-                    <h2 style="margin-top:30px; color:#444;text-transform:uppercase;text-align:center">Commentaire de notre service commercial</h2>
-                    '.$note_admin.'<br>
+                   
                     <p style="font-size:15px; color:#555; line-height:1.6;">
                         Veuillez trouver ci-joint le PDF de votre devis nº '.$id.'.
                     </p>
@@ -284,7 +147,7 @@ class DevisEmailSender {
             $subject,
             $message,
             $headers,
-            array($pdf_path) // tableau de fichiers attachés
+            $pdf_files // tableau de fichiers attachés
         );
         return $sent;
         
@@ -315,8 +178,26 @@ class DevisEmailSender {
         $date_de_creation_formatted = $date_de_creation ? (new DateTime($date_de_creation))->format('d/m/Y \à H\hi') : '';
         $software_duration     =    get_field('software_duration', $post_id)["label"];
        $note_client     =    get_field('note_client', $post_id);
+       $variations  = get_field('variations', $post_id);
+        $pdf_files = [];
       
+        foreach ($variations as $variation) {
+            $variation_id = $variation->ID;
+            $formule     =    get_field('formule', $variation_id);
+            $variation_title     =    get_the_title( $variation_id);
+            $devis_content_html .= '<h3 class="titre-variation-devis">'.$variation_title.'</h3>' ;
+            $devis_content_html .= '<div class="table-devis-details">'.$formule.'</div>' ;
 
+            $recapitulatif_pdf = get_field('recapitulatif_pdf', $variation_id); // champ ACF type "File"
+            if ($recapitulatif_pdf && !empty($recapitulatif_pdf['ID'])) {
+                $pdf_id   = $recapitulatif_pdf['ID'];
+                $pdf_path = get_attached_file($pdf_id);
+                if ($pdf_path) {
+                    $pdf_files[] = $pdf_path; // ajoute au tableau
+                }
+            }
+
+        }
                
 
         $lien_logo_png = site_url().'/wp-content/uploads/2025/11/avast-logo.png';
@@ -407,7 +288,7 @@ class DevisEmailSender {
             $subject,
             $message,
             $headers,
-            array($pdf_path) // tableau de fichiers attachés
+            $pdf_files // tableau de fichiers attachés
         );
         return $sent;
         
@@ -442,6 +323,26 @@ class DevisEmailSender {
         $date_expiration  = get_field('date_expiration', $post_id);
         $date_expiration_formatted  = $date_expiration ? (new DateTime($date_expiration))->format('d/m/Y \à H\hi') : '';
         $software_duration     =    get_field('software_duration', $post_id)["label"];
+        $variations  = get_field('variations', $post_id);
+        $pdf_files = [];
+
+         foreach ($variations as $variation) {
+            $variation_id = $variation->ID;
+            $formule     =    get_field('formule', $variation_id);
+            $variation_title     =    get_the_title( $variation_id);
+            $devis_content_html .= '<h3 class="titre-variation-devis">'.$variation_title.'</h3>' ;
+            $devis_content_html .= '<div class="table-devis-details">'.$formule.'</div>' ;
+
+            $recapitulatif_pdf = get_field('recapitulatif_pdf', $variation_id); // champ ACF type "File"
+            if ($recapitulatif_pdf && !empty($recapitulatif_pdf['ID'])) {
+                $pdf_id   = $recapitulatif_pdf['ID'];
+                $pdf_path = get_attached_file($pdf_id);
+                if ($pdf_path) {
+                    $pdf_files[] = $pdf_path; // ajoute au tableau
+                }
+            }
+
+        }
         
         $lien_logo_png = site_url().'/wp-content/uploads/2025/11/avast-logo.png';
 
@@ -540,7 +441,7 @@ class DevisEmailSender {
             $subject,
             $message,
             $headers,
-            array($pdf_path) // tableau de fichiers attachés
+            $pdf_files // tableau de fichiers attachés
         );
         return $sent;
         

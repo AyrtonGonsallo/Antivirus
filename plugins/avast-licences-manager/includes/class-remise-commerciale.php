@@ -15,6 +15,9 @@ class ALM_Remise_Commerciale {
          */
         add_filter( 'woocommerce_tax_rate_class', [$this, 'get_correct_tax_class'], 10, 2 );
 
+      
+
+
         
     }
 
@@ -227,39 +230,56 @@ class ALM_Remise_Commerciale {
         }
     }
 
+   
+
     /**
      * Appliquer les remises validées au panier
-    */
-    /*public function apply_remises_and_tva_to_user($cart) {
+     */
+    public function apply_remises_and_tva_to_user($cart) {
 
-        if (is_admin() && !defined('DOING_AJAX')) return;
-        if ($cart->is_empty()) return;
+        if ( is_admin() && !defined('DOING_AJAX') ) return;
 
+        if (!WC()->session) return;
+
+        $remises = WC()->session->get('devis_remises');
+
+        /*
+        * ===============================
+        * CAS 1 : Panier issu d’un devis
+        * ===============================
+        */
+        if (!empty($remises)) {
+
+            foreach ($remises as $remise) {
+
+                $label   = $remise['label'];
+                $montant = $remise['amount'];
+
+                error_log("application de la remise $label = $montant");
+
+                $cart->add_fee(
+                    $label,
+                    -$montant,
+                    false
+                );
+            }
+
+            return; // 🔥 on bloque les remises classiques
+        }
+
+        /*
+        * ===============================
+        * CAS 2 : Panier normal
+        * ===============================
+        */
         $user_id = get_current_user_id();
         if (!$user_id) return;
 
         $remises = $this->get_user_remises($user_id);
+        if (empty($remises)) return;
 
-        // 🔹 PAS DE REMISE → WooCommerce gère promos & prix normaux
-        if (empty($remises)) {
-            return;
-        }
+        $base_total = $cart->get_subtotal();
 
-       
-        $base_total = 0;
-
-        foreach ($cart->get_cart() as $cart_item) {
-            $product  = $cart_item['data'];
-            $qty      = $cart_item['quantity'];
-
-            $regular_price = (float) $product->get_regular_price();
-
-            if ($regular_price > 0) {
-                $base_total += $regular_price * $qty;
-            }
-        }
-
-       
         foreach ($remises as $remise) {
 
             $percent = (float) get_field('pourcentage', $remise);
@@ -277,10 +297,14 @@ class ALM_Remise_Commerciale {
             }
         }
 
-      
+        /*
+        * ===============================
+        * TVA revendeur
+        * ===============================
+        */
         $user = get_user_by('id', $user_id);
 
-        if (in_array('customer_revendeur', (array) $user->roles)) {
+        if ($user && in_array('customer_revendeur', (array) $user->roles)) {
 
             $regime = get_user_meta($user_id, 'new_revendeur_account_regime_tva', true);
 
@@ -288,65 +312,8 @@ class ALM_Remise_Commerciale {
                 $cart->remove_taxes();
             }
         }
-    }*/
-
-    /**
-     * Appliquer les remises validées au panier
-     */
-    public function apply_remises_and_tva_to_user($cart) {
-        if ( is_admin() && !defined('DOING_AJAX') ) return;
-
-        $user_id = get_current_user_id();
-       
-
-        if($user_id){
-             $remises = $this->get_user_remises($user_id);
-            if (empty($remises)) return;
-
-           
-
-            $base_total = $cart->get_subtotal();
-
-
-            foreach ($remises as $remise) {
-
-                $percent = (float) get_field('pourcentage', $remise);
-                $type    = get_field('type', $remise);
-
-                if ($percent > 0 && $base_total > 0) {
-
-                    $discount_amount = ($percent / 100) * $base_total;
-
-                    $cart->add_fee(
-                        $type ?: __('Remise', 'woocommerce'),
-                        -$discount_amount,
-                        false
-                    );
-                }
-            }
-
-            $user = get_user_by( 'id', $user_id );
-
-            if (  in_array( 'customer_revendeur', (array) $user->roles ) ) {
-                // Vérifier le régime TVA stocké par ton formulaire
-                $regime = get_user_meta( $user_id, 'new_revendeur_account_regime_tva', true );
-
-                // Si le revendeur est en régime HT => pas de TVA
-                if ( strtoupper( $regime ) === 'HT' ) {
-                    $cart->remove_taxes(  );
-                }
-                
-            }
-
-            
-
-
-        
-        }else{
-            return;
-        }
-
     }
+
 
 
 

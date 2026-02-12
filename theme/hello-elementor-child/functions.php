@@ -992,3 +992,149 @@ function user_has_remise($user_id) {
     return !empty(get_posts($args)); // 🔥 true si au moins une
 }
 
+function traiter_chaines_menu($chaine) {
+    //$res =  esc_html($chaine); avec span dans le texte
+    //$res =  ($chaine); avec variations lues
+
+     // On coupe avant le premier <span>
+    $avant_span = preg_split('/<span.*?>/i', $chaine)[0];
+    $res = $avant_span;
+    return $res;
+
+}
+
+
+function shortcode_menu_entreprise($atts) {
+    $atts = shortcode_atts(['categories' => '', 'page' => 'default'], $atts, 'menu_entreprise');
+    
+    $requested_slugs = array_map('trim', explode(',', $atts['categories']));
+    $slugs_str = preg_replace('/[^a-zA-Z0-9_]/', '_', implode('_', $requested_slugs));
+    $page_clean = preg_replace('/[^a-zA-Z0-9_]/', '_', $atts['page']);
+    
+    $cache_key = "cache_shortcode_menu_{$page_clean}_{$slugs_str}";
+    $cached = get_transient($cache_key);
+    if ($cached !== false) return $cached;
+    
+    error_log("MENU ENTREPRISE : génération lourde en cours...");
+    
+    $product_cats = get_terms([
+        'taxonomy' => 'product_cat',
+        'hide_empty' => true,
+        'slug' => $requested_slugs
+    ]);
+    if (empty($product_cats)) return '';
+    
+    // Réordonner selon l'ordre des slugs
+    if (!empty($requested_slugs)) {
+        $ordered_cats = [];
+        foreach ($requested_slugs as $slug) {
+            foreach ($product_cats as $cat) {
+                if ($cat->slug === $slug) {
+                    $ordered_cats[] = $cat;
+                    break;
+                }
+            }
+        }
+        $product_cats = $ordered_cats;
+    }
+    
+    $class_col = $atts['page'] == "particulier" ? "col-mega-menu1" : "col-mega-menu2";
+    
+    // 🎯 Construction de l'output
+    $output = '<div class="menu-entreprise-wrapper">';
+    $output .= "<div class=\"categories-row {$class_col}\" style=\"display:grid;grid-template-columns:1.5fr 1fr 1fr; gap:15px;\">";
+    
+    foreach ($product_cats as $cat) {
+        $products = wc_get_products([
+            'limit' => -1,
+            'status' => 'publish',
+            'category' => [$cat->slug],
+            'return' => 'ids',
+            'type' => ['variable-subscription', 'subscription'],
+            'meta_query' => [[
+                'key' => 'afficher_dans_le_menu',
+                'value' => '1',
+                'compare' => '='
+            ]]
+        ]);
+        
+        if (empty($products)) continue;
+        
+        $marques = [];
+        foreach ($products as $pid) {
+            $ordre = (int)(get_field('ordre', $pid) ?: 9999);
+            $terms = wp_get_post_terms($pid, 'product_brand');
+            
+            if (!empty($terms)) {
+                foreach ($terms as $t) $marques[$t->name][] = ['id' => $pid, 'ordre' => $ordre];
+            } else {
+                $marques['Sans marque'][] = ['id' => $pid, 'ordre' => $ordre];
+            }
+        }
+        
+        ksort($marques, SORT_NATURAL | SORT_FLAG_CASE);
+        foreach ($marques as &$liste) usort($liste, fn($a, $b) => $a['ordre'] <=> $b['ordre']);
+        unset($liste);
+        
+        $output .= "<div class=\"col-categorie col1\" style=\"margin-bottom:30px;\">";
+        $output .= "<span style=\"color:#ff7700;font-family:'Raleway';font-weight:800;font-size:18px;text-transform:uppercase\">";
+        $output .= "<a href=\"" . get_category_link($cat->term_id) . "\" style=\"color:#ff7700;font-family:'Raleway';font-weight:800;font-size:17px;text-transform:uppercase\">";
+        $output .= esc_html($cat->name) . "</a></span>";
+        
+        $output .= "<div class=\"row-marques\" style=\"display:grid;grid-template-columns:repeat(2,1fr);gap:20px;\">";
+        
+        foreach ($marques as $marque => $liste_produits) {
+            $term = get_term_by('name', $marque, 'product_brand');
+            $marque_link = $term ? get_term_link($term) : '#';
+            
+            $output .= "<div class=\"col-marque\">";
+            
+            if ($cat->slug !== "antivirus-pour-android") {
+                $output .= "<a href=\"" . esc_url($marque_link) . "\" style=\"text-decoration:none;color:#000;font-family:'Raleway';font-weight:800;font-size:17px;\">";
+                $output .= esc_html($marque) . "</a>";
+            }
+            
+            foreach ($liste_produits as $item) {
+                $pid = $item['id'];
+                $parent = wc_get_product($pid);
+                if (!$parent) continue;
+                
+                if ($parent->is_type('variable-subscription')) {
+                    $variations = array_slice($parent->get_available_variations(), 0, 1);
+                    foreach ($variations as $v) {
+                        $variation = wc_get_product($v['variation_id']);
+                        if (!$variation) continue;
+                        
+                        $output .= "<div class=\"produit-item\" style=\"margin-bottom:5px;\">";
+                        $output .= "<a href=\"" . get_permalink($v['variation_id']) . "\" class=\"link-mega-menu\" style=\"text-decoration:none;color:#000;\">";
+                        
+                        if ($cat->slug !== "antivirus-pour-android") {
+                            $output .= traiter_chaines_menu($variation->get_name());
+                        } else {
+                            $output .= "<span style=\"font-family:'Raleway';font-weight:800;font-size:17px;\">" . traiter_chaines_menu($variation->get_name()) . "</span>";
+                        }
+                        $output .= "</a></div>";
+                    }
+                } elseif ($parent->is_type('subscription')) {
+                    $output .= "<div class=\"produit-item\" style=\"margin-bottom:5px;\">";
+                    $output .= "<a href=\"" . get_permalink($parent->get_id()) . "\" class=\"link-mega-menu\" style=\"text-decoration:none;color:#000;\">";
+                    
+                    if ($cat->slug !== "antivirus-pour-android") {
+                        $output .= traiter_chaines_menu($parent->get_name());
+                    } else {
+                        $output .= "<span style=\"font-family:'Raleway';font-weight:800;font-size:17px;\">" . traiter_chaines_menu($parent->get_name()) . "</span>";
+                    }
+                    $output .= "</a></div>";
+                }
+            }
+            $output .= "</div>"; // .col-marque
+        }
+        $output .= "</div></div>"; // .row-marques, .col-categorie
+    }
+    
+    $output .= "</div></div>"; // .categories-row, .menu-entreprise-wrapper
+    
+    set_transient($cache_key, $output, 300);
+    return $output;
+}
+add_shortcode('menu_entreprise', 'shortcode_menu_entreprise');

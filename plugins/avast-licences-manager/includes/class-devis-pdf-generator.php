@@ -4,13 +4,14 @@
 
 class DevisPDFGenerator {
 
-    public static function generate_pdf($post_id) {
+    public static function generate_pdf($post_id,$variation_id) {
 
         // 1. Récupération des données du devis
         $title        = get_the_title($post_id);
         $status       = get_field('status', $post_id)["label"];
         $type_devis   = get_field('type_de_devis', $post_id)["label"];
         $user      = get_field('utilisateur', $post_id);
+        $client_final      = get_field('client_final', $post_id);
         $date_de_creation   = get_field('date_de_creation', $post_id);
         $date_expiration  = get_field('date_expiration', $post_id);
         $status_label           = get_field('status', $post_id)["label"];
@@ -22,7 +23,9 @@ class DevisPDFGenerator {
         $note_client     =    get_field('note_client', $post_id);
         $note_admin     =    get_field('note_admin', $post_id);
         $motif_de_refus_client     =    get_field('motif_de_refus_client', $post_id);
-        $produits_de_la_commande     =    get_field('produits_de_la_commande', $post_id);
+        //$produits_de_la_commande     =    get_field('produits_de_la_variation', $variation_id);
+        $formule     =    get_field('formule', $variation_id);
+        $variation_title     =    get_the_title( $variation_id);
         $option        = get_field('option', $post_id);
         $date_de_creation_formatted = $date_de_creation ? (new DateTime($date_de_creation))->format('d/m/Y \à H\hi') : '';
         $date_expiration_formatted  = $date_expiration ? (new DateTime($date_expiration))->format('d/m/Y \à H\hi') : '';
@@ -38,89 +41,21 @@ class DevisPDFGenerator {
 		$code_postal = get_user_meta($user_id, 'code_postal', true);
 		$selected_pays = get_user_meta($user_id, 'pays', true);
 
+        $client_final_id = $client_final->ID;
+
+        $client_final_prenom = get_user_meta($client_final_id, 'first_name', true);
+        $client_final_nom = get_user_meta($client_final_id, 'last_name', true);
+        $client_final_ville = get_user_meta($client_final_id, 'ville', true);
+		$client_final_code_postal = get_user_meta($client_final_id, 'code_postal', true);
+		$client_final_selected_pays = get_user_meta($client_final_id, 'pays', true);
+        $client_final_civilite = get_user_meta($client_final_id, 'civilite', true);
+        $client_final_denomination = get_user_meta($client_final_id, 'denomination', true);
+        $client_final_billing_address_1 = get_user_meta($client_final_id, 'billing_address_1', true);
+        $client_final_billing_phone = get_user_meta($client_final_id, 'billing_phone', true);
+      
+
         $today = current_time('d/m/Y g:i a'); // même format que date_de_creation
 
-        $args = [
-            'post_type' => 'remise',
-            'post_status' => 'publish',
-            'numberposts' => -1,
-            'meta_query' => [
-                [
-                    'key' => 'utilisateur',
-                    'value' => $user_id,
-                    'compare' => '='
-                ],
-                [
-                    'key' => 'statut',
-                    'value' => 'validee',
-                    'compare' => '='
-                ],
-                [
-                    'key' => 'date_dexpiration',
-                    'value' => $today,
-                    'compare' => '>=',
-                    'type' => 'DATETIME'
-                ]
-            ]
-        ];
-
-       
-
-        $remises = get_posts($args);
-        $percent_tva = 20;
-        $has_tva=true;
-
-        if (  in_array( 'customer_revendeur', (array) $user->roles ) ) {
-            // Vérifier le régime TVA stocké par ton formulaire
-            $regime = get_user_meta( $user_id, 'new_revendeur_account_regime_tva', true );
-
-            // Si le revendeur est en régime HT => pas de TVA
-            if ( strtoupper( $regime ) === 'HT' ) {
-                //$cart->remove_taxes( );
-                $has_tva=false;
-            }else{
-                //trouver sa taxe sur le pays
-                $percent_tva  = get_field('taux_tva', $post_id);
-                $tva  = get_field('tva', $post_id);
-            }
-            
-        }else{
-            if(get_field('taux_tva', $post_id)){
-                $percent_tva  = get_field('taux_tva', $post_id);
-                $tva  = get_field('tva', $post_id);
-            }
-            
-        }
-
-        
-
-       
-    
-        
-
-        /*
-        tu lira les produits comme ca
-        if ($option === 'ikn') {
-            // Afficher le répéteur produits_de_la_commande
-            if ($produits_de_la_commande) {
-                echo '<table class="table-devis">';
-                echo '<thead>
-                        <tr>
-                            <th>Produit</th>
-                            <th>Quantité</th>
-                            <th>Prix actuel</th>
-                            <th>Prix proposé</th>
-                        </tr>
-                    </thead>';
-                echo '<tbody>';
-
-                foreach ($produits_de_la_commande as $ligne) {
-                    
-                    $produit_relation = $ligne['produit'];
-                    $prix_propose = ($ligne['prix_propose'])?($ligne['prix_propose'].'€'):"en attente";
-                    $quantite = $ligne['quantite'];
-
-        */
 
         // 2. Générer le contenu HTML du PDF
         $logo_url = plugin_dir_url(dirname(__FILE__)) . 'assets/logo-pdf.png';
@@ -264,9 +199,18 @@ class DevisPDFGenerator {
 
             <table class="table-presentation" >
                 <tr>
-                    <td style="width: 50%;">
+                    <td style="width: 50%;">';
+                    if($client_final){
+                        $html .='<div>
+                            <p>Coordonnées du client :</p>
+                            <p><strong>Client :</strong> '.$client_final_civilite.' '.$client_final_nom.' '.$client_final_prenom.'</p>
+                            <p><strong>Adresse de facturation :</strong> '.$client_final_billing_address_1.'</p>
+                            <p><strong>Téléphone :</strong> '.$client_final_billing_phone.'</p>
+                            <p>'.$client_final_code_postal.' '.$client_final_ville.' '.$client_final_selected_pays.'</p>
+                        </div>';
+                    }
                       
-                    </td>
+                    $html .='</td>
                     <td style="width: 50%;">
                         <div>
                             <p>Coordonnées de facturation :</p>
@@ -282,215 +226,11 @@ class DevisPDFGenerator {
            
 
             <div class="section4">
-                <div class="section-title">Devis N° '.$post_id.'</div>
-                <table class="produits">
-                    <thead>
-                        <tr>
-                            <th>Désignation</th>
-                            <th>Quantité</th>
-                            <th>Durée</th>
-                            <th>PU proposé</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>';
-                    $total_produits=0;
-                    if ($produits_de_la_commande) {
-                        foreach ($produits_de_la_commande as $ligne) {
-                            $produit_relation = $ligne['produit'];
-                            $prix_propose = ($ligne['prix_propose'])?($ligne['prix_propose'].'€'):"en attente";
-                            $quantite = $ligne['quantite'];
-
-                            if (is_array($produit_relation) && isset($produit_relation[0])) {
-                                $produit_post = $produit_relation[0];
-                                $product_id = $produit_post->ID;
-                                $product_obj = wc_get_product($product_id);
-
-                                if ($product_obj) {
-
-                                    $product_name = $product_obj->get_name();
-                                    $product_price = $product_obj->get_price();
-                                    $product_img = wp_get_attachment_image_src( $product_obj->get_image_id(), 'thumbnail' );
-                                    $product_img_url = $product_img ? $product_img[0] : '';
-                                    $duree = $product_obj->get_attribute('pa_software_duration');
-                                }
-                            }
-                            
-
-                            $total = number_format($prix_propose * $quantite, 2) . " €";
-                            $total_produits+=number_format($prix_propose * $quantite, 2);
-                            $nom = '
-                            <div class= style="white-space:nowrap;">
-                                <img src="'.esc_url($product_img_url).'" width="50" height="50" style="vertical-align:middle; border-radius:4px; margin-right:10px;">
-                                <a href="'.get_permalink($product_id).'" class="product-link"><span style="vertical-align:middle;">'.wp_kses_post($product_name).'</span></a>
-                            </div>';
-
-                            $html .= "
-                            <tr>
-                                <td style='display:flex;align-items:center;gap:10px;'>
-                                $nom
-                                </td>
-                                <td>$quantite</td>
-                                <td>$duree</td>
-                                <td>".$prix_propose." </td>
-                                <td>$total</td>
-                            </tr>";
-                        }
-                    }
-
-
-                    /*
-                    if ($produits_de_la_commande) {
-                        foreach ($produits_de_la_commande as $ligne) {
-                            $produit_relation = $ligne['produit'];
-                            $prix_propose = ($ligne['prix_propose'])?($ligne['prix_propose'].'€'):"en attente";
-                            $quantite = $ligne['quantite'];
-
-                            if (is_array($produit_relation) && isset($produit_relation[0])) {
-                                $produit_post = $produit_relation[0];
-                                $product_id = $produit_post->ID;
-                                $product_obj = wc_get_product($product_id);
-
-                                if ($product_obj) {
-
-                                    $product_name = $product_obj->get_name();
-                                    $product_price = $product_obj->get_price();
-                                    $product_img = wp_get_attachment_image_src( $product_obj->get_image_id(), 'thumbnail' );
-                                    $product_img_url = $product_img ? $product_img[0] : '';
-                                    $duree = $product_obj->get_attribute('pa_software_duration');
-                                }
-                            }
-                            
-
-                            $total = number_format($prix_propose * $quantite, 2) . " €";
-                            $total_produits+=number_format($prix_propose * $quantite, 2);
-                            $nom = '
-                            <div class= style="white-space:nowrap;">
-                                <img src="'.esc_url($product_img_url).'" width="50" height="50" style="vertical-align:middle; border-radius:4px; margin-right:10px;">
-                                <a href="'.get_permalink($product_id).'" class="product-link"><span style="vertical-align:middle;">'.esc_html($product_name).'</span></a>
-                            </div>';
-
-                            $html .= "
-                            <tr>
-                                <td style='display:flex;align-items:center;gap:10px;'>
-                                $nom
-                                </td>
-                                <td>$quantite</td>
-                                <td>$duree</td>
-                                <td>".$prix_propose." €</td>
-                                <td>$total</td>
-                            </tr>";
-                        }
-                    }
-
-
-                    if ($produits_de_la_commande) {
-                        foreach ($produits_de_la_commande as $ligne) {
-                            $produit_relation = $ligne['produit'];
-                            $prix_propose = ($ligne['prix_propose'])?($ligne['prix_propose'].'€'):"en attente";
-                            $quantite = $ligne['quantite'];
-
-                            if (is_array($produit_relation) && isset($produit_relation[0])) {
-                                $produit_post = $produit_relation[0];
-                                $product_id = $produit_post->ID;
-                                $product_obj = wc_get_product($product_id);
-
-                                if ($product_obj) {
-
-                                    $product_name = $product_obj->get_name();
-                                    $product_price = $product_obj->get_price();
-                                    $product_img = wp_get_attachment_image_src( $product_obj->get_image_id(), 'thumbnail' );
-                                    $product_img_url = $product_img ? $product_img[0] : '';
-                                    $duree = $product_obj->get_attribute('pa_software_duration');
-                                }
-                            }
-                            
-
-                            $total = number_format($prix_propose * $quantite, 2) . " €";
-                            $total_produits+=number_format($prix_propose * $quantite, 2);
-                            $nom = '
-                            <div class= style="white-space:nowrap;">
-                                <img src="'.esc_url($product_img_url).'" width="50" height="50" style="vertical-align:middle; border-radius:4px; margin-right:10px;">
-                                <a href="'.get_permalink($product_id).'" class="product-link"><span style="vertical-align:middle;">'.esc_html($product_name).'</span></a>
-                            </div>';
-
-                            $html .= "
-                            <tr>
-                                <td style='display:flex;align-items:center;gap:10px;'>
-                                $nom
-                                </td>
-                                <td>$quantite</td>
-                                <td>$duree</td>
-                                <td>".$prix_propose." €</td>
-                                <td>$total</td>
-                            </tr>";
-                        }
-                    }
-
-                    */
+                <div class="section-title">Devis N° '.$variation_id.'</div>';
                     
-                    // Calcul des remises
-                    $total_discount_amount = 0;
-                    if (!empty($remises)) {
-                        foreach ($remises as $remise) {
-                            $percent = floatval(get_field('pourcentage', $remise));
-                            $total_discount_amount += ($percent / 100) * $total_produits;
-                        }
-                    }
-
-                    
-
-                    // Sous-total (produits - remises)
-                    $sous_total = $total_produits - $total_discount_amount;
-                    $tva = 0; 
-                    if($has_tva){
-                        $tva = ($sous_total * $percent_tva) / 100;
-                    }
-                    
-                    $total_ttc = $sous_total + $tva;
-
-                    // Ligne Total HT
-                    $html .= '<tr>';
-                    $html .= '<td colspan="4" style="text-align:right;"> Total HT</td>';
-                    $html .= '<td>'.number_format($total_produits, 2, ',', ' ').' €</td>';
-                    $html .= '</tr>';
-
-                    
-
-                    // Ligne Remises
-                    if ($total_discount_amount > 0) {
-                        $html .= '<tr>';
-                        $html .= '<td colspan="4" style="text-align:right;">Remises commerciales</td>';
-                        $html .= '<td>-'.number_format($total_discount_amount, 2, ',', ' ').' €</td>';
-                        $html .= '</tr>';
-                    }
-
-                    // Ligne Sous-total HT
-                    $html .= '<tr>';
-                    $html .= '<td colspan="4" style="text-align:right;">Sous-total HT</td>';
-                    $html .= '<td>'.number_format($sous_total, 2, ',', ' ').' €</td>';
-                    $html .= '</tr>';
-                    
-                    if($has_tva){
-                        // Ligne TVA
-                        $html .= '<tr>';
-                        $html .= '<td colspan="4" style="text-align:right;">TVA '.$percent_tva.'%</td>';
-                        $html .= '<td>'.number_format($tva, 2, ',', ' ').' €</td>';
-                        $html .= '</tr>';
-                    }
-                    
-                    
-
-                    // Ligne Total TTC
-                    $html .= '<tr>';
-                    $html .= '<td colspan="4" style="text-align:right; font-weight:bold;">Total TTC</td>';
-                    $html .= '<td style="font-weight:bold;">'.number_format($total_ttc, 2, ',', ' ').' €</td>';
-                    $html .= '</tr>';
-
+                $html .= $formule;
 
             $html .= '
-                    </tbody>
-                </table>
             </div>
 
             <div class="section5">
@@ -523,7 +263,7 @@ class DevisPDFGenerator {
             wp_mkdir_p($folder);
         }
 
-        $file_path = $folder . "devis-$post_id.pdf";
+        $file_path = $folder . sanitize_title($variation_title).'.pdf';
 
         // 4. Générer le PDF (DOMPDF ou mPDF)
         require_once __DIR__ . '/../libs/dompdf/autoload.inc.php';
@@ -541,12 +281,12 @@ class DevisPDFGenerator {
         file_put_contents($file_path, $dompdf->output());
 
         // 5. Importer dans la médiathèque WordPress
-        $file_url  = $upload_dir['baseurl'] . '/devis/devis-' . $post_id . '.pdf';
-        $attachment_id = self::register_pdf_as_media($file_path, $file_url, $post_id);
+        $file_url  = $upload_dir['baseurl'] . '/devis/' . sanitize_title($variation_title) . '.pdf';
+        $attachment_id = self::register_pdf_as_media($file_path, $file_url, $variation_id);
 
         // 6. Mettre à jour le champ ACF type "File"
         if ($attachment_id) {
-            update_field('recapitulatif_pdf', $attachment_id, $post_id);
+            update_field('recapitulatif_pdf', $attachment_id, $variation_id);
         }
 
         return $attachment_id;
@@ -563,7 +303,7 @@ class DevisPDFGenerator {
         $attachment = [
             'guid'           => $file_url,
             'post_mime_type' => $filetype['type'],
-            'post_title'     => "Devis PDF #$post_id",
+            'post_title'     => "$variation_title",
             'post_content'   => '',
             'post_status'    => 'inherit'
         ];

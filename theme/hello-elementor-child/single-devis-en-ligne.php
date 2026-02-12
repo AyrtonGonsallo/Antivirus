@@ -11,38 +11,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
 
-
-$id = get_the_ID();
+$variation_refuser_id = 0;
+$devis_id = get_the_ID();//devis
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
-    // bouton Accepter cliqué
-    if (isset($_POST['accept-devis'])) {
-        update_field('status', 'acceptee', $id);
-        $user      = get_field('utilisateur', $devis_id);
-        $user_id = $user->ID;
-        $customer = new WC_Customer( $user_id );
-        $tax_rates = WC_Tax::get_rates("",$customer );
-        $first_rate = reset($tax_rates);
-        $percent_tva = $first_rate['rate'];
-        $title_tva = $first_rate['label'];
-        update_field('tva', $title_tva, $id);
-        update_field('taux_tva', $percent_tva, $id);
-
-        wc_add_notice("Devis accepté avec succès.", "success");
-        wp_safe_redirect('/mon-compte/mes-devis/');
-        exit;
-    }
 
     // bouton Refuser cliqué (affiche formulaire)
     if (isset($_POST['refuse-devis'])) {
         $show_refuse_form = true;
+        $variation_refuser_id =  intval($_POST['variation_refuser_id']);
     }
 
     // envoi du motif de refus
     if (isset($_POST['send-refuse'])) {
+        $variation_id = intval($_POST['variation_id']);
         $motif = sanitize_textarea_field($_POST['motif']);
-        update_field('status', 'rejetee', $id);
-        update_field('motif_de_refus_client', $motif, $id);
+        update_field('statut', 'rejete', $variation_id);
+        update_field('status', '5', $devis_id);
+        update_field('motif_de_refus_client', $motif, $variation_id);
         wc_add_notice("Refus envoyé avec succès.", "success");
         wp_safe_redirect('/mon-compte/mes-devis/');
         exit;
@@ -50,71 +36,50 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 }
 
 
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["action"] === "convert_devis_to_cart") {
 
-    $devis_id = intval($_POST['devis_id']);
-    $produits_de_la_commande = get_field('produits_de_la_commande', $devis_id);
-
-    if ($produits_de_la_commande) {
-
-        if (WC()->cart) {
-            WC()->cart->empty_cart();
-        }
-
-        foreach ($produits_de_la_commande as $ligne) {
-            
-            $prod_obj = $ligne['produit'][0]; // ACF relation
-            $qty      = (int)$ligne['quantite'];
-            $prix     = (float)$ligne['prix_propose'];
-
-            WC()->cart->add_to_cart(
-                $prod_obj->ID,
-                $qty,
-                0,
-                [],
-                [
-                    'prix_force' => $prix,
-                    'source_devis' => $devis_id
-                ]
-            );
-        }
-
-        
-        update_field('status', 'convertie', $id);
-        wc_add_notice("Votre devis à été converti en panier.", "success");
-        wp_safe_redirect(wc_get_cart_url());
-        exit;
-    }
-}
-
-
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["action"] === "accept_and_convert_devis_to_cart") {
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["action"] === "accept_and_convert_variation_to_cart") {
         
         // ---------- accepté
         $user      = get_field('utilisateur', $devis_id);
+        $variation_id = intval($_POST['variation_id']);
         $user_id = $user->ID;
-        $customer = new WC_Customer( $user_id );
-        $tax_rates = WC_Tax::get_rates("",$customer );
-        $first_rate = reset($tax_rates);
-        $percent_tva = $first_rate['rate'];
-        $title_tva = $first_rate['label'];
-        update_field('tva', $title_tva, $id);
-        update_field('taux_tva', $percent_tva, $id);
+        $total_ht  = (float) get_field('total_ht', $variation_id);
+       
+        $remise_fields_map = [
+            "remise_changer_avast" => 'Remise changement',
+            "remise_renewal"        => 'Remise renouvellement de licences',
+            "remise_administration_mairie"       => 'Remise administrations et mairies',
+            "remise_etalissements" => 'Remise établissements scolaires et associations',
+            "remise_cumulee" => 'Autre remise',
+            "remise_statutaire" => 'Autre remise',
+            "remise_commerciale" => 'Autre remise',
+            "remise_revendeur" => 'Remise revendeur',
+        ];
 
-        wc_add_notice("Devis accepté avec succès.", "success");
+         $remise_fields = [
+            'remise_renewal',
+            'remise_cumulee',
+            'remise_statutaire',
+            'remise_commerciale',
+            'remise_revendeur',
+            'remise_administration_mairie',
+            'remise_etalissements',
+            'remise_changer_avast'
+        ];
+       
         
         //--convertir en panier
 
-         $devis_id = intval($_POST['devis_id']);
-        $produits_de_la_commande = get_field('produits_de_la_commande', $devis_id);
+        
+        $produits_de_la_variation = get_field('produits_de_la_variation', $variation_id);
 
-        if ($produits_de_la_commande) {
+        if ($produits_de_la_variation) {
 
             if (WC()->cart) {
                 WC()->cart->empty_cart();
             }
 
-            foreach ($produits_de_la_commande as $ligne) {
+            foreach ($produits_de_la_variation as $ligne) {
                 
                 $prod_obj = $ligne['produit'][0]; // ACF relation
                 $qty      = (int)$ligne['quantite'];
@@ -132,9 +97,40 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
                 );
             }
 
+            $remises_devis = [];
+            $base_calcul = $total_ht; // on démarre sur le total initial
+            foreach ($remise_fields as $field) {
+
+                $percent = (float) get_field($field, $variation_id);
+
+                if ($percent > 0) {
+
+                    $label = $remise_fields_map[$field];
+
+                    // 🔥 calcul sur la base actuelle, pas sur le total initial
+                    $montant_remise = ($percent / 100) * $base_calcul;
+
+                    error_log("remise $label $percent % = $montant_remise sur $base_calcul");
+
+                    $remises_devis[] = [
+                        'label'  => "$label $percent %",
+                        'amount' => $montant_remise
+                    ];
+
+                    // 🔥 on diminue la base pour la prochaine remise
+                    $base_calcul -= $montant_remise;
+                }
+            }
+
+
+            WC()->session->set('devis_remises', $remises_devis);
+            WC()->session->set('from_devis', true);
+
             
-            update_field('status', 'accepte_par_le_client', $id);
+            update_field('statut', 'accepte', $variation_id);
+            update_field('status', '4', $devis_id);
             wc_add_notice("Votre devis à été converti en panier.", "success");
+            
             wp_safe_redirect(wc_get_cart_url());
             exit;
         }
@@ -158,22 +154,21 @@ get_header();
 	
 
     <div class="layout-account">
-        <?php
-            $menu_items = apply_filters( 'woocommerce_account_menu_items', wc_get_account_menu_items() );
+        <nav class="woocommerce-MyAccount-navigation" aria-label="<?php esc_html_e( 'Account pages', 'woocommerce' ); ?>">
+            <ul>
+                <?php foreach ( wc_get_account_menu_items() as $endpoint => $label ) : 
+                    $active=($endpoint=="mes-devis")?"active":"";
+                    ?>
+                    <li class="<?php echo wc_get_account_menu_item_classes( $endpoint ); ?> <?php echo $active; ?>">
+                        <a href="<?php echo esc_url( wc_get_account_endpoint_url( $endpoint ) ); ?>" <?php echo wc_is_current_account_menu_item( $endpoint ) ? 'aria-current="page"' : ''; ?>>
+                            <?php echo esc_html( $label ); ?>
+                        </a>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        </nav>
 
-            echo '<nav class="woocommerce-MyAccount-navigation"><ul>';
-
-            foreach ( $menu_items as $endpoint => $label ) {
-                $active=($endpoint=="mes-devis")?"active":"";
-                
-                $url = wc_get_account_endpoint_url( $endpoint );
-                echo '<li class="' . esc_attr($endpoint) . ' '.$active.'">';
-                echo '<a href="' . esc_url($url) . '">' . esc_html($label) . '</a>';
-                echo '</li>';
-            }
-
-            echo '</ul></nav>';
-        ?>
+        
         <div class="page-content">
             <?php the_title( '<h1 class="entry-title">', '</h1>' ); ?>
 
@@ -188,9 +183,8 @@ get_header();
             $compt2save     =    get_field('compt2save', $post->ID);
             $software_duration     =    get_field('software_duration', $post->ID)["label"];
             $note_client     =    get_field('note_client', $post->ID);
-            $note_admin     =    get_field('note_admin', $post->ID);
-            $motif_de_refus_client     =    get_field('motif_de_refus_client', $post->ID);
-            $produits_de_la_commande     =    get_field('produits_de_la_commande', $post->ID);
+            $variations  = get_field('variations', $post->ID);
+           
             $option        = get_field('option', $post->ID);
             $date_de_creation_formatted = $date_de_creation ? (new DateTime($date_de_creation))->format('d/m/Y \à H\hi') : '';
             $date_expiration_formatted  = $date_expiration ? (new DateTime($date_expiration))->format('d/m/Y \à H\hi') : '';
@@ -201,12 +195,12 @@ get_header();
 
             champs date_de_creation Sélecteur de date et heure, 
             option bouton radio(valeur/libellé retourne la valeur), 
-            compt2save Zone de texte, produits_de_la_commande est un Répéteur et il a les sous champs 
+            compt2save Zone de texte, produits_de_la_variation est un Répéteur et il a les sous champs 
             produit Relation retourne l'objet, prix_propose nombre,
             et quantite nombre,
             software_duration bouton radio(valeur/libellé retourne la valeur), 
             comment Zone de texte, 
-            on affichera la section produits_de_la_commande si le option est ikn sinon on affiche compt2save
+            on affichera la section produits_de_la_variation si le option est ikn sinon on affiche compt2save
 
             */
 
@@ -216,86 +210,63 @@ get_header();
             echo "<p><strong>Type de devis:</strong> $type_de_devis_label</p>";
             echo "<p><strong>Durée du logiciel:</strong> $software_duration</p>";
             echo "<p><strong>Note client:</strong> $note_client</p>";
-            echo "<p><strong>Note admin:</strong> $note_admin</p>";
-            echo "<p><strong>Motif de refus client:</strong> $motif_de_refus_client</p>";
             if ($option === 'ikn') {
-                // Afficher le répéteur produits_de_la_commande
-                if ($produits_de_la_commande) {
-                    echo '<table class="table-devis">';
-                    echo '<thead>
-                            <tr>
-                                <th>Produit</th>
-                                <th>Quantité</th>
-                                <th>Prix d\'achat actuel</th>
-                                <th>Prix de renouvellement actuel</th>
-                                <th>Prix d\'achat proposé</th>
-                            </tr>
-                        </thead>';
-                    echo '<tbody>';
 
-                    foreach ($produits_de_la_commande as $ligne) {
+                foreach ( $variations as $variation ) : 
+                    
+                    $variation_title     =    get_the_title( $variation->ID);
+                    $produits_de_la_variation     =    get_field('produits_de_la_variation', $variation->ID);
+                    $formule     =    get_field('formule', $variation->ID);
+                    $note_admin     =    get_field('note_admin', $variation->ID);
+                    $statut_variation           = get_field('statut', $variation->ID);
+                     //$motif_de_refus_client     =    get_field('motif_de_refus_client', $variation->ID);
+
+                    if ($statut_variation === 'rejete')
+                        continue;
+
+                    echo '<h3 class="titre-variation-devis">'.$variation_title.'</h3>' ;
+                    echo '<div class="table-devis-details">'.$formule.'</div>' ;
+                    echo "<p><strong>Note admin:</strong> $note_admin</p>";
                         
-                        $produit_relation = $ligne['produit'];
-                        $prix_propose = ($ligne['prix_propose'])?($ligne['prix_propose'].'€'):"en attente";
-                        $quantite = $ligne['quantite'];
+                    // Afficher les options
+                    if($type_de_devis_value=="admin" || $type_de_devis_value=="corrige"){
 
-                        if (is_array($produit_relation) && isset($produit_relation[0])) {
-                            $produit_post = $produit_relation[0];
-                            $product_id = $produit_post->ID;
-                            $product_obj = wc_get_product($product_id);
+                
+
+                        if ($statut_variation === 'en_attente') : 
+
+                            // Si bouton refuser n’a pas encore été cliqué 
+                            if (empty($show_refuse_form) || ($variation_refuser_id != $variation->ID)) : ?>
+                                <div class="action-btns">
+                                    <form method="POST">
+                                        <input type="hidden" name="action" value="accept_and_convert_variation_to_cart">
+                                        <input type="hidden" name="variation_id" value="<?php echo $variation->ID;?>">
+                                        <button type="submit" class="btn-cart">Accepter et convertir en panier</button>
+                                    </form>
+                                    <form method="POST">
+                                        <input type="hidden" name="variation_refuser_id" value="<?php echo $variation->ID;?>">
+                                        <button type="submit" name="refuse-devis" class="devis-btn tbn-no">Refuser</button>
+                                    </form>
+                                </div>
+                            <?php elseif (!empty($show_refuse_form) && $variation_refuser_id == $variation->ID) : ?>
+                                <form method="POST">
+                                    <textarea name="motif" required placeholder="Motif du refus"></textarea>
+                                    <input type="hidden" name="variation_id" value="<?php echo $variation->ID;?>">
+                                    <br>
+                                    <button type="submit" name="send-refuse">Confirmer le refus</button>
+                                </form>
+                            <?php endif; ?>
+
+                        <?php endif; ?>
+                       
+
+                
 
 
-                           
-                            /*
-                            var_dump($product_obj->get_sale_price());
-                            var_dump($product_obj->get_regular_price());
-                            var_dump($product_obj->get_price());
-                            if ( $product_obj && $product_obj->is_type( 'variation' ) ) {
-                                $parent_id      = $product_obj->get_parent_id();
-                                $parent_product = wc_get_product( $parent_id );
-                            }
-                            $prices = wcs_get_variation_prices( $product_obj, $parent_product );
+            <?php }
+                    
 
-                            var_dump( $prices );
-                            */
-
-                            if ( $product_obj && $product_obj->is_type( 'variation' ) ) {
-                                $parent_id      = $product_obj->get_parent_id();
-                                $parent_product = wc_get_product( $parent_id );
-                            }
-                            $prices = wcs_get_variation_prices( $product_obj, $parent_product );
-                            $premier_paiement = $prices["sign_up_fee"];
-                            
-
-                            if ($product_obj) {
-
-                                $product_name = $product_obj->get_name();
-                                $product_price = $product_obj->get_price();
-                                $product_img = wp_get_attachment_image_src( $product_obj->get_image_id(), 'thumbnail' );
-                                $product_img_url = $product_img ? $product_img[0] : '';
-
-                                echo '<tr>';
-                                
-                                echo '<td style="display:flex;align-items:center;gap:10px; padding: 8px;border-width: 0px 0px 1px 1px;">';
-                                echo '<a style="display: flex;gap: 10px; align-items: center; justify-content: flex-start;" href="'.get_permalink($product_id).'">';
-                                    if($product_img_url)
-                                        echo '<img src="'.esc_url($product_img_url).'" width="50" height="50" style="border-radius:4px;">';
-                                    echo '<span>'.wp_kses_post($product_name).'</span>';
-                                echo '</a>';
-                                echo '</td>';
-
-                                echo '<td>'.esc_html($quantite).'</td>';
-                                 echo '<td>'.esc_html($premier_paiement).'€</td>';
-                                echo '<td>'.esc_html($product_price).'€</td>';
-                                echo '<td>'.esc_html($prix_propose).'</td>';
-                                
-                                echo '</tr>';
-                            }
-                        }
-                    }
-
-                    echo '</tbody></table>';
-                }
+                endforeach; 
 
 
             } else {
@@ -309,50 +280,7 @@ get_header();
 
             ?>
            
-            <?php if($type_de_devis_value=="admin" || $type_de_devis_value=="corrige"){?>
-
-                
-
-                    <?php if ($status_value === 'en_attente') : ?>
-
-                        <!-- Si bouton refuser n’a pas encore été cliqué -->
-                        <?php if (empty($show_refuse_form)) : ?>
-                            <!--
-                                <form method="POST">
-                                    <button type="submit" name="accept-devis" class="devis-btn tbn-yes">Accepter</button>
-                                </form>
-                            -->
-                            <div class="action-btns">
-                                <form method="POST">
-                                    <input type="hidden" name="action" value="accept_and_convert_devis_to_cart">
-                                    <input type="hidden" name="devis_id" value="<?php echo $post->ID;?>">
-                                    <button type="submit" class="btn-cart">Accepter et convertir en panier</button>
-                                </form>
-                                <form method="POST">
-                                    <button type="submit" name="refuse-devis" class="devis-btn tbn-no">Refuser</button>
-                                </form>
-                            </div>
-                        <?php else : ?>
-                            <form method="POST">
-                                <textarea name="motif" required placeholder="Motif du refus"></textarea>
-                                <br>
-                                <button type="submit" name="send-refuse">Confirmer le refus</button>
-                            </form>
-                        <?php endif; ?>
-
-                    <?php endif; ?>
-                    <?php if ($status_value === 'acceptee') : ?>
-                        <form method="post">
-                            <input type="hidden" name="action" value="convert_devis_to_cart">
-                            <input type="hidden" name="devis_id" value="'.$post->ID.'">
-                            <button type="submit" class="btn-cart">🛒 Transformer en panier</button>
-                        </form>
-                    <?php endif; ?>
-
-                
-
-
-            <?php }?>
+            
         </div>
     </div>
 
