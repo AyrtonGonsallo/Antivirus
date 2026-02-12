@@ -378,33 +378,65 @@ if ( $product->is_in_stock() ) : ?>
 			}else{
 				$(".btn-remise").prop("disabled", false);
 
-				let totalPourcentage = 0;
-				values.forEach(v => {
-					const match = v.match(/-([0-9]+)%/);
-					if (match) {
-						totalPourcentage += parseInt(match[1], 10);
-					}
-				});
-				console.log("Pourcentage total :", totalPourcentage + "%");
+				
 				let prixFinal = 0
 
-				if($(".prix-total").length || $(".pourcentage-remise-depart").length){
+				 var hasRemise = $(".pourcentage-remise-depart").filter(function() {
+                    return $(this).text().trim() !== "";
+                }).length > 0;
+
+                // Vérifier si le prix total contient un texte
+                var hasPrix = $(".prix-total").filter(function() {//prix de base du produit
+                    return $(this).text().trim() !== "";
+                }).length > 0;
+
+                console.log("Contient remise :", hasRemise);
+                console.log("Contient prix :", hasPrix);
+
+                // Exemple de condition
+                if (hasRemise && hasPrix) {
 					let prixDepart = parseFloat($(".prix-total").text().replace(',', '.'));
 					let pourcentageRemise = parseFloat($(".pourcentage-remise-depart").text().replace(',', '.'));
-					let prixRemiseRevendeur =  (prixDepart * pourcentageRemise / 100);
-					let prixRemiseCom =  (prixDepart * totalPourcentage / 100);
+					let prixRemiseRevendeur =  (prixDepart * pourcentageRemise / 100); //conserver prixDepart - prixRemiseRevendeur et cummulee a partir de la
 					// Appliquer la réduction
-					 prixFinal = prixDepart - prixRemiseRevendeur - prixRemiseCom;
+					 let prixApresRR = prixDepart - prixRemiseRevendeur;
+                     let prixActuel = prixApresRR;
 					 console.log("prixDepart",prixDepart)
-					 console.log("pourcentageRemise",pourcentageRemise)
+					 console.log("pourcentageRemiseR",pourcentageRemise)
 					 console.log("prixRemiseRevendeur",prixRemiseRevendeur)
-					 console.log("prixRemiseCom",prixRemiseCom)
-					 console.log("prixFinal",prixFinal)
+					 console.log("prixApresRR",prixApresRR)
+                      values.forEach(v => {
+                        const match = v.match(/-([0-9]+)%/);
+                        if (match) {
+                            const pourcentage = parseInt(match[1], 10);
+                            const remise = prixActuel * pourcentage / 100;
+                            prixActuel = prixActuel - remise;
+                            
+                            console.log(`  ${v}: -${pourcentage}% = -${remise.toFixed(2)} EUR → ${prixActuel.toFixed(2)} EUR`);
+                        }
+                    });
+
+                    prixFinal = prixActuel;
+                    console.log(`💰 Prix final: ${prixFinal.toFixed(2)} EUR`);
 				}else{
 					let prixDepart = parseFloat($(".prix-remise-depart").text().replace(',', '.'));
-					
-					// Appliquer la réduction
-					prixFinal = prixDepart - (prixDepart * totalPourcentage / 100);
+					let prixActuel = prixDepart;
+
+                    console.log(`Prix départ: ${prixActuel.toFixed(2)} EUR`);
+
+                    values.forEach(v => {
+                        const match = v.match(/-([0-9]+)%/);
+                        if (match) {
+                            const pourcentage = parseInt(match[1], 10);
+                            const remise = prixActuel * pourcentage / 100;
+                            prixActuel = prixActuel - remise;
+                            
+                            console.log(`  ${v}: -${pourcentage}% = -${remise.toFixed(2)} EUR → ${prixActuel.toFixed(2)} EUR`);
+                        }
+                    });
+
+                    prixFinal = prixActuel;
+                    console.log(`💰 Prix final: ${prixFinal.toFixed(2)} EUR`);
 				}
 				
 				// Sécurité (pas négatif)

@@ -76,7 +76,11 @@ do_action( 'woocommerce_before_account_orders', $has_orders ); ?>
 										echo  '<br>Clients<br>';
 										foreach ($order->get_items('line_item') as $item) {
 											foreach ($item->get_meta_data() as $meta) {
-												echo  $meta->value . '<br>';
+												if($meta->key=='Client'){
+													//echo $meta->key . ' : ' . $meta->value . '<br>';
+													echo  $meta->value . '<br>';
+												}
+												
 											}
 										}
 									}

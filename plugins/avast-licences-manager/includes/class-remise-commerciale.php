@@ -65,10 +65,23 @@ class ALM_Remise_Commerciale {
 
                 foreach ($options as $option) {
 
+                    $exists = get_posts([
+                        'post_type' => 'remise',
+                        'post_status' => 'publish',
+                        'numberposts' => 1,
+                        'meta_query' => [
+                            ['key' => 'utilisateur', 'value' => $user_id],
+                            ['key' => 'type', 'value' => $option],
+                            ['key' => 'statut', 'value' => 'validee'],
+                        ]
+                    ]);
+                    
+                    if ($exists) continue;
+
                     // 1️⃣ Créer la remise CPT
                     $remise_id = wp_insert_post([
                         'post_type'   => 'remise',
-                        'post_title'  => "Demande de remise : $option - Utilisateur $user_id",
+                        'post_title'  => "Demande de remise : $option - Utilisateur $user_id",//si une existe deja avec ce titre ne pas inserer
                         'post_status' => 'publish',
                         'post_author' => $user_id,
                     ]);
@@ -282,19 +295,29 @@ class ALM_Remise_Commerciale {
         $remises = $this->get_user_remises($user_id);
         if (empty($remises)) return;
 
-        $base_total = $cart->get_subtotal();
+        // Commencer avec le sous-total
+        $prix_actuel = $cart->get_subtotal();
+        error_log("prix_actuel $prix_actuel ");
 
         foreach ($remises as $remise) {
-
             $percent = (float) get_field('pourcentage', $remise);
             $type    = get_field('type', $remise);
+            $titre   =  'Remise '.$type;
 
-            if ($percent > 0 && $base_total > 0) {
+            if ($percent > 0 && $prix_actuel > 0) {
+                
+                // ✅ Calcul basé sur le prix actuel (résultat des remises précédentes)
+                $discount_amount = ($percent / 100) * $prix_actuel;
+                
+                // Mettre à jour le prix pour la prochaine itération
+                $prix_actuel = $prix_actuel - $discount_amount;
 
-                $discount_amount = ($percent / 100) * $base_total;
-
-                $cart->add_fee(
-                    $type ?: __('Remise', 'woocommerce'),
+                error_log("$titre : $discount_amount");
+                error_log("prix_actuel $prix_actuel ");
+                
+                // Ajouter la fee
+                 $cart->add_fee(
+                    $titre ?: __('Remise', 'woocommerce'),
                     -$discount_amount,
                     false
                 );
