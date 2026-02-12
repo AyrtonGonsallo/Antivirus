@@ -264,6 +264,10 @@ class ALM_Remise_Commerciale {
                 );
             }
 
+            // On supprime le flag et les remises pour les prochains ajouts normaux
+            WC()->session->__unset('from_devis');
+            WC()->session->__unset('devis_remises');
+
             return; // 🔥 on bloque les remises classiques
         }
 

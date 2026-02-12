@@ -183,6 +183,19 @@ get_header();
             $compt2save     =    get_field('compt2save', $post->ID);
             $software_duration     =    get_field('software_duration', $post->ID)["label"];
             $note_client     =    get_field('note_client', $post->ID);
+            $client_final      = get_field('client_final', $post->ID);
+            if($client_final){
+                $client_final_id = $client_final->ID;
+                $client_final_prenom = get_user_meta($client_final_id, 'first_name', true);
+                $client_final_nom = get_user_meta($client_final_id, 'last_name', true);
+                $client_final_ville = get_user_meta($client_final_id, 'ville', true);
+                $client_final_code_postal = get_user_meta($client_final_id, 'code_postal', true);
+                $client_final_selected_pays = get_user_meta($client_final_id, 'pays', true);
+                $client_final_civilite = get_user_meta($client_final_id, 'civilite', true);
+                $client_final_denomination = get_user_meta($client_final_id, 'denomination', true);
+                $client_final_billing_address_1 = get_user_meta($client_final_id, 'billing_address_1', true);
+                $client_final_billing_phone = get_user_meta($client_final_id, 'billing_phone', true);
+            }
             $variations  = get_field('variations', $post->ID);
            
             $option        = get_field('option', $post->ID);
@@ -210,6 +223,16 @@ get_header();
             echo "<p><strong>Type de devis:</strong> $type_de_devis_label</p>";
             echo "<p><strong>Durée du logiciel:</strong> $software_duration</p>";
             echo "<p><strong>Note client:</strong> $note_client</p>";
+             if($client_final){
+                $client_final_presentation = '<div>
+                    <p>Coordonnées du client :</p>
+                    <p><strong>Client :</strong> '.$client_final_civilite.' '.$client_final_nom.' '.$client_final_prenom.'</p>
+                    <p><strong>Adresse de facturation :</strong> '.$client_final_billing_address_1.'</p>
+                    <p><strong>Téléphone :</strong> '.$client_final_billing_phone.'</p>
+                    <p>'.$client_final_code_postal.' '.$client_final_ville.' '.$client_final_selected_pays.'</p>
+                </div>';
+                echo $client_final_presentation;
+            }
             if ($option === 'ikn') {
 
                 foreach ( $variations as $variation ) : 

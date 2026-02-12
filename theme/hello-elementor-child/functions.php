@@ -942,7 +942,7 @@ function shortcode_menu_entreprise($atts) {
     
     $output .= "</div></div>"; // .categories-row, .menu-entreprise-wrapper
     
-    set_transient($cache_key, $output, 300);
+    set_transient($cache_key, $output, DAY_IN_SECONDS);
     return $output;
 }
 add_shortcode('menu_entreprise', 'shortcode_menu_entreprise');

@@ -40,19 +40,18 @@ class DevisPDFGenerator {
 		$ville = get_user_meta($user_id, 'ville', true);
 		$code_postal = get_user_meta($user_id, 'code_postal', true);
 		$selected_pays = get_user_meta($user_id, 'pays', true);
-
-        $client_final_id = $client_final->ID;
-
-        $client_final_prenom = get_user_meta($client_final_id, 'first_name', true);
-        $client_final_nom = get_user_meta($client_final_id, 'last_name', true);
-        $client_final_ville = get_user_meta($client_final_id, 'ville', true);
-		$client_final_code_postal = get_user_meta($client_final_id, 'code_postal', true);
-		$client_final_selected_pays = get_user_meta($client_final_id, 'pays', true);
-        $client_final_civilite = get_user_meta($client_final_id, 'civilite', true);
-        $client_final_denomination = get_user_meta($client_final_id, 'denomination', true);
-        $client_final_billing_address_1 = get_user_meta($client_final_id, 'billing_address_1', true);
-        $client_final_billing_phone = get_user_meta($client_final_id, 'billing_phone', true);
-      
+        if($client_final){
+            $client_final_id = $client_final->ID;
+            $client_final_prenom = get_user_meta($client_final_id, 'first_name', true);
+            $client_final_nom = get_user_meta($client_final_id, 'last_name', true);
+            $client_final_ville = get_user_meta($client_final_id, 'ville', true);
+            $client_final_code_postal = get_user_meta($client_final_id, 'code_postal', true);
+            $client_final_selected_pays = get_user_meta($client_final_id, 'pays', true);
+            $client_final_civilite = get_user_meta($client_final_id, 'civilite', true);
+            $client_final_denomination = get_user_meta($client_final_id, 'denomination', true);
+            $client_final_billing_address_1 = get_user_meta($client_final_id, 'billing_address_1', true);
+            $client_final_billing_phone = get_user_meta($client_final_id, 'billing_phone', true);
+        }
 
         $today = current_time('d/m/Y g:i a'); // même format que date_de_creation
 
