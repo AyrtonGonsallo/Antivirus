@@ -39,7 +39,7 @@
             <button id="faq-load-more"
                     data-page="1"
                     data-max="<?php echo $wp_query->max_num_pages; ?>">
-                En savoir plus
+                Voir plus
             </button>
         </div>
     </div>

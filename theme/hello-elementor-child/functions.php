@@ -46,7 +46,7 @@ function theme_enfant_enqueue_scripts() {
     );
 }
 add_action('wp_enqueue_scripts', 'theme_enfant_enqueue_scripts');
-/*
+
 // === Custom Post Type : FAQ ===
 function create_faq_post_type() {
     $labels = array(
@@ -97,7 +97,7 @@ function pre_handle_404($preempt, $wp_query)
 }
 add_filter( 'pre_handle_404', 'pre_handle_404', 10, 2 );
 
-*/
+
 
 
 // Tableau de langues exemple : ['en_GB', 'fr_FR', 'es_ES']

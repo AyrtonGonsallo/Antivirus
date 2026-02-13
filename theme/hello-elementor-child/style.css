@@ -1385,3 +1385,6 @@ div.woocommerce-variation-price.remisable.has-remise-revendeur bdi, span.remisab
 .prix-remise-variable-subs .price .subscription-details{
     display: none !important;
 }
+.faq-item a {
+    text-decoration: none !important;
+}
