@@ -753,7 +753,7 @@ class ALM_Gestion_De_Comptes {
     }
 
 
-    public function generate_auto_login_link($user_id) {
+    static function generate_auto_login_link($user_id) {
 
         $user = get_user_by('id', $user_id);
         if (!$user) return false;

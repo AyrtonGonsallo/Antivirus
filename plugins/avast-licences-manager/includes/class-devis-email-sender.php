@@ -1,5 +1,5 @@
 <?php
-
+require_once __DIR__ . '/class-gestion-de-comptes.php';
 
 class DevisEmailSender {
 
@@ -35,10 +35,12 @@ class DevisEmailSender {
         $total_produits=0;
         $devis_content_html = "";
 
-        
+        $total_variations = sizeof($variations) ;
+        $ids = [];
        
         foreach ($variations as $variation) {
             $variation_id = $variation->ID;
+            $ids[] = $variation->ID;
             $formule = get_field('formule', $variation_id);
 
             
@@ -47,8 +49,7 @@ class DevisEmailSender {
             $variation_title     =    get_the_title( $variation_id);
             $devis_content_html .= '<h3>'.$variation_title.'</h3>' ;
             $devis_content_html .= '<div>'.$formule.'</div>' ;
-            $devis_content_html .= ' <h2 style="margin-top:30px; color:#444;text-transform:uppercase;text-align:center">Commentaire de notre service commercial</h2>
-                    '.$note_admin.'<br>';
+           // $devis_content_html .= ' <h2 style="margin-top:30px; color:#444;text-transform:uppercase;text-align:center">Commentaire de notre service commercial</h2> '.$note_admin.'<br>';
 
             $recapitulatif_pdf = get_field('recapitulatif_pdf', $variation_id); // champ ACF type "File"
             if ($recapitulatif_pdf && !empty($recapitulatif_pdf['ID'])) {
@@ -60,6 +61,8 @@ class DevisEmailSender {
             }
 
         }
+        $ids_var = implode(' - ', $ids);
+        $lien_auto_connect_devis = ALM_Gestion_De_Comptes::generate_auto_login_link($user_id);
         
       
 
@@ -91,11 +94,44 @@ class DevisEmailSender {
                         Bonjour '.$civilite.' '.$nom.' '.$prenom.',
                     
 
-                    <p style="font-size:15px; color:#555; line-height:1.6;">
-                        Votre demande de devis a été traitée par notre service commercial.<br>
-                        Votre devis est désormais disponible dans votre compte client.
+                    
+
+                     <p style="font-size:15px; color:#555; line-height:1.6;">
+                        Votre demande de tarifs pour des licences Avast a été traitée, et vos '.$total_variations.' devis sont maintenant disponibles dans votre compte client.
                     </p>
 
+                  
+
+                    <h3 style="margin-top:30px; color:#444;text-transform:uppercase;text-align:start">Voici le récapitulatif de votre demande :</h3><br><br>
+------------------------------------------------------<br>
+                    Numéro de votre demande de devis multiples : '.$post_id.'
+                    Date de la demande : '.$date_de_creation_formatted.'<br>
+                    Numéros de vos devis : '.$ids_var.':<br>
+                    Votre demande : '.$note_client.'<br>
+                    Durée : '.$software_duration.'<br>
+------------------------------------------------------<br>
+
+                    
+                    <h3 style="margin-top:30px; color:#444;text-transform:uppercase;text-align:start">Contenu de votre devis :</h3><br>
+                    '.$devis_content_html.'
+
+                    <h3 style="margin-top:30px; color:#444;text-transform:uppercase;text-align:start">Commentaire de l\'équipe commerciale :</h3><br>
+------------------------------------------------------<br>
+'.$note_admin.'
+------------------------------------------------------<br>
+                   
+                    <p style="font-size:15px; color:#555; line-height:1.6;">
+                        Veuillez trouver ci-joint le PDF de votre devis nº '.$id.'.
+                    </p>
+                    <p style="font-size:15px; color:#555; line-height:1.6;">
+                    Pour accepter ou refuser ce devis, connectez vous à votre compte client.
+                    </p>
+                    <p style="font-size:15px; color:#555; line-height:1.6;">
+                    Vous pouvez régler votre commande par carte bancaire en ligne (traitement accéléré de votre commande), par chèque, par virement bancaire ou par mandat administratif.
+                    </p>
+                    <p style="font-size:15px; color:#555; line-height:1.6;">
+                    Pour vous connecter à votre compte client, cliquez sur ce lien:
+                    </p>
                     <div class="content-center" style="text-align:center;">
                         <a href="'.$lien_auto_connect_devis.'" target="_blank" style="
                             display:inline-block;
@@ -109,19 +145,8 @@ class DevisEmailSender {
                         ">Voir mon devis</a>
                     </div>
 
-                    <h2 style="margin-top:30px; color:#444;text-transform:uppercase;text-align:center">Votre demande de devis</h2>
-                    Date : '.$date_de_creation_formatted.'<br><br>
-                    Votre demande : '.$note_client.'<br>
-                    Durée : '.$software_duration.'<br>
-                    <h2 style="margin-top:30px; color:#444;text-transform:uppercase;text-align:center">Contenu de votre devis</h2>
-                    '.$devis_content_html.'
-                   
-                    <p style="font-size:15px; color:#555; line-height:1.6;">
-                        Veuillez trouver ci-joint le PDF de votre devis nº '.$id.'.
-                    </p>
-
                     <p style="font-size:15px; color:#555; line-height:1.6; margin-top:20px;">
-                        Nous vous remercions pour votre confiance et restons à votre disposition pour toute question.
+                        Nous vous remercions d\'avoir effectué votre demande sur notre site et vous souhaitons bonne réception de vos devis.
                     </p>
 
                     <p style="margin-top:30px; color:#333; font-weight:bold;">
@@ -180,6 +205,7 @@ class DevisEmailSender {
        $note_client     =    get_field('note_client', $post_id);
        $variations  = get_field('variations', $post_id);
         $pdf_files = [];
+        
       
         foreach ($variations as $variation) {
             $variation_id = $variation->ID;
@@ -230,6 +256,7 @@ class DevisEmailSender {
                     <p style="font-size:15px; color:#555; line-height:1.6;">
                         Merci pour votre demande de devis ! Notre équipe commerciale traite actuellement votre demande de devis.
                     </p>
+                   
 
 
                     <h2 style="margin-top:30px; color:#444;text-transform:uppercase;text-align:center">Votre demande de devis</h2>
