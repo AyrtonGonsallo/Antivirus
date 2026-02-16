@@ -26,7 +26,7 @@ class ALM_Gestion_De_Comptes {
         add_action('show_user_profile', [$this, 'show_admin_user_fields']);
         add_action('edit_user_profile', [$this, 'show_admin_user_fields']);
 
-        add_action('init', [$this, 'register_clients_endpoint']);
+        add_action('init', [$this, 'traiter_auto_connexion']);
         add_filter('query_vars', [$this, 'add_clients_query_var'], 0);
         add_filter('woocommerce_account_menu_items', [$this, 'add_clients_menu_link']);
         add_action('woocommerce_account_clients_endpoint', [$this, 'render_clients_page']);
@@ -47,6 +47,86 @@ class ALM_Gestion_De_Comptes {
 
         add_action('woocommerce_customer_save_address',[$this, 'wc_save_custom_edit_address_form_billing'], 10, 2);
 
+        add_filter('manage_users_columns', [$this, 'auto_connexion_colomns']);
+
+        add_filter('manage_users_custom_column', [$this, 'auto_connexion_datas'], 10, 3);
+
+        add_action('admin_init',[$this, 'creer_auto_connexion_link_admin'] );
+
+        add_action('admin_notices', [$this, 'afficher_lien_auto_connexion_admin']);
+
+
+    }
+
+    public function auto_connexion_colomns($columns) {
+        $columns['auto_login'] = 'Auto connexion';
+        return $columns;
+    }
+
+
+    public function auto_connexion_datas($value, $column_name, $user_id) {
+
+        if ($column_name === 'auto_login') {
+
+            if (!current_user_can('administrator')) return '';
+
+            $url = wp_nonce_url(
+                admin_url('users.php?action=generate_auto_login&user_id=' . $user_id),
+                'generate_auto_login_' . $user_id
+            );
+
+            return '<a class="button button-primary" href="'.$url.'">Auto connexion</a>';
+        }
+
+        return $value;
+
+    }
+
+    public function creer_auto_connexion_link_admin() {
+
+        if (!isset($_GET['action']) || $_GET['action'] !== 'generate_auto_login') return;
+
+        $user_id = intval($_GET['user_id']);
+
+        if (!current_user_can('administrator')) {
+            wp_die('Accès refusé');
+        }
+
+        if (!wp_verify_nonce($_GET['_wpnonce'], 'generate_auto_login_' . $user_id)) {
+            wp_die('Nonce invalide');
+        }
+
+        $user = get_user_by('id', $user_id);
+        if (!$user) {
+            wp_die('Utilisateur introuvable');
+        }
+
+        // Génération token
+        $token = wp_generate_password(32, false);
+        update_user_meta($user_id, '_auto_login_token', $token);
+        update_user_meta($user_id, '_auto_login_token_expiry', time() + 600);
+
+        $auto_login_url = add_query_arg([
+            'auto_login' => 1,
+            'uid' => $user_id,
+            'token' => $token
+        ], home_url());
+
+        // Redirection avec message
+        wp_redirect(admin_url('users.php?auto_login_link=' . urlencode($auto_login_url)));
+        exit;
+    }
+
+    public function afficher_lien_auto_connexion_admin() {
+
+        if (!isset($_GET['auto_login_link'])) return;
+
+        $link = esc_url($_GET['auto_login_link']);
+
+        echo '<div class="notice notice-success">';
+        echo '<p><strong>Lien auto connexion généré :</strong></p>';
+        echo '<p><a href="'.$link.'" target="_blank">'.$link.'</a></p>';
+        echo '</div>';
     }
 
 
@@ -430,11 +510,66 @@ class ALM_Gestion_De_Comptes {
     /* creer la page mes devis */
     public function register_mes_devis_endpoint() {
         add_rewrite_endpoint('mes-devis', EP_ROOT | EP_PAGES);
+
+
+
+        // Ajouter la rewrite rule
+        add_rewrite_rule(
+            '^generer-lien-auto-connexion/([0-9]+)/?$',
+            'index.php?generate_auto_login=1&user_id=$matches[1]',
+            'top'
+        );
+        
+
+       
+
+        add_action('template_redirect', function() {
+
+            if (get_query_var('generate_auto_login') != 1) return;
+
+            $user_id = intval(get_query_var('user_id'));
+
+            if (!$user_id) {
+                wp_die('ID utilisateur invalide');
+            }
+
+            // Vérifier que l'utilisateur existe
+            $user = get_user_by('id', $user_id);
+            if (!$user) {
+                wp_die('Utilisateur introuvable');
+            }
+
+            // Sécurité : admin uniquement
+            
+               
+            
+
+            // Générer token
+            $token = wp_generate_password(32, false);
+            update_user_meta($user_id, '_auto_login_token', $token);
+            update_user_meta($user_id, '_auto_login_token_expiry', time() + 600);
+
+            $auto_login_url = add_query_arg([
+                'auto_login' => 1,
+                'uid' => $user_id,
+                'token' => $token
+            ], home_url());
+
+            // Afficher proprement
+            echo '<h2>Lien auto connexion :</h2>';
+            echo '<p><a href="'.$auto_login_url.'" target="_blank">'.$auto_login_url.'</a></p>';
+            exit;
+        });
+
+
     }
 
     /* creer la page mes devis */
     public function add_mes_devis_query_var($vars) {
         $vars[] = 'mes-devis';
+
+        $vars[] = 'generate_auto_login';
+        $vars[] = 'user_id';
         return $vars;
     }
 
@@ -614,6 +749,57 @@ class ALM_Gestion_De_Comptes {
 
         // Redirection vers la même page avec paramètre pour afficher le message
         wp_safe_redirect( add_query_arg( 'client_added', 'true', wc_get_account_endpoint_url('clients') ) );
+        exit;
+    }
+
+
+    public function generate_auto_login_link($user_id) {
+
+        $user = get_user_by('id', $user_id);
+        if (!$user) return false;
+
+        $token = wp_generate_password(32, false);
+
+        update_user_meta($user_id, '_auto_login_token', $token);
+        update_user_meta($user_id, '_auto_login_token_expiry', time() + 600); // 10 min
+
+        $url = add_query_arg([
+            'auto_login' => 1,
+            'uid' => $user_id,
+            'token' => $token
+        ], home_url());
+
+        return $url;
+    }
+
+
+    public function traiter_auto_connexion() {
+
+        if (!isset($_GET['auto_login'])) return;
+
+        $user_id = intval($_GET['uid'] ?? 0);
+        $token = sanitize_text_field($_GET['token'] ?? '');
+
+        if (!$user_id || !$token) return;
+
+        $saved_token = get_user_meta($user_id, '_auto_login_token', true);
+        $expiry = get_user_meta($user_id, '_auto_login_token_expiry', true);
+
+        if (!$saved_token || !$expiry) return;
+
+        if ($token !== $saved_token) return;
+        if (time() > $expiry) return;
+
+        // Login
+        wp_set_current_user($user_id);
+        wp_set_auth_cookie($user_id, true);
+
+        // Supprimer token (usage unique)
+        delete_user_meta($user_id, '_auto_login_token');
+        delete_user_meta($user_id, '_auto_login_token_expiry');
+
+        // Redirection vers mon compte WooCommerce
+        wp_redirect(wc_get_account_endpoint_url('dashboard'));
         exit;
     }
 

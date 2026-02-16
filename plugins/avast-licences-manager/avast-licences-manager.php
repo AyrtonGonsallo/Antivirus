@@ -19,6 +19,7 @@ require_once ALM_PATH . 'includes/class-remise-commerciale.php';
 require_once ALM_PATH . 'includes/class-devis.php';
 require_once ALM_PATH . 'includes/class-revendeur.php';
 require_once ALM_PATH . 'includes/class-wcs.php';
+require_once ALM_PATH . 'includes/class-statistiques-antivirus.php';
 
 // Activation / Deactivation hooks
 register_activation_hook(__FILE__, ['ALM_Roles', 'add_roles']);
@@ -32,5 +33,6 @@ add_action('plugins_loaded', function() {
     new ALM_Devis();
     new ALM_Revendeur();
     new ALM_Wcs();
+    new ALM_Statistiques_antivirus();
     
 });
