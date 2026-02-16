@@ -105,6 +105,10 @@ class ALM_Statistiques_antivirus {
                     if (($subscriptions)) {
                         foreach ( $subscriptions as $subscription ) {
                             $subscription_id = $subscription->get_id();
+                            if(!$subscription->get_requires_manual_renewal()){
+                                $subscription->set_requires_manual_renewal(true);
+                                $subscription->save();
+                            }
                             $subs_link = admin_url('post.php?post=' . $subscription_id . '&action=edit');
                             $subs_total = $subscription->get_total();
                             $user = $subscription->get_user();
@@ -147,13 +151,17 @@ class ALM_Statistiques_antivirus {
          table.dataTable>tbody>tr>td{ border: 1px solid rgba(255, 255, 255, 0.3) !important; background-color:#fff}
          .custom-admin-action { color: #ffffff !important; border-color: #ff7800 !important; background: #ff7800 !important; border-radius: 13px !important; padding: 6px 23px !important;}
          table.dataTable thead>tr>th.dt-orderable-desc .dt-column-order:after{ opacity: .425 !important; color:black !important}
-
+        .dt-paging-button.current{background: #ff7800 !important;}
+        .dt-paging-button{background: #ff77006e !important;color: #fff !important}
         </style>";
         echo "<script>
             new DataTable('#myTable', {
                 pageLength: 50,
-                'paging': false,
                 info: false,
+                language: {
+                    search:         'Rechercher',
+                    lengthMenu: 'Afficher _MENU_ commandes',
+                },
                 columns: [
                     { orderable: false },
                     { orderable: true },
@@ -258,6 +266,8 @@ class ALM_Statistiques_antivirus {
                 $subscriptions = wcs_get_subscriptions_for_order($order_id, ['order_type'=>'parent']);
                 if ($subscriptions) {
                     foreach ($subscriptions as $subscription) {
+                        
+                        
                         $subs_id = $subscription->get_id();
                         $subs_total = $subscription->get_total();
                         $next_payment = $subscription->get_date('next_payment');
