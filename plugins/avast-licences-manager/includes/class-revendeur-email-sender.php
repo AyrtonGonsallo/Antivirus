@@ -11,6 +11,8 @@ class RevendeurEmailSender {
 
         $new_revendeur_account_nom = get_field('account_nom', $post_id);
         $new_revendeur_account_prenom = get_field('account_prenom', $post_id);
+        $new_revendeur_account_societe = get_field('account_societe', $post_id);
+        $new_revendeur_account_siret = get_field('account_siret', $post_id);
         $new_revendeur_account_email = get_field('account_email', $post_id);
         $new_revendeur_account_societe = get_field('account_societe', $post_id);
         $new_revendeur_account_genre = get_field('account_genre', $post_id);
@@ -38,11 +40,24 @@ class RevendeurEmailSender {
             'last_name'    => $new_revendeur_account_nom,
             'role'         => $new_revendeur_account_role,
         ]);
+    
+        
+        update_user_meta($user_id, 'billing_first_name', $new_revendeur_account_prenom);
+        update_user_meta($user_id, 'billing_last_name', $new_revendeur_account_nom);
+        update_user_meta($user_id, 'billing_country', $new_revendeur_account_societe);
+        update_user_meta($user_id, 'billing_postcode', $new_revendeur_account_code_postal);
+        update_user_meta($user_id, 'billing_city', $new_revendeur_account_ville);
+
+        update_user_meta($user_id, 'ville', $new_revendeur_account_societe);
         update_user_meta($user_id, 'denomination', $new_revendeur_account_societe);
         update_user_meta($user_id, 'ville', $new_revendeur_account_ville);
+        update_user_meta($user_id, 'billing_type_client', 'entreprise');
+        update_user_meta($user_id, 'billing_societe', $new_revendeur_account_societe);
+        update_user_meta($user_id, 'billing_numero_siret',  $new_revendeur_account_siret);
+        update_user_meta($user_id, 'account_siret', $new_revendeur_account_siret);
         update_user_meta($user_id, 'code_postal', $new_revendeur_account_code_postal);
         update_user_meta($user_id, 'pays', $new_revendeur_account_pays);
-
+        update_user_meta($user_id, 'civilite', $civilite);
         update_user_meta($user_id, 'billing_address_1', $new_revendeur_account_adresse);
         update_user_meta($user_id, 'billing_phone', $new_revendeur_account_telephone);
         if( isset($new_revendeur_account_regime_tva)){

@@ -7,6 +7,11 @@ class ALM_Statistiques_antivirus {
         add_action('admin_menu', [$this, 'add_admin_menu']);
 
         add_action('wp_ajax_export_orders_csv',  [$this, 'export_orders_csv']); 
+
+        add_action('woocommerce_admin_order_data_after_order_details', [$this, 'add_margin_fields']);
+        add_action('woocommerce_process_shop_order_meta', [$this, 'save_margin_fields']);
+
+        
     }
 
     /**
@@ -58,8 +63,10 @@ class ALM_Statistiques_antivirus {
                 <tr>
                     <th><input type="checkbox" id="checkAll"></th>
                     <th>Commande</th>
-                    <th>Date</th>
-                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Date de création</th>
+                    <th>Date prochain renouvellement</th>
+                    <th>Total TTC</th>
                     <th>Utilisateur</th>
                     <th>Rôle</th>
                     <th>Renouvellement</th>
@@ -76,6 +83,7 @@ class ALM_Statistiques_antivirus {
                 $order_link = admin_url('post.php?post=' . $order_id . '&action=edit');
                 $user_roles = $user ? $user->roles : ['Invité'];
                 $order_date = $order->get_date_created()->date('Y-m-d H:i:s'); 
+                $status = wc_get_order_status_name($order->get_status());
 
                 // Appliquer les transformations sur chaque rôle
                 $user_roles_formatted = array_map(function($role) {
@@ -92,11 +100,32 @@ class ALM_Statistiques_antivirus {
                 }, $user_roles);
                 
                 $subscriptions = wcs_get_subscriptions_for_order($order_id, array('order_type' => 'parent'));
+                $closest_date = null;
+                $closest_subscription = null;
+
+                if (!empty($subscriptions)) {
+                    foreach ($subscriptions as $subscription) {
+                        $next_payment = $subscription->get_date('next_payment');
+                        if (!$next_payment) {
+                            continue; // ignore si pas de date
+                        }
+                        $timestamp = strtotime($next_payment);
+                        if (!$closest_date || $timestamp < $closest_date) {
+                            $closest_date = $timestamp;
+                            $closest_subscription = $subscription;
+                        }
+                    }
+                }
+                $order_closest_date = $closest_date ? date('Y-m-d H:i:s', $closest_date) : '';
+
+
 
                 echo '<tr>';
                 echo '<td><input type="checkbox" class="rowCheck"></td>';
                 echo '<td><a href="' . esc_url($order_link) . '" target="_blank">#' . esc_html($order_id) . '</a></td>';
+                echo '<td>' . ($status) . '</td>';
                 echo '<td  data-order="'.esc_attr($order_date).'">' . esc_html($order->get_date_created()->date('d/m/Y H:i')) . '</td>';
+                echo '<td data-order="'.esc_attr($order_closest_date).'">'. esc_html(date('d/m/Y H:i', $closest_date)). '</td>';
                 echo '<td>' . wc_price($order->get_total()) . '</td>';
                 echo '<td>' . ($user ? esc_html($user->display_name) : 'Invité') . '<br>';
                 echo  ($user ? esc_html($user->user_email) : '') . '</td>';
@@ -166,6 +195,8 @@ class ALM_Statistiques_antivirus {
                     { orderable: false },
                     { orderable: true },
                     { orderable: true },
+                     { orderable: true },
+                     { orderable: true },
                     { orderable: true },
                     { orderable: true },
                     { orderable: false },
@@ -243,7 +274,7 @@ class ALM_Statistiques_antivirus {
         $output = fopen('php://output', 'w');
 
         // Colonnes
-        fputcsv($output, ['Commande', 'Date', 'Total', 'Utilisateur', 'Email', 'Rôle', 'Abonnements / Renouvellements']);
+        fputcsv($output, ['Commande', 'N° Facture', 'Mode paiement', 'Statut', 'Societe', 'Nom', 'Prenom', 'Email', 'Rôle', 'Date Commande', 'Date paiement', 'Date prochain paiement',   'Pays', 'Total HT','TVA %','Total TVA','Total TTC', 'Prix réel','Marge HT',  'Abonnements / Renouvellements']);
 
         foreach ($order_ids as $order_id) {
             $order = wc_get_order($order_id);
@@ -252,13 +283,29 @@ class ALM_Statistiques_antivirus {
             $user_id = $order->get_user_id();
             $user = $user_id ? get_user_by('id', $user_id) : null;
             $user_roles = $user ? $user->roles : ['Invité'];
-
+            $societe = get_user_meta($user->ID, 'denomination', true);
+            $nom = get_user_meta($user->ID, 'last_name', true);
+            $prenom = get_user_meta($user->ID, 'first_name', true);
+            $email = $user->user_email;
+            $pays = get_user_meta($user->ID, 'pays', true);
             // Transformer les rôles
             $user_roles_formatted = array_map(function($role){
                 if ($role === 'subscriber') $role = 'abonné';
                 $role = str_replace('customer_', '', $role);
                 return ucwords($role);
             }, $user_roles);
+            $roles_string = implode(' / ', $user_roles_formatted);
+            $status = wc_get_order_status_name($order->get_status());
+            $total_ht = $order->get_total() - $order->get_total_tax();
+            $total_ttc = $order->get_total();
+            $total_tva = $order->get_total_tax();
+            $margin    = get_post_meta($order_id, '_order_margin', true);
+            $real_cost = get_post_meta($order_id, '_real_cost', true);
+            
+            $tva_percent = 0;
+            if ($total_ht > 0) {
+                $tva_percent = round(($total_tva / $total_ht) * 100);
+            }
 
             // Abonnements / renouvellements
             $subscriptions_text = '';
@@ -276,17 +323,52 @@ class ALM_Statistiques_antivirus {
                         $subscriptions_text .= "#$subs_id | total: $subs_total | prochain paiement: " . ($next_payment ? date_i18n('d/m/Y H:i', strtotime($next_payment)) : '—') . " | renouvellement: $manual\n";
                     }
                 } else {
-                    $subscriptions_text = 'pas d\'abonnements';
+                    $subscriptions_text = '';
                 }
             }
 
+            $closest_date = null;
+            $closest_subscription = null;
+
+            if (!empty($subscriptions)) {
+                foreach ($subscriptions as $subscription) {
+                    $next_payment = $subscription->get_date('next_payment');
+                    if (!$next_payment) {
+                        continue; // ignore si pas de date
+                    }
+                    $timestamp = strtotime($next_payment);
+                    if (!$closest_date || $timestamp < $closest_date) {
+                        $closest_date = $timestamp;
+                        $closest_subscription = $subscription;
+                    }
+                }
+            }
+            $order_closest_date = $closest_date ? date('d/m/Y H:i', $closest_date) : '';
+
+            
+
+            
+
             fputcsv($output, [
                 '#' . $order_id,
+                '#' . $order_id,
+                $order->get_payment_method_title(),
+                $status,
+                $societe,
+                $nom,
+                $prenom,
+                $email,
+                $roles_string,
                 $order->get_date_created()->date('d/m/Y H:i'),
-                $order->get_total(),
-                $user ? $user->display_name : 'Invité',
-                $user ? $user->user_email : '',
-                implode(', ', $user_roles_formatted),
+                $order->get_date_paid()->date('d/m/Y H:i'),
+                $order_closest_date,
+                $pays,
+                $total_ht,
+                $tva_percent,
+                $total_tva,
+                $total_ttc,
+                $real_cost,
+                $margin ,
                 $subscriptions_text
             ]);
         }
@@ -294,6 +376,54 @@ class ALM_Statistiques_antivirus {
         fclose($output);
         exit;
     }
+
+
+    public function add_margin_fields($order) {
+
+        $order_id  = $order->get_id();
+        $real_cost = get_post_meta($order_id, '_real_cost', true);
+        $margin    = get_post_meta($order_id, '_order_margin', true);
+
+        echo '<div class="order_margin_section" style="top: 20px;position: relative;">';
+        echo '<h3>Calcul de marge</h3>';
+         echo '<p>
+                Marge = Prix HT - Prix réel
+            </p>';
+
+        echo '<p>
+                <label>Prix réel (coût) :</label>
+                <input type="number" step="0.01" name="real_cost" 
+                    value="'.esc_attr($real_cost).'" />
+            </p>';
+
+        echo '<p><strong>Marge :</strong> ' 
+            . ($margin !== '' ? wc_price($margin) : '—') 
+            . '</p>';
+
+        echo '</div>';
+    }
+
+    public function save_margin_fields($order_id) {
+
+        if (!isset($_POST['real_cost'])) {
+            return;
+        }
+
+        $real_cost = floatval($_POST['real_cost']);
+        update_post_meta($order_id, '_real_cost', $real_cost);
+
+        $order = wc_get_order($order_id);
+
+        $total_ht = $order->get_total() - $order->get_total_tax();
+
+        // ⚠ adapte ici si tu veux TTC
+        $margin = $total_ht - $real_cost;
+
+        update_post_meta($order_id, '_order_margin', $margin);
+    }
+
+
+
 
 }
 

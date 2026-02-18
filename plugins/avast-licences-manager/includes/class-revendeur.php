@@ -285,7 +285,7 @@ class ALM_Revendeur {
                             </div>
                             <div>
                                 
-                            <label>Genre : <span class="required">*</span></label>
+                            <label>Civilité : <span class="required">*</span></label>
                             <select title="Genre" id="genre" class="input_required" name="new_revendeur_account_genre"  alt="Genre">
                                 <option value="m" alt="Genre">Monsieur</option>
                                 <option value="f" alt="Genre">Madame</option>
@@ -756,8 +756,7 @@ class ALM_Revendeur {
                 update_field('account_nom', $new_revendeur_account_nom, $demande_id);
                 update_field('account_prenom', $new_revendeur_account_prenom, $demande_id);
                 update_field('account_societe', $new_revendeur_account_societe, $demande_id);
-                update_field('account_societe', $new_revendeur_account_siret, $demande_id);
-                update_field('account_siret', $new_revendeur_account_genre, $demande_id);
+                update_field('account_siret', $new_revendeur_account_siret, $demande_id);
                 update_field('account_telephone', $new_revendeur_account_telephone, $demande_id);
                 update_field('account_adresse', $new_revendeur_account_adresse, $demande_id);
                 update_field('status', 'en_attente', $demande_id);

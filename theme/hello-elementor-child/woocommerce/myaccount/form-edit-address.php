@@ -59,16 +59,32 @@ do_action( 'woocommerce_before_edit_account_address_form' ); ?>
 <script>
     jQuery(function ($) {
 
-        function toggleBillingFields() {
-            if ($('#billing_infos_entreprise').is(':checked')) {
+        function toggleEntrepriseFields() {
+			console.log("billing_type_client",$('input[name="billing_type_client"]:checked').val())
+            if ($('input[name="billing_type_client"]:checked').val() === 'entreprise') {
                 $('#billing-entreprise-fields').slideDown();
             } else {
                 $('#billing-entreprise-fields').slideUp();
             }
         }
 
-        toggleBillingFields();
-        $('#billing_infos_entreprise').on('change', toggleBillingFields);
+        toggleEntrepriseFields();
+        $('input[name="billing_type_client"]').change(function(){
+			toggleEntrepriseFields();
+		});
 
     });
     </script>
+
+	<style>
+		#billing_type_client_field .woocommerce-input-wrapper .required{
+			display:none;
+		}
+		#billing_type_client_field .woocommerce-input-wrapper {
+			display: flex;
+    		gap: 20px;
+		}
+		#billing_societe_field .optional, #billing_numero_siret_field .optional{
+			display:none;
+		}
+	</style>

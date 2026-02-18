@@ -132,12 +132,24 @@ class ALM_Gestion_De_Comptes {
 
     public function wc_add_custom_edit_address_form_billing( ) {
 
-        // Checkbox
-        woocommerce_form_field('billing_infos_entreprise', [
-            'type'  => 'checkbox',
-            'label' => __('Entreprise', 'woocommerce'),
-            'class' => ['form-row-wide'],
-        ], get_user_meta(get_current_user_id(), 'billing_infos_entreprise', true));
+        $value = get_user_meta(get_current_user_id(), 'billing_type_client', true);
+
+        if (empty($value)) {
+            $value = 'particulier';
+        }
+
+        woocommerce_form_field('billing_type_client', [
+            'type'    => 'radio',
+            'required'    => true,
+            'label'   => __('Type de client', 'woocommerce'),
+            'class'   => ['form-row-wide'],
+            'options' => [
+                'particulier' => __('Particulier', 'woocommerce'),
+                'entreprise'  => __('Entreprise', 'woocommerce'),
+            ],
+            'default' => 'particulier'
+        ], $value);
+
 
         echo '<div id="billing-entreprise-fields" style="display:none;">';
 
@@ -162,11 +174,9 @@ class ALM_Gestion_De_Comptes {
 
         if ($load_address !== 'billing') return;
 
-        update_user_meta(
-            $user_id,
-            'billing_infos_entreprise',
-            isset($_POST['billing_infos_entreprise']) ? 1 : 0
-        );
+        if (isset($_POST['billing_type_client'])) {
+            update_user_meta($user_id, 'billing_type_client', sanitize_text_field($_POST['billing_type_client']));
+        }
 
         if (isset($_POST['billing_societe'])) {
             update_user_meta($user_id, 'billing_societe', sanitize_text_field($_POST['billing_societe']));
@@ -739,6 +749,11 @@ class ALM_Gestion_De_Comptes {
         update_user_meta($user_id, 'pays', $pays);
         update_user_meta( $user_id, 'billing_country', sanitize_text_field( $pays ) );
         update_user_meta( $user_id, 'shipping_country', sanitize_text_field( $pays ) );
+         update_user_meta($user_id, 'billing_first_name', $prenom);
+        update_user_meta($user_id, 'billing_last_name', $nom);
+        update_user_meta($user_id, 'billing_postcode', $code_postal);
+        update_user_meta($user_id, 'billing_city', $ville);
+         update_user_meta($user_id, 'billing_type_client', 'particulier');
 
         /*
         // Envoi email au client avec ses identifiants
