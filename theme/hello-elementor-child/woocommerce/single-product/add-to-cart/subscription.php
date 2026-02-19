@@ -327,9 +327,11 @@ if ( $product->is_in_stock() ) : ?>
 ?>
 	<script>
 	jQuery(document).ready(function($) {
-		function  apply_reduction(){
-			const $this = $(this);
-			const group = parseInt($this.data('group'));
+		function  apply_reduction(element){
+			 const $this = element ? $(element) : $('.optionRemise:checked').first();
+    		const group = $this.length ? parseInt($this.data('group')) : null;
+			
+			console.log("selected group:",group)
 
 			// logique de combinaison
 			if (group === 1) {
@@ -457,9 +459,9 @@ if ( $product->is_in_stock() ) : ?>
 		}
 
 		$('.optionRemise').on('change', function () {
-			apply_reduction();
+			apply_reduction(this);
 		});
-		apply_reduction();
+		apply_reduction(null);
 
 		
 

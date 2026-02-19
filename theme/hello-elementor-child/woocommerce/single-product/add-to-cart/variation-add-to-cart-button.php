@@ -116,9 +116,11 @@ if($user_id){
     <script>
     jQuery(document).ready(function($) {
 
-        function  apply_reduction(){
-            const $this = $(this);
-            const group = parseInt($this.data('group'));
+        function  apply_reduction(element){
+			 const $this = element ? $(element) : $('.optionRemise:checked').first();
+    		const group = $this.length ? parseInt($this.data('group')) : null;
+			
+			console.log("selected group:",group)
 
             // logique de combinaison
             if (group === 1) {
@@ -251,16 +253,16 @@ if($user_id){
 
 
         $('.optionRemise').on('change', function() {
-            apply_reduction();
+            apply_reduction(this);
 		});
         $('#pa_software_duration').on('change', function() {
             setTimeout(() => {
-                apply_reduction();
+                apply_reduction(null);
             }, 2000); 
 		});
         $('#pa_number_of_computers').on('change', function() {
 		    setTimeout(() => {
-                apply_reduction();
+                apply_reduction(null);
             }, 2000); 
 		});
 

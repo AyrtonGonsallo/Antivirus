@@ -79,7 +79,7 @@ class ALM_Devis {
             [$this, 'alm_render_calcul_total_devis_variation_button'],
             'variation-devis',
             'side',
-            'high'
+            'low'
         );
     }
 

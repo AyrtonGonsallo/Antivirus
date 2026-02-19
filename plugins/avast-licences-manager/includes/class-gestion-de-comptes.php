@@ -4,19 +4,19 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class ALM_Gestion_De_Comptes {
 
     public function __construct() {
-        /*
+        
             add_action('init', [$this, 'register_clients_endpoint']);
-            → Déclare un nouvel endpoint URL pour le compte client (ex: /mon-compte/clients)
+            //→ Déclare un nouvel endpoint URL pour le compte client (ex: /mon-compte/clients)
 
             add_filter('query_vars', [$this, 'add_clients_query_var'], 0);
-            → Ajoute la variable clients à WordPress pour qu’elle soit reconnue dans l’URL.
+            //→ Ajoute la variable clients à WordPress pour qu’elle soit reconnue dans l’URL.
 
             add_filter('woocommerce_account_menu_items', [$this, 'add_clients_menu_link']);
-            → Ajoute un nouveau lien dans le menu du compte WooCommerce (ex: “Mes clients”).
+            //→ Ajoute un nouveau lien dans le menu du compte WooCommerce (ex: “Mes clients”).
 
             add_action('woocommerce_account_clients_endpoint', [$this, 'render_clients_page']);
-            → Affiche la page correspondante quand l’URL /mon-compte/clients est visitée.
-        */
+            //→ Affiche la page correspondante quand l’URL /mon-compte/clients est visitée.
+        
             
         // Hooks WooCommerce
         add_action('woocommerce_save_account_details', [$this, 'save_account_fields']);

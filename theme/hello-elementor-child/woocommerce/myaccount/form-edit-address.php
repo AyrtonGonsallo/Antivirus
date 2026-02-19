@@ -63,6 +63,8 @@ do_action( 'woocommerce_before_edit_account_address_form' ); ?>
 			console.log("billing_type_client",$('input[name="billing_type_client"]:checked').val())
             if ($('input[name="billing_type_client"]:checked').val() === 'entreprise') {
                 $('#billing-entreprise-fields').slideDown();
+				$('#billing_societe_field .optional, #billing_numero_siret_field .optional')
+        			.html('<span style="color:red;">*</span>');
             } else {
                 $('#billing-entreprise-fields').slideUp();
             }
@@ -83,8 +85,5 @@ do_action( 'woocommerce_before_edit_account_address_form' ); ?>
 		#billing_type_client_field .woocommerce-input-wrapper {
 			display: flex;
     		gap: 20px;
-		}
-		#billing_societe_field .optional, #billing_numero_siret_field .optional{
-			display:none;
 		}
 	</style>

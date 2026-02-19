@@ -1382,9 +1382,11 @@ div.woocommerce-variation-price.remisable.has-remise-revendeur bdi, span.remisab
 .woocommerce-Price-amount.amount.remisable.has-remise-revendeur, .has-remise-revendeur.promo-end, .has-remise-revendeur ins, .has-remise-revendeur .variation-reduction-percentage{
     display: none !important;
 }
-.prix-remise-variable-subs .price .subscription-details{
-    display: none !important;
-}
+
+
 .faq-item a {
     text-decoration: none !important;
+}
+.elementor-menu-cart__product-name .variation-Software_duration, .elementor-menu-cart__product-name .variation-Dure, .subscription-details{
+    display: none !important;
 }

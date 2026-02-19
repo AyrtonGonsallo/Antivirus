@@ -801,12 +801,14 @@ function user_has_remise($user_id) {
 }
 
 function traiter_chaines_menu($chaine) {
-    //$res =  esc_html($chaine); avec span dans le texte
+    $res =  esc_html($chaine); 
     //$res =  ($chaine); avec variations lues
 
-     // On coupe avant le premier <span>
+    // On coupe avant le premier <span>
+    /*
     $avant_span = preg_split('/<span.*?>/i', $chaine)[0];
     $res = $avant_span;
+    */
     return $res;
 
 }
@@ -908,6 +910,7 @@ function shortcode_menu_entreprise($atts) {
                 if (!$parent) continue;
                 
                 if ($parent->is_type('variable-subscription')) {
+                    /*
                     $variations = array_slice($parent->get_available_variations(), 0, 1);
                     foreach ($variations as $v) {
                         $variation = wc_get_product($v['variation_id']);
@@ -923,6 +926,17 @@ function shortcode_menu_entreprise($atts) {
                         }
                         $output .= "</a></div>";
                     }
+                    */
+                    $output .= "<div class=\"produit-item\" style=\"margin-bottom:5px;\">";
+                    $output .= "<a href=\"" . get_permalink($parent->get_id()) . "\" class=\"link-mega-menu\" style=\"text-decoration:none;color:#000;\">";
+                    
+                    if ($cat->slug !== "antivirus-pour-android") {
+                        $output .= traiter_chaines_menu($parent->get_name());
+                    } else {
+                        $output .= "<span style=\"font-family:'Raleway';font-weight:800;font-size:17px;\">" . traiter_chaines_menu($parent->get_name()) . "</span>";
+                    }
+                    $output .= "</a></div>";
+
                 } elseif ($parent->is_type('subscription')) {
                     $output .= "<div class=\"produit-item\" style=\"margin-bottom:5px;\">";
                     $output .= "<a href=\"" . get_permalink($parent->get_id()) . "\" class=\"link-mega-menu\" style=\"text-decoration:none;color:#000;\">";
