@@ -17,3 +17,7 @@ PROCHAINES ETAPES
 - Ajouter gestion devis / licences / cron / reporting
 
 Note: Procédé minimal pour débuter le développement. Ne pas modifier functions.php ; tout le code métier doit être ajouté dans ce plugin.
+
+
+lien pour fonctions woocommerce 
+https://woocommerce.github.io/code-reference/classes/WC-Order.html#method_get_payment_method

@@ -11,6 +11,9 @@ class ALM_Statistiques_antivirus {
         add_action('woocommerce_admin_order_data_after_order_details', [$this, 'add_margin_fields']);
         add_action('woocommerce_process_shop_order_meta', [$this, 'save_margin_fields']);
 
+         add_action('woocommerce_admin_order_data_after_order_details', [$this, 'add_delete_subscription_fields']);//un champ pour avoir id de la commande de reference sur une commande de renouvellment
+        add_action('wp_ajax_delete_subscriptions_from_order', [$this, 'delete_subscriptions_from_order']);
+
         
     }
 
@@ -84,6 +87,16 @@ class ALM_Statistiques_antivirus {
                 $user_roles = $user ? $user->roles : ['Invité'];
                 $order_date = $order->get_date_created()->date('Y-m-d H:i:s'); 
                 $status = wc_get_order_status_name($order->get_status());
+                $pdf_url = wp_nonce_url( add_query_arg( array(
+                    'action'        => 'generate_wpo_wcpdf',
+                    'document_type' => 'invoice',
+                    'order_ids'     => $order->get_id(),
+                    'my-account'    => true,
+                ), admin_url( 'admin-ajax.php' ) ), 'generate_wpo_wcpdf' );
+                $link_text = 'Facture';
+                $text = sprintf( '<p><a href="%s" target="_blank">%s</a></p>', esc_attr( $pdf_url ), esc_html( $link_text ) );
+    
+                
 
                 // Appliquer les transformations sur chaque rôle
                 $user_roles_formatted = array_map(function($role) {
@@ -122,7 +135,7 @@ class ALM_Statistiques_antivirus {
 
                 echo '<tr>';
                 echo '<td><input type="checkbox" class="rowCheck"></td>';
-                echo '<td><a href="' . esc_url($order_link) . '" target="_blank">#' . esc_html($order_id) . '</a></td>';
+                echo '<td><a href="' . esc_url($order_link) . '" target="_blank">#'. esc_html($order_id) . '</a><br>'.$text.'</td>';
                 echo '<td>' . ($status) . '</td>';
                 echo '<td  data-order="'.esc_attr($order_date).'">' . esc_html($order->get_date_created()->date('d/m/Y H:i')) . '</td>';
                 echo '<td data-order="'.esc_attr($order_closest_date).'">'. esc_html(date('d/m/Y H:i', $closest_date)). '</td>';
@@ -301,6 +314,8 @@ class ALM_Statistiques_antivirus {
             $total_tva = $order->get_total_tax();
             $margin    = get_post_meta($order_id, '_order_margin', true);
             $real_cost = get_post_meta($order_id, '_real_cost', true);
+            $invoice = wcpdf_get_document( 'invoice', (array) $order->get_id(), true ); // true sets 'init' which makes sure an invoice number is created;
+                $invoice_number = $invoice->get_number();
             
             $tva_percent = 0;
             if ($total_ht > 0) {
@@ -351,7 +366,7 @@ class ALM_Statistiques_antivirus {
 
             fputcsv($output, [
                 '#' . $order_id,
-                '#' . $order_id,
+                $invoice_number,
                 $order->get_payment_method_title(),
                 $status,
                 $societe,
@@ -420,6 +435,118 @@ class ALM_Statistiques_antivirus {
         $margin = $total_ht - $real_cost;
 
         update_post_meta($order_id, '_order_margin', $margin);
+        
+    }
+
+
+    public function add_delete_subscription_fields($order) {
+
+        $order_id = $order->get_id();
+        $reference_order_id = get_post_meta($order_id, '_reference_order_id', true);
+
+        ?>
+        <div class="delete_subscription_section" style="top: 20px;position: relative;">
+            <h3>Suppression abonnements</h3>
+            <p>
+            S'il s'agit d'un renouvellement, il faut indiquer dans la commande, le numéro de la commande qui a été renouvelé pour éviter que le client ou revendeur ne reçoive des relances Emails sur une commande qu'il a déjà renouvelée
+            </p>
+            <p>
+                <label>ID commande de référence :</label>
+                <input type="number" id="reference_order_id"
+                    value="<?php echo esc_attr($reference_order_id); ?>" />
+                <input type="hidden" id="order_id"
+                    value="<?php echo esc_attr($order_id); ?>" />
+            </p>
+
+            <p>
+                <button type="button" class="button button-primary"
+                        id="delete_subscriptions_btn">
+                    Supprimer abonnements
+                </button>
+            </p>
+
+            <div id="delete_subscriptions_result"
+                style="margin-top:10px;font-weight:bold;"></div>
+        </div>
+
+        <script>
+        jQuery(function($){
+
+            $('#delete_subscriptions_btn').on('click', function(){
+
+                let reference_id = $('#reference_order_id').val();
+                let order_id = $('#order_id').val();
+
+                if (!reference_id) {
+                    alert('Veuillez saisir un ID valide.');
+                    return;
+                }
+
+                $('#delete_subscriptions_result').html('Suppression en cours...');
+
+                $.post(ajaxurl, {
+                    action: 'delete_subscriptions_from_order',
+                    reference_order_id: reference_id,
+                    order_id: order_id
+                }, function(response){
+
+                    $('#delete_subscriptions_result').html(response);
+
+                });
+
+            });
+
+        });
+        </script>
+        <?php
+    }
+
+
+
+    public function delete_subscriptions_from_order() {
+
+        if (!current_user_can('manage_woocommerce')) {
+            wp_die('Permission refusée');
+        }
+
+        $reference_order_id = intval($_POST['reference_order_id']);
+        $order_id = intval($_POST['order_id']);
+        update_post_meta($order_id, '_reference_order_id', $reference_order_id);
+
+        if (!$reference_order_id) {
+            echo 'ID invalide.';
+            wp_die();
+        }
+
+        if (!function_exists('wcs_get_subscriptions_for_order')) {
+            echo 'WooCommerce Subscriptions non actif.';
+            wp_die();
+        }
+
+        $subscriptions = wcs_get_subscriptions_for_order(
+            $reference_order_id,
+            array('order_type' => 'parent')
+        );
+
+        if (empty($subscriptions)) {
+            echo 'Aucun abonnement trouvé.';
+            wp_die();
+        }
+
+        $deleted_ids = [];
+
+        foreach ($subscriptions as $subscription) {
+
+            $sub_id = $subscription->get_id();
+
+            $subscription->delete(true); // suppression définitive
+
+            $deleted_ids[] = $sub_id;
+        }
+
+        echo 'Abonnements supprimés : ' . implode(', ', $deleted_ids);
+
+        wp_die();
     }
 
 
