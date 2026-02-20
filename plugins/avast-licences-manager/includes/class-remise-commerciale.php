@@ -14,15 +14,84 @@ class ALM_Remise_Commerciale {
          * Désactive la TVA si l'utilisateur est revendeur HT.
          */
         add_filter( 'woocommerce_tax_rate_class', [$this, 'get_correct_tax_class'], 10, 2 );
+        add_action('wp_ajax_toggle_user_remises', [$this, 'toggle_user_remises']);
 
       
-
-
         
     }
 
 
-    
+        
+    public function toggle_user_remises(){
+
+        if(!is_user_logged_in()){
+            wp_send_json_error();
+        }
+
+        $user_id = get_current_user_id();
+        $mode = sanitize_text_field($_POST['mode']);
+
+        if($mode === 'activate'){
+            $this->activer_remises_utilisateur($user_id);
+        }
+
+        if($mode === 'deactivate'){
+            $this->desactiver_remises_utilisateur($user_id);
+        }
+
+        wp_send_json_success();
+    }
+
+    public function activer_remises_utilisateur($user_id){
+
+        $args = [
+            'post_type' => 'remise',
+            'meta_query' => [
+                'relation' => 'AND',
+                [
+                    'key'   => 'utilisateur',
+                    'value' => $user_id
+                ],
+                [
+                    'key'     => 'type',
+                    'value'   => 'revendeur - 25 %',
+                    'compare' => '!='
+                ],
+            ]
+        ];
+
+        $remises = get_posts($args);
+
+        foreach($remises as $remise){
+            update_post_meta($remise->ID, 'statut', 'activee');
+        }
+    }
+
+    public function desactiver_remises_utilisateur($user_id){
+
+        $args = [
+            'post_type' => 'remise',
+            'meta_query' => [
+                'relation' => 'AND',
+                [
+                    'key'   => 'utilisateur',
+                    'value' => $user_id
+                ],
+                [
+                    'key'     => 'type',
+                    'value'   => 'revendeur - 25 %',
+                    'compare' => '!='
+                ],
+            ]
+        ];
+
+        $remises = get_posts($args);
+
+        foreach($remises as $remise){
+            update_post_meta($remise->ID, 'statut', 'desactivee');
+        }
+    }
+
 
    
 
@@ -202,14 +271,8 @@ class ALM_Remise_Commerciale {
                 ],
                 [
                     'key' => 'statut',
-                    'value' => 'validee',
-                    'compare' => '='
-                ],
-                [
-                    'key' => 'date_dexpiration',
-                    'value' => $today,
-                    'compare' => '>=',
-                    'type' => 'DATETIME'
+                    'value'   => ['validee','activee'],
+                    'compare' => 'IN'
                 ]
             ]
         ];

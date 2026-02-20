@@ -109,14 +109,9 @@ class ALM_Commandes_Panier {
                 ],
                 [
                     'key' => 'statut',
-                    'value' => 'validee',
-                    'compare' => '='
-                ],
-                [
-                    'key' => 'date_dexpiration',
-                    'value' => $today,
-                    'compare' => '>=',
-                    'type' => 'DATETIME'
+                    'value'   => ['validee','activee'],
+                    'compare' => 'IN'
+
                 ]
             ]
         ];

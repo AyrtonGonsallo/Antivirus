@@ -40,7 +40,12 @@ $prix_remise_depart = null;
 $class_hide_remise_revendeur = 'hide_remise_revendeur';
 $pourcentage_remise_revendeur = null;
 $current_remises="";
+$user_has_disabled_remises = false;
+$user_has_enabled_remises = false;
+
 if($user_id){
+	$user_has_disabled_remises = has_user_disabled_remises($user_id);
+	$user_has_enabled_remises = has_user_enabled_remises($user_id);
 	$remise_c = get_user_remise_by_type($user_id,"Changement -25%");
 	$remise_r = get_user_remise_by_type($user_id,"Renouvellement de licences -30%");
 	$remise_a = get_user_remise_by_type($user_id,"Administrations et mairies -30%");
@@ -312,7 +317,34 @@ if ( $product->is_in_stock() ) : ?>
 
 			<input type="hidden" name="remise_type" id="remise_type" value="<?php echo $current_remises; ?>">
 
-			<button class="btn-remise" style="font-family:'Raleway';font-weight:700;margin-top:17px;border-style: solid; border-width: 3px 3px 3px 3px; border-radius: 8px 8px 8px 8px; padding: 12px 30px 12px 30px; color: #FFFFFF; background-color: var(--e-global-color-primary); border-color: var(--e-global-color-primary); transition: all 0.2s;width: fit-content;margin: auto; text-transform: unset;" class="button product_type_simple" type="submit" name="submit_demande_remise">Appliquer ma remise</button>
+			<?php if($user_has_enabled_remises  || !($user_has_enabled_remises || $user_has_disabled_remises)){ //si il a des remises activees ou si il n'a aucune remise
+			?>
+			<button class="btn-remise btn-remise-style"  type="submit" name="submit_demande_remise">Appliquer ma remise</button>
+			<?php }
+			?>
+
+			<?php if($user_has_disabled_remises){ //si il a des remises desactivees lui permettre de les activer
+			?>
+				<button 
+					type="button"
+					class=" toggle-remise btn-remise-style"
+					data-action="activate">
+					Activer mes remises
+				</button>
+			<?php }
+			?>
+
+			<?php if($user_has_enabled_remises){ //si il a des remises activees lui permettre de les desactiver
+			?>
+				<button 
+					type="button"
+					class="toggle-remise btn-remise-style"
+					data-action="deactivate">
+					Désactiver mes remises
+				</button>
+			<?php }
+			?>
+
 
 		</form>
 	</div>
@@ -327,6 +359,27 @@ if ( $product->is_in_stock() ) : ?>
 ?>
 	<script>
 	jQuery(document).ready(function($) {
+
+		$('.toggle-remise').on('click', function(){
+
+			let actionType = $(this).data('action');
+
+			$.post('<?php echo admin_url('admin-ajax.php'); ?>', {
+				action: 'toggle_user_remises',
+				mode: actionType
+			}, function(response){
+
+				if(response.success){
+					location.reload(); // simple
+				} else {
+					alert('Erreur');
+				}
+
+			});
+
+		});
+
+
 		function  apply_reduction(element){
 			 const $this = element ? $(element) : $('.optionRemise:checked').first();
     		const group = $this.length ? parseInt($this.data('group')) : null;
@@ -486,5 +539,22 @@ if ( $product->is_in_stock() ) : ?>
 	}
 	.prix-remise{
 		display:none;
+	}
+	.btn-remise-style {
+		font-family:'Raleway';
+		font-weight:700;
+		margin-top:17px;
+		border-style: solid; 
+		border-width: 3px 3px 3px 3px; 
+		border-radius: 8px 8px 8px 8px; 
+		padding: 12px 30px 12px 30px; 
+		color: #FFFFFF; 
+		background-color: var(--e-global-color-primary); 
+		border-color: var(--e-global-color-primary); 
+		transition: all 0.2s;
+		width: fit-content;
+		margin: auto; 
+		text-transform: unset;
+		margin-block: 10px !important;
 	}
 </style>

@@ -340,7 +340,7 @@ ins { text-decoration: none !important;}
 }
 .price:not(:has(del)) .woocommerce-Price-amount bdi{/*display: flex!important; gap: 10px; align-items: flex-end; */line-height: 1.2;}
 .price:not(:has(del)) .woocommerce-Price-amount bdi .woocommerce-Price-currencySymbol{line-height: 0.6 !important;}
-.btn-remise:hover{ background-color: var(--e-global-color-secondary) !important; color: var(--e-global-color-1ac87de) !important;border-color: var(--e-global-color-secondary) !important;}
+.btn-remise:hover,.btn-remise-style:hover{ background-color: var(--e-global-color-secondary) !important; color: var(--e-global-color-1ac87de) !important;border-color: var(--e-global-color-secondary) !important;}
 /* .single-product .price del .woocommerce-Price-amount bdi{font-size: 20px !important;    text-decoration: line-through;color: #FF1212 !important;}
 .single-product .price ins .woocommerce-Price-amount bdi{
   color: #000000 !important;

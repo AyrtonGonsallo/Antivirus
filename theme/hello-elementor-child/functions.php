@@ -596,7 +596,6 @@ function get_revendeur_remise($user_id) {
 
 
 function get_user_remise_by_type($user_id,$type) {
-    $today = current_time('Y-m-d H:i:s');
 
     $args = [
         'post_type'      => 'remise',
@@ -609,24 +608,82 @@ function get_user_remise_by_type($user_id,$type) {
             ],
             [
                 'key'   => 'statut',
-                'value' => 'validee',
+                'value'   => ['validee','activee'],
+                'compare' => 'IN'
             ],
             [
                 'key'   => 'type',
                 'value' => $type,
-            ],
-            [
-                'key'     => 'date_dexpiration',
-                'value'   => $today,
-                'compare' => '>=',
-                'type'    => 'DATETIME',
-            ],
+            ]
         ],
     ];
 
     $posts = get_posts($args);
     return $posts[0] ?? null;
 }
+function has_user_enabled_remises($user_id) {
+
+    $args = [
+        'post_type'      => 'remise',
+        'post_status'    => 'publish',
+        'posts_per_page' => 1,
+        'fields'         => 'ids',
+        'no_found_rows'  => true,
+        'meta_query'     => [
+            'relation' => 'AND',
+            [
+                'key'     => 'utilisateur',
+                'value'   => $user_id,
+                'compare' => '='
+            ],
+            [
+                'key'     => 'statut',
+                'value'   => ['validee', 'activee'],
+                'compare' => 'IN'
+            ],
+            [
+                'key'     => 'type',
+                'value'   => 'revendeur - 25 %',
+                'compare' => '!=' // tout sauf celui-ci
+            ],
+        ],
+    ];
+
+    return !empty(get_posts($args));
+}
+
+
+function has_user_disabled_remises($user_id) {
+
+    $args = [
+        'post_type'      => 'remise',
+        'post_status'    => 'publish',
+        'posts_per_page' => 1,
+        'fields'         => 'ids',
+        'no_found_rows'  => true,
+        'meta_query'     => [
+            'relation' => 'AND',
+            [
+                'key'     => 'utilisateur',
+                'value'   => $user_id,
+                'compare' => '='
+            ],
+            [
+                'key'     => 'statut',
+                'value'   => 'desactivee',
+                'compare' => '='
+            ],
+            [
+                'key'     => 'type',
+                'value'   => 'revendeur - 25 %',
+                'compare' => '!='
+            ],
+        ],
+    ];
+
+    return !empty(get_posts($args));
+}
+
 
 add_filter('woocommerce_available_variation', function ($variation_data, $product, $variation) {
 
@@ -786,13 +843,8 @@ function user_has_remise($user_id) {
             ],
             [
                 'key'   => 'statut',
-                'value' => 'validee',
-            ],
-            [
-                'key'     => 'date_dexpiration',
-                'value'   => $today,
-                'compare' => '>=',
-                'type'    => 'DATETIME',
+                'value'   => ['validee', 'activee'],
+                'compare' => 'IN'
             ],
         ],
     ];
