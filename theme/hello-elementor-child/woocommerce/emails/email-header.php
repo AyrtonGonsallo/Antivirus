@@ -66,30 +66,7 @@ $store_name                 = $store_name ?? get_bloginfo( 'name', 'display' );
 										$img           = false !== $img_transient ? $img_transient : $img;
 									}
 
-									if ( $email_improvements_enabled ) :
-										?>
-										<table border="0" cellpadding="0" cellspacing="0" width="100%">
-											<tr>
-												<td id="template_header_image">
-													<?php
-													if ( $img ) {
-														echo '<p style="margin-top:0;"><img src="' . esc_url( $img ) . '" alt="' . esc_attr( $store_name ) . '" /></p>';
-													} else {
-														echo '<p class="email-logo-text">' . esc_html( $store_name ) . '</p>';
-													}
-													?>
-												</td>
-											</tr>
-										</table>
-									<?php else : ?>
-										<div id="template_header_image">
-											<?php
-											if ( $img ) {
-												echo '<p style="margin-top:0;"><img src="' . esc_url( $img ) . '" alt="' . esc_attr( $store_name ) . '" /></p>';
-											}
-											?>
-										</div>
-									<?php endif; ?>
+									 ?>
 									<table border="0" cellpadding="0" cellspacing="0" width="100%" id="template_container">
 										<tr>
 											<td align="center" valign="top">

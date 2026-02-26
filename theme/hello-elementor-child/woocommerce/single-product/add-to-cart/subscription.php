@@ -60,10 +60,18 @@ if($user_id){
 	if (!empty($remise) && !$bloquer_remise_revendeur){
 		$percent = (float) get_field('pourcentage', $remise->ID);
 
-		$class_remise_revendeur = "has-remise-revendeur";
+		
 		$pourcentage_remise_revendeur = $percent;
 		$remise_revendeur_txt = "Remise revendeur - ".$percent." %";
-		$prix_base = $product->is_on_sale() ? $regular_price : $regular_price;//remise toujours sur prix de base
+		if($user_has_enabled_remises){
+			$prix_base = $regular_price;//remise toujours sur prix de base si revendeur sans commerciale
+			$class_remise_revendeur = "has-remise-revendeur";
+		}else{
+			$prix_base = $product->is_on_sale() ? $sale_price : $regular_price;//remise sur prix promo si revendeur sans commerciale
+		}
+		$class_barrer_autres_prix = "barrer-car-remise";
+		
+		
 		$prix_remise_revendeur = $prix_base - ($prix_base * $percent / 100);
 		$prix_remise_revendeur = round($prix_remise_revendeur, 2);
 		$prix_remise_depart = $prix_remise_revendeur;
@@ -155,7 +163,7 @@ if ( $product->is_in_stock() ) : ?>
 					</span>
 				</del>
 				<ins aria-hidden="true" class="hide-if-rem-comm <?php echo $class_remise_revendeur;?>">
-					<span class="woocommerce-Price-amount amount remisable  <?php echo $class_remise_revendeur;?>">
+					<span class="woocommerce-Price-amount amount remisable <?php echo $class_remise_revendeur;?>">
 						<bdi><?php echo wc_price( $sale_price ); ?></bdi>
 						<?php 
 							$reduction = (($regular_price - $sale_price) / $regular_price) * 100;
@@ -180,8 +188,8 @@ if ( $product->is_in_stock() ) : ?>
 
 				?>
 
-				<ins aria-hidden="true" class="<?php echo $class_hide_remise_revendeur;?>">
-					<span class="woocommerce-Price-amount amount remisable ">
+				<ins aria-hidden="true" class=" prix-promo  <?php echo $class_hide_remise_revendeur;?>">
+					<span class="woocommerce-Price-amount amount remisable">
 						<bdi><?php echo wc_price( $prix_remise_revendeur ); ?></bdi>
 					</span>
 				</ins>
@@ -189,6 +197,7 @@ if ( $product->is_in_stock() ) : ?>
 				<?php if (!empty($remise) && !$bloquer_remise_revendeur){?>
 					<span class="pourcentage-remise-depart"><?php echo $pourcentage_remise_revendeur;?></span>
 					<span class="prix-total"><?php echo $prix_base;?></span>
+					<span class="prix-total2"><?php echo $regular_price;?></span>
 				<?php }?>
 				<span class="prix-remise-depart"><?php echo $prix_remise_revendeur;?></span>
 				<span class="prix-remise">prix remisé</span>
@@ -201,7 +210,7 @@ if ( $product->is_in_stock() ) : ?>
 		<div class="woocommerce-variation-price ">
 			<span class="price">
 				<ins aria-hidden="true">
-					<span class="woocommerce-Price-amount amount remisable <?php //echo $class_remise_revendeur;?>">
+					<span class="woocommerce-Price-amount amount remisable <?php echo $class_barrer_autres_prix;?>">
 						<bdi><?php echo wc_price( $regular_price ); ?></bdi>
 					</span>
 				</ins>
@@ -428,11 +437,12 @@ if ( $product->is_in_stock() ) : ?>
 				$(".btn-remise").prop("disabled", true);
 				$(".prix-remise").hide();
 				$(".promo-end").show();
+				$(".prix-promo").show();
 				$(".hide-if-rem-comm").show();
 				$(".remisable bdi").css("text-decoration", "none");
 			}else{
 				$(".btn-remise").prop("disabled", false);
-
+				$(".prix-promo").hide();
 				
 				let prixFinal = 0
 
@@ -441,7 +451,7 @@ if ( $product->is_in_stock() ) : ?>
                 }).length > 0;
 
                 // Vérifier si le prix total contient un texte
-                var hasPrix = $(".prix-total").filter(function() {//prix de base du produit
+                var hasPrix = $(".prix-total2").filter(function() {//prix de base du produit
                     return $(this).text().trim() !== "";
                 }).length > 0;
 
@@ -450,7 +460,7 @@ if ( $product->is_in_stock() ) : ?>
 
                 // Exemple de condition
                 if (hasRemise && hasPrix) {
-					let prixDepart = parseFloat($(".prix-total").text().replace(',', '.'));
+					let prixDepart = parseFloat($(".prix-total2").text().replace(',', '.'));
 					let pourcentageRemise = parseFloat($(".pourcentage-remise-depart").text().replace(',', '.'));
 					let prixRemiseRevendeur =  (prixDepart * pourcentageRemise / 100); //conserver prixDepart - prixRemiseRevendeur et cummulee a partir de la
 					// Appliquer la réduction
@@ -534,7 +544,7 @@ if ( $product->is_in_stock() ) : ?>
 		opacity: 0.5;
 		margin-block: 10px !important;
 	}
-	.prix-remise-depart,.prix-total,.pourcentage-remise-depart{
+	.prix-remise-depart,.prix-total,.prix-total2,.pourcentage-remise-depart{
 		display:none;
 	}
 	.prix-remise{
@@ -556,5 +566,8 @@ if ( $product->is_in_stock() ) : ?>
 		margin: auto; 
 		text-transform: unset;
 		margin-block: 10px !important;
+	}
+	.barrer-car-remise bdi{
+		text-decoration: line-through !important;
 	}
 </style>

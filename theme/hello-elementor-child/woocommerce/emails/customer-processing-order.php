@@ -26,26 +26,37 @@ $email_improvements_enabled = FeaturesUtil::feature_is_enabled( 'email_improveme
 /*
  * @hooked WC_Emails::email_header() Output the email header
  */
-do_action( 'woocommerce_email_header', $email_heading, $email ); ?>
+do_action( 'woocommerce_email_header', $email_heading, $email ); 
+
+
+$user = get_user_by('login', $user_login);
+$user_id = $user->ID;
+$civilite    = strtolower(get_user_meta($user_id, 'civilite', true));
+$prenom     = $user->first_name;
+$nom        = $user->last_name;
+?>
 
 <?php echo $email_improvements_enabled ? '<div class="email-introduction">' : ''; ?>
 <p>
-<?php
-if ( ! empty( $order->get_billing_first_name() ) ) {
-	/* translators: %s: Customer first name */
-	printf( esc_html__( 'Hi %s,', 'woocommerce' ), esc_html( $order->get_billing_first_name() ) );
-} else {
-	printf( esc_html__( 'Hi,', 'woocommerce' ) );
-}
-?>
+
+<?php echo '<p class="email-logo-text">Merci !</p>'; ?>
+<p><span style="font-weight: 400;">Bonjour <?php echo $civilite ;?> <?php echo $nom ;?> <?php echo $prenom ;?>,</span></p>
+
 </p>
-<?php if ( $email_improvements_enabled ) : ?>
-	<p><?php esc_html_e( 'Just to let you know &mdash; we’ve received your order, and it is now being processed.', 'woocommerce' ); ?></p>
-	<p><?php esc_html_e( 'Here’s a reminder of what you’ve ordered:', 'woocommerce' ); ?></p>
-<?php else : ?>
-	<?php /* translators: %s: Order number */ ?>
-	<p><?php printf( esc_html__( 'Just to let you know &mdash; we\'ve received your order #%s, and it is now being processed:', 'woocommerce' ), esc_html( $order->get_order_number() ) ); ?></p>
-<?php endif; ?>
+
+
+	<p>Le paiement de votre commande Avast a bien été accepté et nous vous en remercions !</p>
+	<p>
+		Notre équipe commerciale via très rapidement livrer votre commande. 
+		Vous recevrez sous peu un Email avec votre code d’activation Avast et la procédure d’installation du logiciel.
+		Vous pouvez accéder à tout moment au suivi de votre commande en vous connectant à votre compte Avast :
+	</p>
+	<p>&nbsp;</p>
+	<p style="text-align:center;"> 
+		<a style="color:#000000;padding: 16px 20px;background-color:#ff7800;font-size: 13px;font-weight: bold;text-decoration:none" href=<?php echo esc_url( wc_get_page_permalink( 'myaccount' ) );?> target="_blank">
+			Me connecter à mon compte client AVAST
+		</a>
+	</p>
 <?php echo $email_improvements_enabled ? '</div>' : ''; ?>
 
 <?php

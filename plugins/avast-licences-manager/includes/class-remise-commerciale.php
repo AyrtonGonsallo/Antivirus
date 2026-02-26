@@ -8,7 +8,7 @@ class ALM_Remise_Commerciale {
         // Lors du submit du formulaire → on crée la remise
         add_action('init', [$this, 'handle_demande_remise_creation']);
         add_action('woocommerce_cart_calculate_fees', [$this, 'apply_remises_and_tva_to_user'],5);
-        add_action( 'woocommerce_before_calculate_totals', [$this, 'force_regular_price_if_user_has_remise'],  5  );
+        add_action( 'woocommerce_before_calculate_totals', [$this, 'force_regular_price_if_user_has_remise_commerciale'],  5  );
 
         /**
          * Désactive la TVA si l'utilisateur est revendeur HT.
@@ -141,7 +141,6 @@ class ALM_Remise_Commerciale {
                         'meta_query' => [
                             ['key' => 'utilisateur', 'value' => $user_id],
                             ['key' => 'type', 'value' => $option],
-                            ['key' => 'statut', 'value' => 'validee'],
                         ]
                     ]);
                     
@@ -274,14 +273,50 @@ class ALM_Remise_Commerciale {
                     'value'   => ['validee','activee'],
                     'compare' => 'IN'
                 ]
-            ]
+            ],
+            'meta_key' => 'type',
+            'orderby'  => 'meta_value',
+            'order'    => 'ASC'
         ];
 
         return get_posts($args);
     }
 
 
-    public function force_regular_price_if_user_has_remise($cart) {
+    private function get_user_remises_commerciales($user_id) {
+        $today = current_time('d/m/Y g:i a'); // même format que date_de_creation
+
+        $args = [
+            'post_type' => 'remise',
+            'post_status' => 'publish',
+            'numberposts' => -1,
+            'meta_query' => [
+                [
+                    'key' => 'utilisateur',
+                    'value' => $user_id,
+                    'compare' => '='
+                ],
+                [
+                    'key' => 'statut',
+                    'value'   => ['validee','activee'],
+                    'compare' => 'IN'
+                ],
+                [
+                    'key' => 'type',
+                    'value'   => 'revendeur - 25 %',
+                    'compare' => '!='
+                ]
+            ],
+            'meta_key' => 'type',
+            'orderby'  => 'meta_value',
+            'order'    => 'ASC'
+        ];
+
+        return get_posts($args);
+    }
+
+
+    public function force_regular_price_if_user_has_remise_commerciale($cart) {
 
         if (is_admin() && !defined('DOING_AJAX')) return;
         if (!$cart || did_action('woocommerce_before_calculate_totals') >= 2) return;
@@ -289,7 +324,7 @@ class ALM_Remise_Commerciale {
         $user_id = get_current_user_id();
         if (!$user_id) return;
 
-        $remises = $this->get_user_remises($user_id);
+        $remises = $this->get_user_remises_commerciales($user_id);
         if (empty($remises)) return; //  PAS DE REMISE → PRIX PROMO NORMAL
 
         foreach ($cart->get_cart() as $cart_item) {

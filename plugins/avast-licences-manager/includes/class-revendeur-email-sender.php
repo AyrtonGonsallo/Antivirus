@@ -99,7 +99,7 @@ class RevendeurEmailSender {
         $lien_logo_png = site_url().'/wp-content/uploads/2025/11/avast-logo.png';
 
         // 2️⃣ Construire le contenu de l'email
-        $subject = "Votre compte revendeur avast est ouvert !";
+        $subject = "Ouverture de votre compte revendeur AVAST";
        $message = '
             <div style="
                 width:100%;
@@ -111,13 +111,19 @@ class RevendeurEmailSender {
                     max-width:600px;
                     margin:0 auto;
                     background:white;
-                    padding:30px;
+                    padding:0px 30px 30px 30px;
                     border-radius:8px;
                     text-align:start;
                     box-shadow:0 0 10px rgba(0,0,0,0.08);
                 ">            
 
-                  
+                  <h4 style="
+                            margin:20px 0;
+                            color:#FF7800;
+                            font-weight:bolder;
+                            text-align:center;
+                            font-size:18px;
+                        ">Votre compte revendeur AVAST est ouvert</h4>
                 
                     
                         Bonjour '.$civilite.' '.$new_revendeur_account_nom.' '.$new_revendeur_account_prenom.',
@@ -135,14 +141,15 @@ class RevendeurEmailSender {
                             margin:20px 0;
                             padding:12px 25px;
                             background:#FF7800;
-                            color:white;
+                            font-weight:bolder;
+                            color:black;
                             text-decoration:none;
                             font-size:16px;
                             border-radius:6px;
                         ">Accéder à mon compte revendeur avast</a>
                     </div>
 
-                    <h2 style="margin-top:30px; color:#444;text-transform:uppercase;text-align:center">Votre compte revendeur avast vous permet de bénéficier des avantages suivants</h2>
+                    <p style="margin-top:10px; color:#444; font-weight:bolder;">Votre compte revendeur avast vous permet de bénéficier des avantages suivants :</p>
                     
                      <p style="font-size:15px; color:#555; line-height:1.6; margin-top:20px;">       
                     - une marge revendeur garantie quelque soit le volume d\'affaires que vous faites avec nous.<br>
@@ -155,8 +162,8 @@ class RevendeurEmailSender {
                         Je reste à votre disposition pour toute question.
                     </p>
 
-                    <p style="margin-top:30px; color:#333; font-weight:bold;">
-                        Bien cordialement,<br>Maelle Adeire <br>Distribution AVAST
+                    <p style="margin-top:30px; color:#333;">
+                        Bien cordialement,<br>Maelle Adeire<br>Distribution AVAST<br>contact@avastedition.com<br>02 55 99 31 37
                     </p>
 
                 </div>

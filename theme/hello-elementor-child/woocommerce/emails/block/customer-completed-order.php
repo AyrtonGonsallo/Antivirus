@@ -25,7 +25,7 @@ defined( 'ABSPATH' ) || exit;
 
 <!-- wp:heading -->
 <!-- /wp:heading -->
-ee
+
 <!-- wp:paragraph -->
 <p><?php
 	/* translators: %s: Customer first name */

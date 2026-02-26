@@ -24,18 +24,22 @@ class DevisEmailSender {
         $civilite = get_user_meta($user_id, 'civilite', true); 
         
         $note_admin     =    get_field('note_admin', $post_id);
-        $lien_auto_connect_devis = site_url()."/mon-compte/mes-devis/";
         $date_de_creation   = get_field('date_de_creation', $post_id);
         $date_de_creation_formatted = $date_de_creation ? (new DateTime($date_de_creation))->format('d/m/Y \à H\hi') : '';
         $note_client     =    get_field('note_client', $post_id);
         $software_duration     =    get_field('software_duration', $post_id)["label"];
         $produits_de_la_commande     =    get_field('produits_de_la_commande', $post_id);
-         $today = current_time('d/m/Y g:i a'); // même format que date_de_creation
+        $today = current_time('d/m/Y g:i a'); // même format que date_de_creation
 
         $total_produits=0;
         $devis_content_html = "";
 
-        $total_variations = sizeof($variations) ;
+        if(sizeof($variations)>1){
+            $total_variations = "Vos ".sizeof($variations)." devis sont maintenant disponibles" ;
+        }else{
+            $total_variations =  "Votre devis est maintenant disponible";
+        }
+        
         $ids = [];
        
         foreach ($variations as $variation) {
@@ -71,7 +75,7 @@ class DevisEmailSender {
 
 
         // 2️⃣ Construire le contenu de l'email
-        $subject = "Merci pour votre demande de devis AVAST";
+        $subject = "Devis disponible dans votre compte client";
         $message = '
             <div style="
                 width:100%;
@@ -88,7 +92,7 @@ class DevisEmailSender {
                     box-shadow:0 0 10px rgba(0,0,0,0.08);
                 ">
 
-                  
+                <h4 style="margin:20px 0;color:#FF7800;font-weight:bolder;text-align:center;font-size:18px;">Votre devis AVAST est disponible dans votre compte client</h4>
                 
                     
                         Bonjour '.$civilite.' '.$nom.' '.$prenom.',
@@ -97,7 +101,7 @@ class DevisEmailSender {
                     
 
                      <p style="font-size:15px; color:#555; line-height:1.6;">
-                        Votre demande de tarifs pour des licences Avast a été traitée, et vos '.$total_variations.' devis sont maintenant disponibles dans votre compte client.
+                        Votre demande de devis a été traitée par notre service commercial ! '.$total_variations.' dans votre compte client.
                     </p>
 
                   
@@ -150,7 +154,7 @@ class DevisEmailSender {
                     </p>
 
                     <p style="margin-top:30px; color:#333; font-weight:bold;">
-                        Cordialement,<br>L\'équipe Avast
+                        Cordialement,<br>L\'équipe Avast<br>contact@avastedition.com<br>02 55 99 31 37
                     </p>
 
                 </div>
@@ -198,7 +202,7 @@ class DevisEmailSender {
         $prenom = get_user_meta($user_id, 'first_name', true);
         $nom = get_user_meta($user_id, 'last_name', true);
         $civilite = get_user_meta($user_id, 'civilite', true); 
-        $lien_auto_connect_devis = site_url()."/mon-compte/mes-devis/";
+        $lien_auto_connect_devis =  ALM_Gestion_De_Comptes::generate_auto_login_link($user_id);
         $date_de_creation   = get_field('date_de_creation', $post_id);
         $date_de_creation_formatted = $date_de_creation ? (new DateTime($date_de_creation))->format('d/m/Y \à H\hi') : '';
         $software_duration     =    get_field('software_duration', $post_id)["label"];
@@ -230,7 +234,7 @@ class DevisEmailSender {
 
 
         // 2️⃣ Construire le contenu de l'email
-        $subject = "Merci pour votre demande de devis AVAST";
+        $subject = "Confirmation de création de votre devis";
         $message = '
             <div style="
                 width:100%;
@@ -247,7 +251,13 @@ class DevisEmailSender {
                     box-shadow:0 0 10px rgba(0,0,0,0.08);
                 ">
 
-                  
+                  <h4 style="
+                            margin:20px 0;
+                            color:#FF7800;
+                            font-weight:bolder;
+                            text-align:center;
+                            font-size:18px;
+                        ">Nous avons reçu votre demande de devis</h4>
                 
                     
                         Bonjour '.$civilite.' '.$nom.' '.$prenom.',
@@ -285,7 +295,7 @@ class DevisEmailSender {
                             text-decoration:none;
                             font-size:16px;
                             border-radius:6px;
-                        ">Voir mon devis</a>
+                        ">Me connecter à mon compte client</a>
                     </div>
 
                     <p style="font-size:15px; color:#555; line-height:1.6; margin-top:20px;">
@@ -293,7 +303,7 @@ class DevisEmailSender {
                     </p>
 
                     <p style="margin-top:30px; color:#333; font-weight:bold;">
-                        Cordialement,<br>L\'équipe Avast
+                        Cordialement,<br>L\'équipe Avast<br>contact@avastedition.com<br>02 55 99 31 37
                     </p>
 
                 </div>
@@ -344,7 +354,7 @@ class DevisEmailSender {
         $prenom = get_user_meta($user_id, 'first_name', true);
         $nom = get_user_meta($user_id, 'last_name', true);
         $civilite = get_user_meta($user_id, 'civilite', true); 
-        $lien_auto_connect_devis = site_url()."/mon-compte/mes-devis/";
+        $lien_auto_connect_devis =  ALM_Gestion_De_Comptes::generate_auto_login_link($user_id);
         $date_de_creation   = get_field('date_de_creation', $post_id);
         $date_de_creation_formatted = $date_de_creation ? (new DateTime($date_de_creation))->format('d/m/Y \à H\hi') : '';
         $date_expiration  = get_field('date_expiration', $post_id);

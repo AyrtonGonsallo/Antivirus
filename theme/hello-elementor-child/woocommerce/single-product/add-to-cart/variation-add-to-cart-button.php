@@ -212,6 +212,7 @@ if($user_id){
                 console.log("pas de remise")
                 $(".btn-remise").prop("disabled", true);
                 $(".prix-remise").hide();
+                $(".remise_initiale").show();
                 $(".hide-if-rem-comm").show();
                 $(".remisable bdi").css("text-decoration", "none");
                 $(".hide-if-rem-comm  .variation-reduction-percentage").show();
@@ -219,6 +220,7 @@ if($user_id){
                 $(".hide-if-rem-comm  .promo-end").show();
             }else{
                 $(".btn-remise").prop("disabled", false);
+                $(".remise_initiale").hide();
                 
 
                 let prixFinal = 0
@@ -228,7 +230,7 @@ if($user_id){
                 }).length > 0;
 
                 // Vérifier si le prix total contient un texte
-                var hasPrix = $(".prix-total").filter(function() {//prix de base du produit
+                var hasPrix = $(".prix-total2").filter(function() {//prix de base du produit
                     return $(this).text().trim() !== "";
                 }).length > 0;
 
@@ -236,8 +238,8 @@ if($user_id){
                 console.log("Contient prix :", hasPrix);
 
                 // Exemple de condition
-                if (hasRemise && hasPrix) {
-					let prixDepart = parseFloat($(".prix-total").text().replace(',', '.'));
+                if (hasRemise && hasPrix) {//reevendeur
+					let prixDepart = parseFloat($(".prix-total2").text().replace(',', '.'));
 					let pourcentageRemise = parseFloat($(".pourcentage-remise-depart").text().replace(',', '.'));
 					let prixRemiseRevendeur =  (prixDepart * pourcentageRemise / 100); //conserver prixDepart - prixRemiseRevendeur et cummulee a partir de la
 					// Appliquer la réduction
@@ -260,8 +262,8 @@ if($user_id){
 
                     prixFinal = prixActuel;
                     console.log(`💰 Prix final: ${prixFinal.toFixed(2)} EUR`);
-				}else{
-					let prixDepart = parseFloat($(".prix-remise-depart").text().replace(',', '.'));
+				}else{//client normal
+					let prixDepart = parseFloat($(".prix-total2").text().replace(',', '.'));
                     let prixActuel = prixDepart;
 
                     console.log(`Prix départ: ${prixActuel.toFixed(2)} EUR`);
@@ -336,7 +338,7 @@ if($user_id){
             opacity: 0.5;
             margin-block: 10px !important;
         }
-        .prix-remise-depart,.prix-total,.pourcentage-remise-depart{
+        .prix-remise-depart,.prix-total,.prix-total2,.pourcentage-remise-depart{
             display:none;
         }
         .prix-remise{

@@ -12,7 +12,7 @@
  *
  * @see     https://woocommerce.com/document/template-structure/
  * @package WooCommerce\Templates\Emails
- * @version 9.9.0
+ * @version 10.5.0
  */
 
 use Automattic\WooCommerce\Internal\Email\EmailFont;
@@ -92,20 +92,13 @@ $text_lighter_40 = wc_hex_lighter( $text, 40 );
 // body{padding: 0;} ensures proper scale/positioning of the email in the iOS native email app.
 ?>
 body {
-    background: #f5f5f5;
-    padding: 40px 0;
-    font-family: Arial, sans-serif;
+	background-color: <?php echo esc_attr( $bg ); ?>;
+	padding: 0;
+	text-align: center;
 }
 
 #outer_wrapper {
-	border-radius: 8px;
-	max-width:600px;
-	margin:0 auto;
-	background:white;
-	padding:30px;
-	border-radius:8px;
-	text-align:start;
-	box-shadow:0 0 10px rgba(0,0,0,0.08);
+	background-color: <?php echo esc_attr( $bg ); ?>;
 }
 
 <?php if ( $email_improvements_enabled ) : ?>
@@ -117,7 +110,7 @@ body {
 
 #wrapper {
 	margin: 0 auto;
-	padding: <?php echo $email_improvements_enabled ? '12px 0' : '70px 0'; ?>;
+	padding: <?php echo $email_improvements_enabled ? '24px 0' : '70px 0'; ?>;
 	-webkit-text-size-adjust: none !important;
 	width: 100%;
 	max-width: 600px;
@@ -178,9 +171,7 @@ body {
 .email-logo-text {
 	color: <?php echo esc_attr( $link_color ); ?>;
 	font-family: <?php echo $safe_font_family; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>;
-	font-size: 22px;
-	font-weight:bolder;
-	text-align:center;
+	font-size: 18px;
 }
 
 .email-introduction {
@@ -291,6 +282,10 @@ body {
 	padding-top: 5px;
 }
 
+#body_content .email-order-details .order-totals .includes_tax {
+	display: block;
+}
+
 #body_content .email-order-details .order-totals-total th {
 	font-weight: bold;
 }
@@ -336,13 +331,13 @@ body {
 }
 
 #body_content p {
-	margin: 0 0 10px;
+	margin: 0 0 16px;
 }
 
 #body_content_inner {
 	color: <?php echo esc_attr( $text_lighter_20 ); ?>;
 	font-family: <?php echo $safe_font_family; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>;
-	font-size: <?php echo $email_improvements_enabled ? '14px' : '14px'; ?>;
+	font-size: <?php echo $email_improvements_enabled ? '16px' : '14px'; ?>;
 	line-height: 150%;
 	text-align: <?php echo is_rtl() ? 'right' : 'left'; ?>;
 }
@@ -378,9 +373,7 @@ body {
 	border: 1px solid <?php echo esc_attr( $body_darker_10 ); ?>;
 	list-style: none outside;
 }
-ul {
-    list-style-type: none ;
-}
+
 .additional-fields li {
 	margin: 0 0 12px 0;
 }

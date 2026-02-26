@@ -37,6 +37,7 @@ if ( ! empty( $order->get_billing_first_name() ) ) {
 }
 ?>
 </p>
+
 <?php if ( $email_improvements_enabled ) : ?>
 	<p><?php esc_html_e( 'We’ve received your order and it’s currently on hold until we can confirm your payment has been processed.', 'woocommerce' ); ?></p>
 	<p><?php esc_html_e( 'Here’s a reminder of what you’ve ordered:', 'woocommerce' ); ?></p>

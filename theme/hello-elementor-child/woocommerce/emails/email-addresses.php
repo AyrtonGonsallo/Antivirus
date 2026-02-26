@@ -36,6 +36,17 @@ $email_improvements_enabled = FeaturesUtil::feature_is_enabled( 'email_improveme
 			<?php } ?>
 
 			<address class="address">
+				<?php
+					$user_id = $order->get_user_id();
+					$billing_numero_siret    = (get_user_meta($user_id, 'billing_numero_siret', true));
+					$billing_societe    = (get_user_meta($user_id, 'billing_societe', true));
+				?>
+				<?php if ( !empty( $billing_numero_siret ) ) : ?>
+					<br/><?php echo $billing_numero_siret;  ?></td>
+				<?php endif; ?>
+				<?php if ( !empty( $billing_societe ) ) : ?>
+					<br/><?php echo $billing_societe; ?>
+				<?php endif; ?>
 				<?php echo wp_kses_post( $address ? $address : esc_html__( 'N/A', 'woocommerce' ) ); ?>
 				<?php if ( $order->get_billing_phone() ) : ?>
 					<br/><?php echo wc_make_phone_clickable( $order->get_billing_phone() ); ?>
@@ -58,35 +69,7 @@ $email_improvements_enabled = FeaturesUtil::feature_is_enabled( 'email_improveme
 				?>
 			</address>
 		</td>
-		<?php if ( ! wc_ship_to_billing_address_only() && $order->needs_shipping_address() && $shipping ) : ?>
-			<td class="font-family text-align-left" style="padding:0;" valign="top" width="50%">
-				<?php if ( $email_improvements_enabled ) { ?>
-					<b class="address-title"><?php esc_html_e( 'Shipping address', 'woocommerce' ); ?></b>
-				<?php } else { ?>
-					<h2><?php esc_html_e( 'Shipping address', 'woocommerce' ); ?></h2>
-				<?php } ?>
-
-				<address class="address">
-					<?php echo wp_kses_post( $shipping ); ?>
-					<?php if ( $order->get_shipping_phone() ) : ?>
-						<br /><?php echo wc_make_phone_clickable( $order->get_shipping_phone() ); ?>
-					<?php endif; ?>
-					<?php
-					/**
-					 * Fires after the core address fields in emails.
-					 *
-					 * @since 8.6.0
-					 *
-					 * @param string $type Address type. Either 'billing' or 'shipping'.
-					 * @param WC_Order $order Order instance.
-					 * @param bool $sent_to_admin If this email is being sent to the admin or not.
-					 * @param bool $plain_text If this email is plain text or not.
-					 */
-					do_action( 'woocommerce_email_customer_address_section', 'shipping', $order, $sent_to_admin, false );
-					?>
-				</address>
-			</td>
-		<?php endif; ?>
+		
 	</tr>
 </table>
 <?php echo $email_improvements_enabled ? '<br>' : ''; ?>

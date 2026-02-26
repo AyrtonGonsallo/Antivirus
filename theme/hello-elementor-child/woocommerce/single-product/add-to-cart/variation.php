@@ -27,7 +27,7 @@ defined( 'ABSPATH' ) || exit;
 	
 	<span class="variation-reduction-percentage has-remise-revendeur {{{ data.variation.class_hide_remise_revendeur }}}">{{{ data.variation.remise_revendeur_txt }}}</span>
 	<span class="prix-remise-revendeur {{{ data.variation.class_hide_remise_revendeur }}}">
-		<div class="woocommerce-variation-price remisable ">
+		<div class="woocommerce-variation-price remisable remise_initiale">
 			<span class="price">
 				<span class="woocommerce-Price-amount amount">
 					<bdi>{{{ data.variation.prix_remise_revendeur }}}&nbsp;
@@ -36,11 +36,12 @@ defined( 'ABSPATH' ) || exit;
 				</span> 
 			</span>
 		</div>
-	</span>
+	</span><br>
 
 	<span class="prix-remise-depart">{{{ data.variation.prix_remise_depart }}}</span>
 	<span class="prix-remise">prix remisé</span>
 	<span class="prix-total">{{{ data.variation.prix_base }}}</span>
+	<span class="prix-total2">{{{ data.variation.prix_base2 }}}</span>
 	<span class="pourcentage-remise-depart">{{{ data.variation.pourcentage_remise_revendeur }}}</span>
 
 </script>

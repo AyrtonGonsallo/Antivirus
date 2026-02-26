@@ -690,34 +690,38 @@ add_filter('woocommerce_available_variation', function ($variation_data, $produc
     $user_id = get_current_user_id();
     $bloquer_remise_revendeur = get_field('bloquer_remise_revendeur', $product->get_id());       // true / false
     $bloquer_remise_commerciale = get_field('bloquer_remise_commerciale', $product->get_id());
+    $user_has_enabled_remises = has_user_enabled_remises($user_id);
 
     if ($variation->is_on_sale()) {
 
         $regular = (float) $variation->get_regular_price();
         $sale    = (float) $variation->get_sale_price();
 
-        if ($regular > 0 && $sale > 0 && $sale < $regular) {
-            $percent = round((($regular - $sale) / $regular) * 100);
+        
 
-            
+        if($user_has_enabled_remises){
+			$prix_base = $regular_price;
+		}else{
+			$prix_base = $product->is_on_sale() ? $sale : $regular;//remise sur prix promo si revendeur sans commerciale
+            if ($regular > 0 && $sale > 0 && $sale < $regular) {
+                $percent = round((($regular - $sale) / $regular) * 100);
+                $variation_data['discount_percent'] =  "<span class='variation-reduction-percentage'>- ".$percent." %</span>"; 
+            }
 
-        $variation_data['discount_percent'] =  "<span class='variation-reduction-percentage'>- ".$percent." %</span>"; 
-        }
+            $date = $variation->get_date_on_sale_to();
 
-        $date = $variation->get_date_on_sale_to();
+            if ($date) {
 
-        if ($date) {
+                $res_string = '<p class="promo-end">';
+                $res_string .= 'Promotion valable jusqu’au <strong>' . wc_format_datetime($date) . '</strong>';
+                $res_string .= '</p>';
 
-            $res_string = '<p class="promo-end">';
-            $res_string .= 'Promotion valable jusqu’au <strong>' . wc_format_datetime($date) . '</strong>';
-            $res_string .= '</p>';
-
-            $variation_data['sale_end_date'] = $res_string;
-        } else {
-            $variation_data['sale_end_date'] = '';
-        }
-
-        $variation_data['prix_remise_depart'] = $regular;//toujour sur le prix regulier
+                $variation_data['sale_end_date'] = $res_string;
+            } else {
+                $variation_data['sale_end_date'] = '';
+            }
+		}
+        $variation_data['prix_remise_depart'] = $prix_base;
 
     }else{
         $regular = (float) $variation->get_regular_price();
@@ -726,18 +730,26 @@ add_filter('woocommerce_available_variation', function ($variation_data, $produc
     $remise = get_revendeur_remise($user_id);
     if (!empty($remise) && !$bloquer_remise_revendeur){
         $percent = (float) get_field('pourcentage', $remise->ID);
-
-        $variation_data['class_remise_revendeur'] = "has-remise-revendeur";
+        
         $variation_data['pourcentage_remise_revendeur'] = $percent;
         $variation_data['remise_revendeur_txt'] = "Remise revendeur - ".$percent." %";
-        $prix_base = $variation->is_on_sale() ? $regular : $regular;  //remise toujours sur prix de base
+        if($user_has_enabled_remises){
+            $prix_base =  $regular;  //si remise commerciale remise revendeur et comm toujours sur prix de base
+            $variation_data['class_remise_revendeur'] = "has-remise-revendeur";
+		}else{
+            $prix_base = $variation->is_on_sale() ? $sale : $regular;  //si pas remise commerciale remise revendeur toujours sur prix promo
+        }
         $prix_remise_revendeur = $prix_base - ($prix_base * $percent / 100);
         $variation_data['prix_remise_revendeur'] = round($prix_remise_revendeur, 2);
         $variation_data['prix_remise_depart'] = $prix_remise_revendeur;
         $variation_data['prix_base'] = $prix_base;
+        $variation_data['prix_base2'] = $regular;
+        
 
     }else{
         $variation_data['class_hide_remise_revendeur'] = 'hide_remise_revendeur';
+        $variation_data['prix_base'] = $prix_base;
+        $variation_data['prix_base2'] = $regular;
     }
 
   return $variation_data;
@@ -924,6 +936,11 @@ function shortcode_menu_entreprise($atts) {
         
         $marques = [];
         foreach ($products as $pid) {
+            $afficher_dans_le_menu = get_field('afficher_dans_le_menu', $pid);
+            if(!$afficher_dans_le_menu){
+                continue;
+            }
+
             $ordre = (int)(get_field('ordre', $pid) ?: 9999);
             $terms = wp_get_post_terms($pid, 'product_brand');
             
@@ -980,6 +997,7 @@ function shortcode_menu_entreprise($atts) {
                     }
                     */
                     $output .= "<div class=\"produit-item\" style=\"margin-bottom:5px;\">";
+                    
                     $output .= "<a href=\"" . get_permalink($parent->get_id()) . "\" class=\"link-mega-menu\" style=\"text-decoration:none;color:#000;\">";
                     
                     if ($cat->slug !== "antivirus-pour-android") {
@@ -1012,3 +1030,65 @@ function shortcode_menu_entreprise($atts) {
     return $output;
 }
 add_shortcode('menu_entreprise', 'shortcode_menu_entreprise');
+
+
+
+add_shortcode('prix_promo_auto', function() {
+
+    global $product;
+
+    // Fallback si hors loop
+    if (!$product) {
+        $product_id = get_the_ID();
+        if (!$product_id) return '';
+        $product = wc_get_product($product_id);
+    }
+
+    if (!$product) return '';
+
+    /* ======================
+       SIMPLE / SUBSCRIPTION
+    ======================= */
+
+    if ($product->is_type('simple') || $product->is_type('subscription')) {
+
+        if ($product->is_on_sale()) {
+
+            $regular = (float) $product->get_regular_price();
+            $sale    = (float) $product->get_sale_price();
+
+            if ($regular > 0 && $sale > 0) {
+                $percent = round((($regular - $sale) / $regular) * 100);
+                return "<span style='color:green;font-weight:bold;'>Promo -{$percent}% *</span>";
+            }
+        }
+    }
+
+    /* ======================
+       VARIABLE / VARIABLE SUBSCRIPTION
+    ======================= */
+
+    if ($product->is_type('variable') || $product->is_type('variable-subscription')) {
+
+        $children = $product->get_children();
+
+        if (!empty($children)) {
+
+            // 🔥 On prend juste la première variation
+            $variation = wc_get_product($children[0]);
+
+            if ($variation && $variation->is_on_sale()) {
+
+                $regular = (float) $variation->get_regular_price();
+                $sale    = (float) $variation->get_sale_price();
+
+                if ($regular > 0 && $sale > 0) {
+                    $percent = round((($regular - $sale) / $regular) * 100);
+                    return "<span style='color:green;font-weight:bold;'>Promo -{$percent}% *</span>";
+                }
+            }
+        }
+    }
+
+    return '';
+});
