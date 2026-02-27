@@ -40,6 +40,8 @@ do_action( 'woocommerce_before_edit_account_form' );
 		$selected_regime=($account_regime_tva=="HT")?1:2;
         $account_prefixe_tva = get_user_meta($user->ID, 'new_revendeur_account_prefixe_tva', true);
         $account_tva_intra = get_user_meta($user->ID, 'new_revendeur_account_tva_intra', true);
+
+		$type_client = get_user_meta($user_id, 'type_client', true);
        
 
 		$denomination = get_user_meta($user_id, 'denomination', true);
@@ -115,12 +117,24 @@ do_action( 'woocommerce_before_edit_account_form' );
 			$role = ''; // fallback
 		}
 	?>
-	<?php if($role == 'customer_revendeur'){?>
+	<p class="form-row">
+		<label for="type_client">Type de client</label>
+
+		<select id="type_client" disabled>
+			<option value="">-- Sélectionner --</option>
+			<option value="particulier" <?php selected($type_client, 'particulier'); ?>>Particulier</option>
+			<option value="professionnel" <?php selected($type_client, 'professionnel'); ?>>Professionnel</option>
+			<option value="association_ou_institution" <?php selected($type_client, 'association_ou_institution'); ?>>Association ou Institution</option>
+		</select>
+
+		<!--  valeur envoyée quand même -->
+		<input type="hidden" name="type_client" value="<?php echo esc_attr($type_client); ?>">
+	</p>
 	<p class="form-row ">
         <label for="denomination">Dénomination sociale <span class="required">*</span></label>
         <input type="text" maxlength="100" name="denomination" id="denomination" class="woocommerce-Input woocommerce-Input--text input-text" required value="<?php echo esc_attr($denomination); ?>"/>
     </p>
-	<?php }?>
+	
 	<div class="clear"></div>
 	<p class="woocommerce-form-row woocommerce-form-row--first form-row form-row-first">
 		<label for="account_first_name"><?php esc_html_e( 'First name', 'woocommerce' ); ?>&nbsp;<span class="required" aria-hidden="true">*</span></label>
@@ -193,7 +207,20 @@ do_action( 'woocommerce_before_edit_account_form' );
 		</select>
     </p>
 
-	<?php if($role == 'customer_revendeur'){?>			
+	<?php 
+		if($role == 'customer_revendeur'){
+			$account_regime_tva = get_user_meta($user->ID, 'new_revendeur_account_regime_tva', true);
+			$selected_regime=($account_regime_tva=="HT")?1:2;
+			$account_prefixe_tva = get_user_meta($user->ID, 'new_revendeur_account_prefixe_tva', true);
+			$account_tva_intra = get_user_meta($user->ID, 'new_revendeur_account_tva_intra', true);
+		}else{
+
+			$account_regime_tva = get_user_meta($user->ID, 'new_account_regime_tva', true);
+			$selected_regime=($account_regime_tva=="HT")?1:2;
+			$account_prefixe_tva = get_user_meta($user->ID, 'new_account_prefixe_tva', true);
+			$account_tva_intra = get_user_meta($user->ID, 'new_account_tva_intra', true);
+		}
+		?>
 		<div id="boxtva" name="boxtva" >            
 			<b>Régime de TVA applicable :<span class="required">*</span></b>
 			<br><br>
@@ -211,7 +238,7 @@ do_action( 'woocommerce_before_edit_account_form' );
 				<label style="line-height: 1.5;"><b>Facturation HT</b> (pour les pays de l'union Européenne, hors France) Merci de justifier ci dessous d'un numéro de TVA Intra valide :</label>
 			</div>
 				<div id="tva_regime_1_box">
-					<div id="tva_regime_1_box2">
+					<div id="tva_regime_1_box2" class="w-100">
 					N° TVA intracommunautaire:
 					<select title="Prefixe TVA" id="prefixe_tva" name="new_revendeur_account_prefixe_tva" alt="Prefixe TVA">
 						<option <?php echo empty($account_prefixe_tva) ? 'selected' : ''; ?> value="" alt="Prefixe TVA">--</option>
@@ -257,7 +284,7 @@ do_action( 'woocommerce_before_edit_account_form' );
 			Contactez-nous pour que nous puissions paramétrer spécifiquement votre compte, sur présentation d'un justificatif de situation, et vous permettre de passer vos commandes avec le taux de TVA qui vous est applicable.</p></td>
 
 		</div>
-	<?php }?>
+	
 
 	 <p class="form-row">
         <label>

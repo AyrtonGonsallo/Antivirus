@@ -270,11 +270,20 @@ body .afrfq-continue-button:hover{ background-color: var(--e-global-color-second
 }
 .devis-form button#send-button:hover, .alm-revendeur-form button#send-button:hover{background-color:transparent;color:var(--e-global-color-primary);}
 .count-clmn{gap: 5%;column-count: 2 !important;}
-/************************************* page revendeur *******************************************/
-div#tva_regime_1_box2 {
-    display: grid;width: 66%;
+/************************************* page revendeur ****************************************"***/
+div.w-66#tva_regime_1_box2 {
+    display: grid;
+    width: 66%;
     gap: 10px;margin-top: 15px;
     grid-template-columns: 1fr 1fr 0.01fr 1fr;
+    align-items: center;
+}
+
+div.w-100#tva_regime_1_box2 {
+    display: grid;
+    width: 100%;
+    gap: 10px;margin-top: 15px;
+    grid-template-columns: 1fr 0.4fr 1fr;
     align-items: center;
 }
 
@@ -1057,12 +1066,7 @@ div.cart_totals .recurring-total{
 
 .chosen-container-single .chosen-single div b {background: url(chosen-sprite.png) no-repeat 0 4px;}
 
-.woocommerce-MyAccount-navigation-link.woocommerce-MyAccount-navigation-link--tax-exemption a{
-   pointer-events: none;
-}
-.woocommerce-MyAccount-navigation-link.woocommerce-MyAccount-navigation-link--tax-exemption {
-   display: none !important;
-}
+
 
 .reduction-percentage {
     font-size: 50px;
@@ -1389,4 +1393,7 @@ div.woocommerce-variation-price.remisable.has-remise-revendeur bdi, span.remisab
 }
 .elementor-menu-cart__product-name .variation-Software_duration, .elementor-menu-cart__product-name .variation-Dure, .subscription-details{
     display: none !important;
+}
+.woocommerce-form.woocommerce-form-register{
+    height: auto !important;
 }

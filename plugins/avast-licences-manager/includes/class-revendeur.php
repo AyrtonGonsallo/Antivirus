@@ -368,7 +368,7 @@ class ALM_Revendeur {
                             <label style="line-height: 1.5;"><b>Facturation HT</b> (pour les pays de l'union Européenne, hors France) Merci de justifier ci dessous d'un numéro de TVA Intra valide :</label>
                             </div>
                             <div id="tva_regime_1_box">
-                                <div id="tva_regime_1_box2">
+                                <div id="tva_regime_1_box2" class="w-66">
                                 N° TVA intracommunautaire:
                                 <select title="Prefixe TVA" id="prefixe_tva" name="new_revendeur_account_prefixe_tva" alt="Prefixe TVA">
                                     <option selected="" value="" alt="Prefixe TVA">--</option>

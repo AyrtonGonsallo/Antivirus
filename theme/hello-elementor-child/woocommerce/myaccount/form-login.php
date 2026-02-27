@@ -126,9 +126,25 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 
 		<h2>Je suis un nouveau client</h2>
 
-		<form method="post" class="woocommerce-form woocommerce-form-register register" <?php do_action( 'woocommerce_register_form_tag' ); ?> >
+		<form method="post"  class="woocommerce-form woocommerce-form-register register" <?php do_action( 'woocommerce_register_form_tag' ); ?> >
 
 			<?php do_action( 'woocommerce_register_form_start' ); ?>
+
+			<p class="form-row ">
+				<label for="type_client">Type de client <span class="required">*</span></label>
+				<select name="type_client" id="type_client" required>
+					<option value="">-- Sélectionner --</option>
+					<option value="particulier">Particulier</option>
+					<option value="professionnel">Professionnel</option>
+					<option value="entreprise">Entreprise</option>
+					<option value="association_ou_institution">Association ou Institution</option>
+				</select>
+			</p>
+
+			<p class="form-row" id="denomination-field">
+				<label for="denomination">Dénomination sociale <span class="required">*</span></label>
+				<input type="text" maxlength="100" name="denomination" id="denomination" class="woocommerce-Input woocommerce-Input--text input-text" required value="<?php echo esc_attr($denomination); ?>"/>
+			</p>
 
 			<p class="form-row ">
 				<label for="nom">Nom <span class="required">*</span></label>
@@ -205,6 +221,71 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 
 			<?php endif; ?>
 
+			<div id="boxtva" name="boxtva" style="display: block;">            
+				<b>Régime de TVA applicable :</b>
+				<br><br>
+				
+				
+				<div style="width: 100%; display: flex; align-items: flex-start; gap: 7px;">
+					<input type="radio" id="regime_2" checked="" name="account_regime_tva" value="2" style="width: auto" >
+					<label style="line-height: 1.5;"><b>Facturation TTC faisant ressortir la TVA</b> (pays de l'union) Facturation avec TVA de 20%</label>
+						</div>
+				<br>
+			
+				<div style="">
+					<div style="display: flex;align-items: flex-start;justify-content: flex-start;gap: 7px;">
+					<input type="radio" id="regime_1" name="account_regime_tva" value="1" style="width: auto" >
+					<label style="line-height: 1.5;"><b>Facturation HT</b> (pour les pays de l'union Européenne, hors France) Merci de justifier ci dessous d'un numéro de TVA Intra valide :</label>
+					</div>
+					<div id="tva_regime_1_box">
+						<div id="tva_regime_1_box2" class="w-100">
+						N° TVA intracommunautaire:
+						<select title="Prefixe TVA" id="prefixe_tva" name="account_prefixe_tva" alt="Prefixe TVA">
+							<option selected="" value="" alt="Prefixe TVA">--</option>
+							<option value="AT" alt="Prefixe TVA">AT</option>
+							<option value="BE" alt="Prefixe TVA">BE</option>
+							<option value="BG" alt="Prefixe TVA">BG</option>
+							<option value="CY" alt="Prefixe TVA">CY</option>
+							<option value="CZ" alt="Prefixe TVA">CZ</option>
+							<option value="DE" alt="Prefixe TVA">DE</option>
+							<option value="DK" alt="Prefixe TVA">DK</option>
+							<option value="EE" alt="Prefixe TVA">EE</option>
+							<option value="EL" alt="Prefixe TVA">EL</option>
+							<option value="ES" alt="Prefixe TVA">ES</option>
+							<option value="FI" alt="Prefixe TVA">FI</option>
+							<option value="FR" alt="Prefixe TVA">FR</option>
+							<option value="GB" alt="Prefixe TVA">GB</option>
+							<option value="HU" alt="Prefixe TVA">HU</option>
+							<option value="IE" alt="Prefixe TVA">IE</option>
+							<option value="IT" alt="Prefixe TVA">IT</option>
+							<option value="LT" alt="Prefixe TVA">LT</option>
+							<option value="LU" alt="Prefixe TVA">LU</option>
+							<option value="LV" alt="Prefixe TVA">LV</option>
+							<option value="MT" alt="Prefixe TVA">MT</option>
+							<option value="NL" alt="Prefixe TVA">NL</option>
+							<option value="PL" alt="Prefixe TVA">PL</option>
+							<option value="PT" alt="Prefixe TVA">PT</option>
+							<option value="RO" alt="Prefixe TVA">RO</option>
+							<option value="SE" alt="Prefixe TVA">SE</option>
+							<option value="SI" alt="Prefixe TVA">SI</option>
+							<option value="SK" alt="Prefixe TVA">SK</option>
+						</select>
+						<input  style="width: auto" type="text" name="account_tva_intra" value="" size="25" maxlength="30" onblur="IsRequiredOk(this)">
+						</div>
+						<br>
+						<span style="font-size:11px;position: relative;top: -24px;"> 
+							Obligatoire pour facturation Hors TVA pour les sociétés situées dans un pays de l'Union Européenne et hors de France.
+						</span>
+					</div>
+					
+						</div>
+				<br>
+		
+				<b>Franchise de TVA</b><p>
+				Contactez-nous pour que nous puissions paramétrer spécifiquement votre compte, sur présentation d'un justificatif de situation, et vous permettre de passer vos commandes avec le taux de TVA qui vous est applicable.</p></td>
+		
+			</div>
+
 			<?php do_action( 'woocommerce_register_form' ); ?>
 
 			<p class="woocommerce-form-row form-row">
@@ -222,3 +303,48 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 <?php endif; ?>
 
 <?php do_action( 'woocommerce_after_customer_login_form' ); ?>
+
+
+<script>
+		jQuery(document).ready(function($) {
+			
+			const $typeClient = $('#type_client');
+			const $boxtva = $('#boxtva');
+			const $denominationField = $('#denomination-field');
+			$boxtva.hide();
+			$denominationField.hide();
+
+			function toggleOptinExpiration() {
+				if ($typeClient.val() === 'association_ou_institution' ||  $typeClient.val() === 'professionnel') {
+					$boxtva.show();
+					$denominationField.show();
+				} else {
+					$boxtva.hide();
+					$denominationField.hide();
+				}
+			}
+
+			// Au chargement initial
+			toggleOptinExpiration();
+
+			// À chaque changement
+			$typeClient.on('change', toggleOptinExpiration);
+
+
+			$('#tva_regime_1_box').hide();
+			if ($('#regime_1').is(':checked')) {
+				$('#tva_regime_1_box').show();
+			}
+
+			$('input[name="account_regime_tva"]').on('change', function() {
+
+			if ($('#regime_1').is(':checked')) {
+				$('#tva_regime_1_box').show();
+			}
+
+			if ($('#regime_2').is(':checked')) {
+				$('#tva_regime_1_box').hide();
+			}
+		});
+		});
+	</script>

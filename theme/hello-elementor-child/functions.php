@@ -1059,7 +1059,7 @@ add_shortcode('prix_promo_auto', function() {
 
             if ($regular > 0 && $sale > 0) {
                 $percent = round((($regular - $sale) / $regular) * 100);
-                return "<span style='color:green;font-weight:bold;'>Promo -{$percent}% *</span>";
+                return "<span style='color:green;font-weight:bold;text-align:center;'>Promo -{$percent}% *</span>";
             }
         }
     }
@@ -1084,7 +1084,7 @@ add_shortcode('prix_promo_auto', function() {
 
                 if ($regular > 0 && $sale > 0) {
                     $percent = round((($regular - $sale) / $regular) * 100);
-                    return "<span style='color:green;font-weight:bold;'>Promo -{$percent}% *</span>";
+                    return "<span style='color:green;font-weight:bold;display: grid;width: 100%;text-align:center'>Promo -{$percent}% *</span>";
                 }
             }
         }

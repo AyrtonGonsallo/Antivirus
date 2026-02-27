@@ -202,6 +202,10 @@ class ALM_Gestion_De_Comptes {
         if ( ! empty( $user->roles ) && ! in_array( 'customer', $user->roles ) ) {
             return;
         }
+        $new_account_tva_intra = $_POST['account_tva_intra'];
+        $new_account_regime_tva = $_POST['account_regime_tva'];
+        $new_account_prefixe_tva = $_POST['account_prefixe_tva'];
+        $type_client = $_POST['type_client'];
 
         $user->set_role( 'customer_particulier' ); // <-- ton rôle (ou autre : subscriber, editor...)
         update_user_meta($user_id, 'ville', sanitize_text_field($_POST['ville']));
@@ -221,6 +225,61 @@ class ALM_Gestion_De_Comptes {
         update_user_meta($user_id, 'shipping_country', sanitize_text_field($_POST['pays']));
         update_user_meta($user_id, 'shipping_postcode', sanitize_text_field($_POST['code_postal']));
         update_user_meta($user_id, 'shipping_city', sanitize_text_field($_POST['ville']));
+
+        update_user_meta($user_id, 'type_client', sanitize_text_field($type_client));
+        
+        if ($type_client === 'association_ou_institution' ||  $type_client === 'professionnel') {
+            update_user_meta($user_id, 'denomination', sanitize_text_field($_POST['denomination']));
+        }
+        
+        if( isset($new_account_regime_tva)){
+            $regime=$new_account_regime_tva;
+            if($regime==1){
+                update_user_meta( $user_id, 'new_account_regime_tva', "HT" );
+                update_user_meta($user_id, 'new_account_prefixe_tva', sanitize_text_field($new_account_prefixe_tva));
+                update_user_meta($user_id, 'new_account_tva_intra', sanitize_text_field($new_account_tva_intra));
+
+                //taxe
+                update_user_meta($user_id, 'tefw_exempt', 1);
+                update_user_meta($user_id, 'tefw_exempt_name', $_POST['prenom'].' '.$_POST['nom']);
+                update_user_meta($user_id, 'tefw_exempt_reason', 'Exonération automatique compte "Professionnel, Association ou Institution"');
+                update_user_meta($user_id, 'tefw_exempt_status', 'pending');
+
+                // Send email notification to the admin
+                // 🔹 Email admin
+                $admin_email = get_option('admin_email');
+
+                $subject = 'Nouvelle demande d\'exonération de taxe';
+
+                $message = "
+                Un nouveau compte professionnel, association ou institution a été créé. Il a automatiquement généré une demande d'exonération de TVA.
+
+                Nom : {$_POST['nom']}
+                Prénom : {$_POST['prenom']}
+                Email : {$_POST['email']}
+                ID utilisateur : {$user_id}
+                Pays : {$_POST['pays']}
+                Type client : {$type_client}
+                Prefixe tva : {$new_account_prefixe_tva}
+                N° TVA intracommunautaire : {$new_account_tva_intra}
+
+                Connectez-vous au back office du site et rendez-vous dans 'Tax Exepmtion > Exempt customers' pour changer le statut de cette demande.
+                
+                ";
+
+                wp_mail($admin_email, $subject, $message);
+
+
+
+            }else{
+                update_user_meta( $user_id, 'new_account_regime_tva', "TVA" );
+
+            }
+
+        }
+
+        
+
     }
 
   

@@ -11,7 +11,6 @@ class RevendeurEmailSender {
 
         $new_revendeur_account_nom = get_field('account_nom', $post_id);
         $new_revendeur_account_prenom = get_field('account_prenom', $post_id);
-        $new_revendeur_account_societe = get_field('account_societe', $post_id);
         $new_revendeur_account_siret = get_field('account_siret', $post_id);
         $new_revendeur_account_email = get_field('account_email', $post_id);
         $new_revendeur_account_societe = get_field('account_societe', $post_id);
@@ -44,14 +43,14 @@ class RevendeurEmailSender {
         
         update_user_meta($user_id, 'billing_first_name', $new_revendeur_account_prenom);
         update_user_meta($user_id, 'billing_last_name', $new_revendeur_account_nom);
-        update_user_meta($user_id, 'billing_country', $new_revendeur_account_societe);
+        update_user_meta($user_id, 'billing_country', $new_revendeur_account_pays);
         update_user_meta($user_id, 'billing_postcode', $new_revendeur_account_code_postal);
         update_user_meta($user_id, 'billing_city', $new_revendeur_account_ville);
 
-        update_user_meta($user_id, 'ville', $new_revendeur_account_societe);
-        update_user_meta($user_id, 'denomination', $new_revendeur_account_societe);
         update_user_meta($user_id, 'ville', $new_revendeur_account_ville);
+        update_user_meta($user_id, 'denomination', $new_revendeur_account_societe);
         update_user_meta($user_id, 'billing_type_client', 'entreprise');
+        update_user_meta($user_id, 'type_client', 'entreprise');
         update_user_meta($user_id, 'billing_societe', $new_revendeur_account_societe);
         update_user_meta($user_id, 'billing_numero_siret',  $new_revendeur_account_siret);
         update_user_meta($user_id, 'account_siret', $new_revendeur_account_siret);
@@ -66,6 +65,36 @@ class RevendeurEmailSender {
                 update_user_meta( $user_id, 'new_revendeur_account_regime_tva', "HT" );
                 update_user_meta($user_id, 'new_revendeur_account_prefixe_tva', sanitize_text_field($new_revendeur_account_prefixe_tva));
                 update_user_meta($user_id, 'new_revendeur_account_tva_intra', sanitize_text_field($new_revendeur_account_tva_intra));
+
+
+                //taxe
+                update_user_meta($user_id, 'tefw_exempt', 1);
+                update_user_meta($user_id, 'tefw_exempt_name', $new_revendeur_account_nom.' '.$new_revendeur_account_prenom);
+                update_user_meta($user_id, 'tefw_exempt_reason', 'Exonération automatique compte revendeur');
+                update_user_meta($user_id, 'tefw_exempt_status', 'pending');
+
+                // Send email notification to the admin
+                // 🔹 Email admin
+                $admin_email = get_option('admin_email');
+
+                $subject = 'Nouvelle demande d\'exonération de taxe';
+
+                $message = "
+                Un nouveau compte revendeur a été créé. Il a automatiquement généré une demande d'exonération de TVA.
+
+                Nom : {$new_revendeur_account_nom}
+                Prénom : {$new_revendeur_account_prenom}
+                Email : {$new_revendeur_account_email}
+                ID utilisateur : {$user_id}
+                Pays : {$new_revendeur_account_pays}
+                Prefixe tva : {$new_revendeur_account_prefixe_tva}
+                N° TVA intracommunautaire : {$new_revendeur_account_tva_intra}
+
+                Connectez-vous au back office du site et rendez-vous dans 'Tax Exepmtion > Exempt customers' pour changer le statut de cette demande.
+                
+                ";
+
+                wp_mail($admin_email, $subject, $message);
             }else{
                 update_user_meta( $user_id, 'new_revendeur_account_regime_tva', "TVA" );
 

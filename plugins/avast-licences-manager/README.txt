@@ -21,3 +21,8 @@ Note: Procédé minimal pour débuter le développement. Ne pas modifier functio
 
 lien pour fonctions woocommerce 
 https://woocommerce.github.io/code-reference/classes/WC-Order.html#method_get_payment_method
+
+https://worldpressit.com/ 
+Worldpressit.com:
+mylene.audebert@gmail.com
+dnz%ZO3M&wDtrC6Q

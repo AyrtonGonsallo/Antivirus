@@ -428,15 +428,17 @@ class ALM_Remise_Commerciale {
         * ===============================
         */
         $user = get_user_by('id', $user_id);
+        /*
 
         if ($user && in_array('customer_revendeur', (array) $user->roles)) {
 
             $regime = get_user_meta($user_id, 'new_revendeur_account_regime_tva', true);
 
             if (strtoupper($regime) === 'HT') {
-                $cart->remove_taxes();
+                //$cart->remove_taxes();
             }
         }
+            */
     }
 
 
@@ -456,15 +458,18 @@ class ALM_Remise_Commerciale {
         if ( ! in_array( 'customer_revendeur', (array) $user->roles ) ) {
             return 'Zero Rate';
         }
-
+        
+        /*
         // Vérifier le régime TVA stocké par ton formulaire
         $regime = get_user_meta( $user_id, 'new_revendeur_account_regime_tva', true );
+
 
         // Si le revendeur est en régime HT => pas de TVA
         if ( strtoupper( $regime ) === 'HT' ) {
             $tax_class = 'taux-zero';
             return $tax_class;
         }
+        */
 
         // Sinon on laisse WooCommerce faire son job
         return 'Zero Rate';
