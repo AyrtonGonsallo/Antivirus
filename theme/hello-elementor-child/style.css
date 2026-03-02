@@ -1397,3 +1397,30 @@ div.woocommerce-variation-price.remisable.has-remise-revendeur bdi, span.remisab
 .woocommerce-form.woocommerce-form-register{
     height: auto !important;
 }
+.woocommerce-checkout-review-order table.shop_table tfoot tr:not(.cart-subtotal) td, .woocommerce-checkout-review-order table.shop_table tfoot  th {
+    font-weight: 400 !important;
+}
+.link-conn{
+    font-family:'Raleway';
+    font-weight:700;
+    display:block;
+    margin-top:17px;
+    border-style: solid; 
+    border-width: 3px 3px 3px 3px; 
+    border-radius: 8px 8px 8px 8px; 
+    padding: 12px 30px 12px 30px; 
+    color: #FFFFFF !important; 
+    background-color: var(--e-global-color-primary); 
+    border-color: var(--e-global-color-primary); 
+    transition: all 0.2s;
+    width: fit-content;
+    margin: auto; 
+    text-transform: unset;
+    margin-block: 10px !important;
+}
+.link-conn:hover{
+    color: var(--e-global-color-primary) !important;
+    background-color: #02010100;
+    border-color: var(--e-global-color-primary) !important;
+}
+

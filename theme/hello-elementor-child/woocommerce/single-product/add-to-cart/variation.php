@@ -39,10 +39,12 @@ defined( 'ABSPATH' ) || exit;
 	</span><br>
 
 	<span class="prix-remise-depart">{{{ data.variation.prix_remise_depart }}}</span>
+	<div class="formule-rc"></div>
 	<span class="prix-remise">prix remisé</span>
 	<span class="prix-total">{{{ data.variation.prix_base }}}</span>
 	<span class="prix-total2">{{{ data.variation.prix_base2 }}}</span>
 	<span class="pourcentage-remise-depart">{{{ data.variation.pourcentage_remise_revendeur }}}</span>
+
 
 </script>
 <script type="text/template" id="tmpl-unavailable-variation-template">

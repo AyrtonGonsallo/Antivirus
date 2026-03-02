@@ -102,7 +102,13 @@ if($user_id){
 
             <?php if($user_has_enabled_remises  || !($user_has_enabled_remises || $user_has_disabled_remises)){ //si il a des remises activees ou si il n'a aucune remise
 			?>
-			<button class="btn-remise btn-remise-style"  type="submit" name="submit_demande_remise">Appliquer ma remise</button>
+            <?php if($user_id){ //si il est connecte
+				?>
+					<button class="btn-remise btn-remise-style"  type="submit" name="submit_demande_remise">Appliquer ma remise</button>
+				<?php }else{?>
+					<a class="link-conn"  href=<?php echo esc_url( wc_get_page_permalink( 'myaccount' ) );?> target="_blank">Connectez-vous</a>
+				<?php }
+				?>
 			<?php }
 			?>
 
@@ -218,6 +224,7 @@ if($user_id){
                 $(".hide-if-rem-comm  .variation-reduction-percentage").show();
                 $(".hide-if-rem-comm ins").show();
                 $(".hide-if-rem-comm  .promo-end").show();
+                $(".formule-rc").hide();
             }else{
                 $(".btn-remise").prop("disabled", false);
                 $(".remise_initiale").hide();
@@ -236,6 +243,8 @@ if($user_id){
 
                 console.log("Contient remise :", hasRemise);
                 console.log("Contient prix :", hasPrix);
+                let currency = $('.woocommerce-Price-currencySymbol').first().text();
+				let formule = ""
 
                 // Exemple de condition
                 if (hasRemise && hasPrix) {//reevendeur
@@ -249,38 +258,55 @@ if($user_id){
 					 console.log("pourcentageRemiseR",pourcentageRemise)
 					 console.log("prixRemiseRevendeur",prixRemiseRevendeur)
 					 console.log("prixApresRR",prixApresRR)
-                      values.forEach(v => {
+                     formule += `<span class="price"><del aria-hidden="true">${prixApresRR.toFixed(2)} ${currency}</del></span>`
+                      values.forEach((v, index, array) => {
                         const match = v.match(/-([0-9]+)%/);
                         if (match) {
                             const pourcentage = parseInt(match[1], 10);
                             const remise = prixActuel * pourcentage / 100;
                             prixActuel = prixActuel - remise;
+                            const isLast = index === array.length - 1;
                             
-                            console.log(`  ${v}: -${pourcentage}% = -${remise.toFixed(2)} EUR → ${prixActuel.toFixed(2)} EUR`);
+                            console.log(`  ${v}: -${pourcentage}% = -${remise.toFixed(2)} ${currency} → ${prixActuel.toFixed(2)} ${currency}`);
+                            if (isLast) {
+								formule += `<span class="variation-reduction-percentage has-remise-revendeur">Remise ${v.toLowerCase()}</span>`
+							}else{
+								formule += `<span class="variation-reduction-percentage has-remise-revendeur">Remise ${v.toLowerCase()}</span><span class="price"><del aria-hidden="true">${prixActuel.toFixed(2)} ${currency}</del></span>`
+							}
                         }
                     });
 
                     prixFinal = prixActuel;
-                    console.log(`💰 Prix final: ${prixFinal.toFixed(2)} EUR`);
+                    console.log(`💰 Prix final: ${prixFinal.toFixed(2)} ${currency}`);
+                    $(".formule-rc").html(formule);
+					$(".formule-rc").show();
 				}else{//client normal
 					let prixDepart = parseFloat($(".prix-total2").text().replace(',', '.'));
                     let prixActuel = prixDepart;
 
-                    console.log(`Prix départ: ${prixActuel.toFixed(2)} EUR`);
+                    console.log(`Prix départ: ${prixActuel.toFixed(2)} ${currency}`);
 
-                    values.forEach(v => {
+                    values.forEach((v, index, array) => {
                         const match = v.match(/-([0-9]+)%/);
                         if (match) {
                             const pourcentage = parseInt(match[1], 10);
                             const remise = prixActuel * pourcentage / 100;
                             prixActuel = prixActuel - remise;
+                            const isLast = index === array.length - 1;
                             
-                            console.log(`  ${v}: -${pourcentage}% = -${remise.toFixed(2)} EUR → ${prixActuel.toFixed(2)} EUR`);
+                            console.log(`  ${v}: -${pourcentage}% = -${remise.toFixed(2)} ${currency} → ${prixActuel.toFixed(2)} ${currency}`);
+                            if (isLast) {
+								formule += `<span class="variation-reduction-percentage has-remise-revendeur">Remise ${v.toLowerCase()}</span>`
+							}else{
+								formule += `<span class="variation-reduction-percentage has-remise-revendeur">Remise ${v.toLowerCase()}</span><span class="price"><del aria-hidden="true">${prixActuel.toFixed(2)} ${currency}</del></span>`
+							}
                         }
                     });
 
                     prixFinal = prixActuel;
-                    console.log(`💰 Prix final: ${prixFinal.toFixed(2)} EUR`);
+                    console.log(`💰 Prix final: ${prixFinal.toFixed(2)} ${currency}`);
+                    $(".formule-rc").html(formule);
+					$(".formule-rc").show();
 				}
                 
 

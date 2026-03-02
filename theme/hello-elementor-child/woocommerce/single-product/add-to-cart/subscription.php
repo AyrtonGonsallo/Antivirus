@@ -84,6 +84,11 @@ if($user_id){
 		$prix_remise_revendeur = round($prix_remise_revendeur, 2);
 		$prix_remise_depart = $prix_remise_revendeur;
 	}
+}else{
+	$prix_base_promo =  $regular_price;//toujour sur le prix regulier
+		$prix_remise_revendeur = $prix_base_promo;
+		$prix_remise_revendeur = round($prix_remise_revendeur, 2);
+		$prix_remise_depart = $prix_remise_revendeur;
 }
 
 
@@ -200,6 +205,7 @@ if ( $product->is_in_stock() ) : ?>
 					<span class="prix-total2"><?php echo $regular_price;?></span>
 				<?php }?>
 				<span class="prix-remise-depart"><?php echo $prix_remise_revendeur;?></span>
+				<div class="formule-rc"></div>
 				<span class="prix-remise">prix remisé</span>
 
 				
@@ -237,6 +243,7 @@ if ( $product->is_in_stock() ) : ?>
 				<?php }?>
 
 				<span class="prix-remise-depart"><?php echo $prix_remise_revendeur;?></span>
+				<div class="formule-rc"></div>
 				<span class="prix-remise">prix remisé</span>
 			</span>
 		</div>
@@ -328,9 +335,14 @@ if ( $product->is_in_stock() ) : ?>
 
 			<?php if($user_has_enabled_remises  || !($user_has_enabled_remises || $user_has_disabled_remises)){ //si il a des remises activees ou si il n'a aucune remise
 			?>
-			<button class="btn-remise btn-remise-style"  type="submit" name="submit_demande_remise">Appliquer ma remise</button>
-			<?php }
-			?>
+				<?php if($user_id){ //si il est connecte
+				?>
+					<button class="btn-remise btn-remise-style"  type="submit" name="submit_demande_remise">Appliquer ma remise</button>
+				<?php }else{?>
+					<a class="link-conn"  href=<?php echo esc_url( wc_get_page_permalink( 'myaccount' ) );?> target="_blank">Connectez-vous</a>
+				<?php }
+				?>
+			<?php }?>
 
 			<?php if($user_has_disabled_remises){ //si il a des remises desactivees lui permettre de les activer
 			?>
@@ -440,6 +452,7 @@ if ( $product->is_in_stock() ) : ?>
 				$(".prix-promo").show();
 				$(".hide-if-rem-comm").show();
 				$(".remisable bdi").css("text-decoration", "none");
+				$(".formule-rc").hide();
 			}else{
 				$(".btn-remise").prop("disabled", false);
 				$(".prix-promo").hide();
@@ -457,6 +470,8 @@ if ( $product->is_in_stock() ) : ?>
 
                 console.log("Contient remise :", hasRemise);
                 console.log("Contient prix :", hasPrix);
+				let currency = $('.woocommerce-Price-currencySymbol').first().text();
+				let formule = ""
 
                 // Exemple de condition
                 if (hasRemise && hasPrix) {
@@ -470,38 +485,59 @@ if ( $product->is_in_stock() ) : ?>
 					 console.log("pourcentageRemiseR",pourcentageRemise)
 					 console.log("prixRemiseRevendeur",prixRemiseRevendeur)
 					 console.log("prixApresRR",prixApresRR)
-                      values.forEach(v => {
+					 formule += `<span class="price"><del aria-hidden="true">${prixApresRR.toFixed(2)} ${currency}</del></span>`
+                      values.forEach((v, index, array) => {
                         const match = v.match(/-([0-9]+)%/);
                         if (match) {
                             const pourcentage = parseInt(match[1], 10);
                             const remise = prixActuel * pourcentage / 100;
                             prixActuel = prixActuel - remise;
+							const isLast = index === array.length - 1;
                             
-                            console.log(`  ${v}: -${pourcentage}% = -${remise.toFixed(2)} EUR → ${prixActuel.toFixed(2)} EUR`);
+                            console.log(`${v}: -${pourcentage}% = -${remise.toFixed(2)} ${currency} → ${prixActuel.toFixed(2)} ${currency}`);
+							if (isLast) {
+								formule += `<span class="variation-reduction-percentage has-remise-revendeur">Remise ${v.toLowerCase()}</span>`
+							}else{
+								formule += `<span class="variation-reduction-percentage has-remise-revendeur">Remise ${v.toLowerCase()}</span><span class="price"><del aria-hidden="true">${prixActuel.toFixed(2)} ${currency}</del></span>`
+
+							}
+
                         }
                     });
+					$(".formule-rc").html(formule);
+					$(".formule-rc").show();
 
                     prixFinal = prixActuel;
-                    console.log(`💰 Prix final: ${prixFinal.toFixed(2)} EUR`);
+                    console.log(`💰 Prix final: ${prixFinal.toFixed(2)} ${currency}`);
 				}else{
 					let prixDepart = parseFloat($(".prix-remise-depart").text().replace(',', '.'));
 					let prixActuel = prixDepart;
 
-                    console.log(`Prix départ: ${prixActuel.toFixed(2)} EUR`);
+                    console.log(`Prix départ: ${prixActuel.toFixed(2)} ${currency}`);
 
-                    values.forEach(v => {
+                    values.forEach((v, index, array) => {
                         const match = v.match(/-([0-9]+)%/);
                         if (match) {
                             const pourcentage = parseInt(match[1], 10);
                             const remise = prixActuel * pourcentage / 100;
                             prixActuel = prixActuel - remise;
+							const isLast = index === array.length - 1;
                             
-                            console.log(`  ${v}: -${pourcentage}% = -${remise.toFixed(2)} EUR → ${prixActuel.toFixed(2)} EUR`);
+                            console.log(`  ${v}: -${pourcentage}% = -${remise.toFixed(2)} ${currency} → ${prixActuel.toFixed(2)} ${currency}`);
+							if (isLast) {
+								formule += `<span class="variation-reduction-percentage has-remise-revendeur">Remise ${v.toLowerCase()}</span>`
+							}else{
+								formule += `<span class="variation-reduction-percentage has-remise-revendeur">Remise ${v.toLowerCase()}</span><span class="price"><del aria-hidden="true">${prixActuel.toFixed(2)} ${currency}</del></span>`
+
+							}
                         }
                     });
 
+					$(".formule-rc").html(formule);
+					$(".formule-rc").show();
+
                     prixFinal = prixActuel;
-                    console.log(`💰 Prix final: ${prixFinal.toFixed(2)} EUR`);
+                    console.log(`💰 Prix final: ${prixFinal.toFixed(2)} ${currency}`);
 				}
 				
 				// Sécurité (pas négatif)
@@ -509,7 +545,7 @@ if ( $product->is_in_stock() ) : ?>
 				// Arrondi (à l’entier ou 2 décimales selon ton besoin)
 				prixFinal = (prixFinal.toFixed(2)); // ou toFixed(2)
 				// Affichage
-				$(".prix-remise").text(prixFinal+" €");
+				$(".prix-remise").text(prixFinal+" "+currency);
 				
 				$(".promo-end").hide();
 
@@ -547,7 +583,7 @@ if ( $product->is_in_stock() ) : ?>
 	.prix-remise-depart,.prix-total,.prix-total2,.pourcentage-remise-depart{
 		display:none;
 	}
-	.prix-remise{
+	.prix-remise,.formule-rc{
 		display:none;
 	}
 	.btn-remise-style {
@@ -570,4 +606,5 @@ if ( $product->is_in_stock() ) : ?>
 	.barrer-car-remise bdi{
 		text-decoration: line-through !important;
 	}
+	
 </style>

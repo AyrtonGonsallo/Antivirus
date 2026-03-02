@@ -53,8 +53,8 @@ defined( 'ABSPATH' ) || exit;
 	<tfoot>
 
 		<tr class="cart-subtotal">
-			<th><?php esc_html_e( 'Subtotal', 'woocommerce' ); ?></th>
-			<td><?php wc_cart_totals_subtotal_html(); ?></td>
+			<th><b><?php esc_html_e( 'Subtotal', 'woocommerce' ); ?></b></th>
+			<td><b><?php wc_cart_totals_subtotal_html(); ?></b></td>
 		</tr>
 
 		<?php foreach ( WC()->cart->get_coupons() as $code => $coupon ) : ?>
@@ -104,8 +104,8 @@ defined( 'ABSPATH' ) || exit;
 		<?php do_action( 'woocommerce_review_order_before_order_total' ); ?>
 
 		<tr class="order-total">
-			<th><?php esc_html_e( 'Total TTC', 'woocommerce' ); ?></th>
-			<td><?php wc_cart_totals_order_total_html(); ?></td>
+			<th><b><?php esc_html_e( 'Total TTC', 'woocommerce' ); ?></b></th>
+			<td><b><?php wc_cart_totals_order_total_html(); ?></b></td>
 		</tr>
 
 		<?php do_action( 'woocommerce_review_order_after_order_total' ); ?>

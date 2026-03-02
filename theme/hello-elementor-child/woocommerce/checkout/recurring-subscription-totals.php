@@ -32,7 +32,7 @@ function get_next_pay_date($next_payment_date){
 			$formatted_date = str_replace($en, $fr, $formatted_date);
 		}
 		
-		return 'Premier renouvellement: ' . $formatted_date;
+		return 'Prochain renouvellement : ' . $formatted_date;
 	
 }
 
@@ -42,9 +42,18 @@ $display_heading = true;
 foreach ( $recurring_carts as $recurring_cart_key => $recurring_cart ) { ?>
 	<tr class="order-total recurring-total">
 
-	<?php if ( $display_heading ) { ?>
-		<?php $display_heading = false; ?>
-		<th rowspan="<?php echo esc_attr( count( $recurring_carts ) ); ?>"><?php esc_html_e( 'Renouvellement', 'woocommerce-subscriptions' ); ?></th>
+
+		<th >
+			<?php 
+			foreach ($recurring_cart->get_cart() as $cart_item) {
+
+				$product = $cart_item['data']; // objet produit
+
+				echo 'Renouvellement '.$product->get_name();
+
+			}
+			 ?>
+		</th>
 		<td data-title="<?php esc_attr_e( 'Recurring total', 'woocommerce-subscriptions' ); ?>">
 			<?php //wcs_cart_totals_order_total_html( $recurring_cart ); ?>
 			<?php 
@@ -52,21 +61,10 @@ foreach ( $recurring_carts as $recurring_cart_key => $recurring_cart ) { ?>
 			$next_payment = $recurring_cart->next_payment_date;
 			$montant = $recurring_cart->total;
 			echo wc_price($montant);
-			echo '<br>';
+			echo ' - ';
 			echo get_next_pay_date($next_payment);
 			?>
 		</td>
-	<?php } else { ?>
-		<td>
-			<?php //wcs_cart_totals_order_total_html( $recurring_cart ); ?>
-			<?php 
-			$next_payment = $recurring_cart->next_payment_date;
-			$montant = $recurring_cart->total;
-			echo wc_price($montant);
-			echo '<br>';
-			echo get_next_pay_date($next_payment);
-			?>
-	</td>
-	<?php } ?>
+	
 	</tr> <?php
 }
