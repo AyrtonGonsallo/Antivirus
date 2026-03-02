@@ -269,9 +269,9 @@ if($user_id){
                             
                             console.log(`  ${v}: -${pourcentage}% = -${remise.toFixed(2)} ${currency} → ${prixActuel.toFixed(2)} ${currency}`);
                             if (isLast) {
-								formule += `<span class="variation-reduction-percentage has-remise-revendeur">Remise ${v.toLowerCase()}</span>`
+								formule += `<span class="variation-reduction-percentage remise-title has-remise-revendeur">Remise ${v.toLowerCase()}</span>`
 							}else{
-								formule += `<span class="variation-reduction-percentage has-remise-revendeur">Remise ${v.toLowerCase()}</span><span class="price"><del aria-hidden="true">${prixActuel.toFixed(2)} ${currency}</del></span>`
+								formule += `<span class="variation-reduction-percentage remise-title has-remise-revendeur">Remise ${v.toLowerCase()}</span><span class="price"><del aria-hidden="true">${prixActuel.toFixed(2)} ${currency}</del></span>`
 							}
                         }
                     });
@@ -296,9 +296,9 @@ if($user_id){
                             
                             console.log(`  ${v}: -${pourcentage}% = -${remise.toFixed(2)} ${currency} → ${prixActuel.toFixed(2)} ${currency}`);
                             if (isLast) {
-								formule += `<span class="variation-reduction-percentage has-remise-revendeur">Remise ${v.toLowerCase()}</span>`
+								formule += `<span class="variation-reduction-percentage remise-title has-remise-revendeur">Remise ${v.toLowerCase()}</span>`
 							}else{
-								formule += `<span class="variation-reduction-percentage has-remise-revendeur">Remise ${v.toLowerCase()}</span><span class="price"><del aria-hidden="true">${prixActuel.toFixed(2)} ${currency}</del></span>`
+								formule += `<span class="variation-reduction-percentage remise-title has-remise-revendeur">Remise ${v.toLowerCase()}</span><span class="price"><del aria-hidden="true">${prixActuel.toFixed(2)} ${currency}</del></span>`
 							}
                         }
                     });

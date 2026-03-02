@@ -1423,4 +1423,9 @@ div.woocommerce-variation-price.remisable.has-remise-revendeur bdi, span.remisab
     background-color: #02010100;
     border-color: var(--e-global-color-primary) !important;
 }
-
+.remise-title,.variation-reduction-percentage.has-remise-revendeur{
+    margin-top: 7px;
+    margin-bottom: -5px;
+    display: block;
+    line-height: 1.12em;
+}

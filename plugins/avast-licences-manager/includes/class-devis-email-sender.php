@@ -385,7 +385,7 @@ class DevisEmailSender {
 
 
         // 2️⃣ Construire le contenu de l'email
-        $subject = "Votre devis AVAST vous attend dans votre compte AVAST";
+        $subject = "Relance Expiration devis";
         $message = '
             <div style="
                 width:100%;
@@ -402,15 +402,20 @@ class DevisEmailSender {
                     box-shadow:0 0 10px rgba(0,0,0,0.08);
                 ">
 
-                  
+                  <h4 style="
+                            margin:20px 0;
+                            color:#FF7800;
+                            font-weight:bolder;
+                            text-align:center;
+                            font-size:18px;
+                        ">Votre devis AVAST expire bientôt</h4>
                 
                     
                         Bonjour '.$civilite.' '.$nom.' '.$prenom.',
                     
 
                     <p style="font-size:15px; color:#555; line-height:1.6;">
-                        Vous avez formulé une demande de devis pour des licences AVAST le '.$date_de_creation_formatted.' et nous
-                        vous en remercions sincèrement.<br>
+                        Vous avez formulé une demande de devis pour des licences AVAST le '.$date_de_creation_formatted.' et nous vous en remercions sincèrement.<br>
                     </p>
 
                     <p style="font-size:15px; color:#555; line-height:1.6;">
@@ -456,7 +461,8 @@ class DevisEmailSender {
                     </p>
 
                     <p style="margin-top:30px; color:#333; font-weight:bold;">
-                        Cordialement,<br>L\'équipe Avast
+                        Cordialement,<br>L\'équipe Avast<br>contact@avastedition.com<br>02 55 99 31 37
+
                     </p>
 
                 </div>

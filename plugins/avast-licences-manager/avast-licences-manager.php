@@ -17,6 +17,7 @@ require_once ALM_PATH . 'includes/class-gestion-de-comptes.php';
 require_once ALM_PATH . 'includes/class-commandes-panier.php';
 require_once ALM_PATH . 'includes/class-remise-commerciale.php';
 require_once ALM_PATH . 'includes/class-devis.php';
+require_once ALM_PATH . 'includes/class-crons-urls.php';
 require_once ALM_PATH . 'includes/class-revendeur.php';
 require_once ALM_PATH . 'includes/class-wcs.php';
 require_once ALM_PATH . 'includes/class-statistiques-antivirus.php';
@@ -34,5 +35,8 @@ add_action('plugins_loaded', function() {
     new ALM_Revendeur();
     new ALM_Wcs();
     new ALM_Statistiques_antivirus();
+    new ALM_Crons_Urls();
+    
+
     
 });
