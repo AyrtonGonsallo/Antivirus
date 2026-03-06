@@ -17,10 +17,10 @@ class ALM_Roles {
         }
 
         // Rôle : Client Particulier
-        if ( ! get_role('customer_particulier') ) {
+        if ( ! get_role('customer_direct') ) {
             add_role(
-                'customer_particulier',
-                'Client Particulier',
+                'customer_direct',
+                'Client Direct',
                 $caps
             );
         }
@@ -40,7 +40,7 @@ class ALM_Roles {
 
     public static function remove_roles() {
         // On ne retire pas les rôles si d'autres utilisateurs les utilisent — ici on supprime quand le plugin est désactivé
-        remove_role('customer_particulier');
+        remove_role('customer_direct');
         remove_role('customer_revendeur');
     }
 }

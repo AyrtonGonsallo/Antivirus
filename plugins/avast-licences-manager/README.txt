@@ -3,7 +3,7 @@ Avast Licences Manager - Plugin skeleton
 
 Ce ZIP contient une structure minimale du plugin "avast-licences-manager" :
 - avast-licences-manager.php  (fichier principal)
-- includes/class-roles.php     (gestion des rôles : customer_particulier, customer_revendeur)
+- includes/class-roles.php     (gestion des rôles : customer_direct, customer_revendeur)
 - assets/                      (dossier pour JS/CSS futurs)
 
 INSTALLATION

@@ -2,7 +2,7 @@
 defined('ABSPATH') || exit;
 
 // Vérifier si l'utilisateur est un revendeur
-if (! (current_user_can('customer_revendeur') || current_user_can('customer_particulier')) ) {
+if (! (current_user_can('customer_revendeur') || current_user_can('customer_direct')) ) {
     wp_safe_redirect(home_url());
     exit;
 }

@@ -18,6 +18,8 @@
 defined( 'ABSPATH' ) || exit;
 
 $show_shipping = ! wc_ship_to_billing_address_only() && $order->needs_shipping_address();
+
+$user_id = $order->get_user_id();
 ?>
 <section class="woocommerce-customer-details">
 
@@ -39,6 +41,22 @@ $show_shipping = ! wc_ship_to_billing_address_only() && $order->needs_shipping_a
 
 		<?php if ( $order->get_billing_email() ) : ?>
 			<p class="woocommerce-customer-details--email"><?php echo esc_html( $order->get_billing_email() ); ?></p>
+		<?php endif; ?>
+
+		
+		<?php  $billing_type_client_value = get_user_meta($user_id, 'billing_type_client', true);
+		if ( $billing_type_client_value ) : ?>
+			<p class="woocommerce-customer-details--type-client">Type de client : <?php echo esc_html( $billing_type_client_value ); ?></p>
+		<?php endif; ?>
+
+		<?php $denomination_value = get_user_meta($user_id, 'billing_societe', true);
+		if ( $denomination_value  ) : ?>
+			<p class="woocommerce-customer-details--denomination">Dénomination : <?php echo esc_html( $denomination_value  ); ?></p>
+		<?php endif; ?>
+
+		<?php $siret_value = get_user_meta($user_id, 'billing_numero_siret', true);
+		if ( $siret_value  ) : ?>
+			<p class="woocommerce-customer-details--siret">Siret : <?php echo esc_html( $siret_value  ); ?></p>
 		<?php endif; ?>
 
 		<?php

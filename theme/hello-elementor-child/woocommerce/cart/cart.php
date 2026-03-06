@@ -324,7 +324,7 @@ $has_remise = user_has_remise(get_current_user_id());
 						<?php if ( $est_revendeur ) : ?>
 							<?php 
 								$args = [
-									'role'       => 'customer_particulier',
+									'role'       => 'customer_direct',
 									'meta_key'   => 'revendeur_id',
 									'meta_value' => $revendeur_id
 								];

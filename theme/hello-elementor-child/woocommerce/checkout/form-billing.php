@@ -72,3 +72,60 @@ defined( 'ABSPATH' ) || exit;
 		<?php do_action( 'woocommerce_after_checkout_registration_form', $checkout ); ?>
 	</div>
 <?php endif; ?>
+
+
+
+<script>
+    jQuery(function ($) {
+
+		$('#billing_type_client_field input[type="radio"]').prop('disabled', true);
+        function toggleDenominationSiretFields() {
+			console.log("billing_type_client",$('input[name="billing_type_client"]:checked').val())
+            if ($('input[name="billing_type_client"]:checked').val() === 'professionnel') {
+				// ou 
+                $('#billing-denomination-field').slideDown();
+				$('#billing-siret-field').slideUp();
+				$('#billing_societe_field .optional')
+        			.html('<span style="color:red;">*</span>');
+            }
+			else if ($('input[name="billing_type_client"]:checked').val() === 'association_ou_institution') {
+				// ou 
+                $('#billing-denomination-field').slideDown();
+				$('#billing-siret-field').slideUp();
+				$('#billing_societe_field .optional')
+        			.html('<span style="color:red;">*</span>');
+            } 
+			else if ($('input[name="billing_type_client"]:checked').val() === 'revendeur') {
+				console.log("revendeur")
+				// ou 
+				$('#billing-denomination-field').slideDown();
+                $('#billing-siret-field').slideDown();
+				$('#billing_societe_field .optional, #billing_numero_siret_field .optional')
+        			.html('<span style="color:red;">*</span>');
+            }
+			else {
+				$('#billing-denomination-field').slideUp();
+                $('#billing-siret-field').slideUp();
+            }
+        }
+
+        toggleDenominationSiretFields();
+        $('input[name="billing_type_client"]').change(function(){
+			toggleDenominationSiretFields();
+		});
+
+    });
+    </script>
+
+	<style>
+		#billing_type_client_field .woocommerce-input-wrapper .required{
+			display:none;
+		}
+		#billing_type_client_field .woocommerce-input-wrapper {
+			display: flex;
+    		gap: 5px;
+		}
+		#billing_type_client_field{
+			margin-top: -55px;
+		}
+	</style>

@@ -49,8 +49,8 @@ class RevendeurEmailSender {
 
         update_user_meta($user_id, 'ville', $new_revendeur_account_ville);
         update_user_meta($user_id, 'denomination', $new_revendeur_account_societe);
-        update_user_meta($user_id, 'billing_type_client', 'entreprise');
-        update_user_meta($user_id, 'type_client', 'entreprise');
+        update_user_meta($user_id, 'billing_type_client', 'revendeur');
+        update_user_meta($user_id, 'type_client', 'revendeur');
         update_user_meta($user_id, 'billing_societe', $new_revendeur_account_societe);
         update_user_meta($user_id, 'billing_numero_siret',  $new_revendeur_account_siret);
         update_user_meta($user_id, 'account_siret', $new_revendeur_account_siret);

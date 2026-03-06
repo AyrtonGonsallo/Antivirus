@@ -574,7 +574,7 @@ class ALM_Devis {
                 $est_revendeur = current_user_can('customer_revendeur');
                 if ( $est_revendeur ) : 
                     $args = [
-                        'role'       => 'customer_particulier',
+                        'role'       => 'customer_direct',
                         'meta_key'   => 'revendeur_id',
                         'meta_value' => $user_id
                     ];
@@ -1223,7 +1223,7 @@ class ALM_Devis {
                         'user_email' => $new_account_email,
                         'first_name' => $new_account_prenom,
                         'last_name'  => $new_account_nom,
-                        'role'       => 'customer_particulier',
+                        'role'       => 'customer_direct',
                     ];
 
                     $user_id = wp_insert_user($userdata);

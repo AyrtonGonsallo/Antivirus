@@ -21,7 +21,7 @@ if (isset($_GET['client_added']) && $_GET['client_added'] == 'true') {
 $revendeur_id = get_current_user_id();
 
 $args = [
-    'role'       => 'customer_particulier',
+    'role'       => 'customer_direct',
     'meta_key'   => 'revendeur_id',
     'meta_value' => $revendeur_id
 ];

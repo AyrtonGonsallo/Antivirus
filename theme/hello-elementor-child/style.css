@@ -1429,3 +1429,6 @@ div.woocommerce-variation-price.remisable.has-remise-revendeur bdi, span.remisab
     display: block;
     line-height: 1.12em;
 }
+#tefw_fields_content{
+    display: none !important;
+}

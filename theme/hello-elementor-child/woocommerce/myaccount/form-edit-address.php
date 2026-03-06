@@ -59,20 +59,40 @@ do_action( 'woocommerce_before_edit_account_address_form' ); ?>
 <script>
     jQuery(function ($) {
 
-        function toggleEntrepriseFields() {
+	$('#billing_type_client_field input[type="radio"]').prop('disabled', true);
+        function toggleDenominationSiretFields() {
 			console.log("billing_type_client",$('input[name="billing_type_client"]:checked').val())
-            if ($('input[name="billing_type_client"]:checked').val() === 'entreprise') {
-                $('#billing-entreprise-fields').slideDown();
+            if ($('input[name="billing_type_client"]:checked').val() === 'professionnel') {
+				// ou 
+                $('#billing-denomination-field').slideDown();
+				$('#billing-siret-field').slideUp();
+				$('#billing_societe_field .optional')
+        			.html('<span style="color:red;">*</span>');
+            }
+			else if ($('input[name="billing_type_client"]:checked').val() === 'association_ou_institution') {
+				// ou 
+                $('#billing-denomination-field').slideDown();
+				$('#billing-siret-field').slideUp();
+				$('#billing_societe_field .optional')
+        			.html('<span style="color:red;">*</span>');
+            } 
+			else if ($('input[name="billing_type_client"]:checked').val() === 'revendeur') {
+				console.log("revendeur")
+				// ou 
+				$('#billing-denomination-field').slideDown();
+                $('#billing-siret-field').slideDown();
 				$('#billing_societe_field .optional, #billing_numero_siret_field .optional')
         			.html('<span style="color:red;">*</span>');
-            } else {
-                $('#billing-entreprise-fields').slideUp();
+            }
+			else {
+				$('#billing-denomination-field').slideUp();
+                $('#billing-siret-field').slideUp();
             }
         }
 
-        toggleEntrepriseFields();
+        toggleDenominationSiretFields();
         $('input[name="billing_type_client"]').change(function(){
-			toggleEntrepriseFields();
+			toggleDenominationSiretFields();
 		});
 
     });

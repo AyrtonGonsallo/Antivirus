@@ -42,6 +42,10 @@ do_action( 'woocommerce_before_edit_account_form' );
         $account_tva_intra = get_user_meta($user->ID, 'new_revendeur_account_tva_intra', true);
 
 		$type_client = get_user_meta($user_id, 'type_client', true);
+
+		$billing_type_client = get_user_meta($user_id, 'billing_type_client', true);
+
+
        
 
 		$denomination = get_user_meta($user_id, 'denomination', true);
@@ -304,8 +308,8 @@ do_action( 'woocommerce_before_edit_account_form' );
 		$user_id = get_current_user_id();
 		$user = wp_get_current_user();
 		$user_roles = $user->roles; // array de tous les rôles
-		if (in_array('customer_particulier', $user_roles)) {
-			$role = 'customer_particulier';
+		if (in_array('customer_direct', $user_roles)) {
+			$role = 'customer_direct';
 		} elseif (in_array('customer_revendeur', $user_roles)) {
 			$role = 'customer_revendeur';
 		} else {
@@ -319,7 +323,7 @@ do_action( 'woocommerce_before_edit_account_form' );
 			<option value="">-- Sélectionner --</option>
 			<option value="particulier" <?php selected($type_client, 'particulier'); ?>>Particulier</option>
 			<option value="professionnel" <?php selected($type_client, 'professionnel'); ?>>Professionnel</option>
-			<option value="entreprise">Entreprise</option>
+			<option value="revendeur" <?php selected($type_client, 'revendeur'); ?>>Revendeur</option>
 			<option value="association_ou_institution" <?php selected($type_client, 'association_ou_institution'); ?>>Association ou Institution</option>
 		</select>
 
@@ -393,7 +397,7 @@ do_action( 'woocommerce_before_edit_account_form' );
         <label for="role">Type de compte</label>
         <select  id="role" required disabled>
 			<option value="">Sélectionnez...</option>
-			<option value="customer_particulier" <?php selected($role,'customer_particulier'); ?>>Particulier</option>
+			<option value="customer_direct" <?php selected($role,'customer_direct'); ?>>Particulier</option>
 			<option value="customer_revendeur" <?php selected($role,'customer_revendeur'); ?>>Revendeur</option>
 		</select>
     </p>
@@ -547,7 +551,7 @@ do_action( 'woocommerce_before_edit_account_form' );
 
 
 			function toggleOptinExpiration() {
-				if ($roleField.val() === 'customer_particulier') {
+				if ($roleField.val() === 'customer_direct') {
 					$expField.show();
 				} else {
 					$expField.hide();

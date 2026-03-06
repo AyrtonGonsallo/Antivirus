@@ -15,7 +15,8 @@ if ( ! $product->is_purchasable() && ( ! is_user_logged_in() || 'no' === wcs_get
 	return;
 }
 
-
+$product_url = get_permalink($product->get_id());
+$login_url = add_query_arg('redirect_to', urlencode($product_url), wc_get_page_permalink('myaccount'));
 
 $user_id = get_current_user_id();
 $bloquer_remise_revendeur = get_field('bloquer_remise_revendeur', $product->get_id());       // true / false
@@ -50,6 +51,11 @@ if($user_id){
 	$remise_r = get_user_remise_by_type($user_id,"Renouvellement de licences -30%");
 	$remise_a = get_user_remise_by_type($user_id,"Administrations et mairies -30%");
 	$remise_e = get_user_remise_by_type($user_id,"Établissements scolaires et associations -50%");
+
+	$desactiver1 = $user_has_disabled_remises || $remise_r || $remise_a || $remise_e;
+    $desactiver2 = $user_has_disabled_remises || $remise_r;
+    $desactiver3 = $user_has_disabled_remises || $remise_r || $remise_e;
+    $desactiver4 = $user_has_disabled_remises || $remise_r || $remise_a || $remise_c;
 	
 	$current_remises .= ($remise_c)?get_field('type', $remise_c):"";
 	$current_remises .= ($remise_r)?get_field('type', $remise_r):"";
@@ -299,7 +305,7 @@ if ( $product->is_in_stock() ) : ?>
 			<span style="font-family: 'Raleway';font-weight: 600;text-align:center;"> JE PEUX BÉNÉFICIER<br> D'UNE REMISE COMMERCIALE :</span>
 			<!-- Option 1 -->
 			<label>
-				<input type="checkbox" <?php if ($remise_c) echo 'checked disabled'; ?> name="option_remise[]"  id="option1" class="optionRemise" data-group="1" data-file="file1" data-value="Changement -25%"> Je change d'antivirus pour Avast -25%
+				<input type="checkbox" <?php if ($remise_c){ echo 'checked disabled'; }else if($desactiver1){echo 'disabled'; }  ?> name="option_remise[]"  id="option1" class="optionRemise" data-group="1" data-file="file1" data-value="Changement -25%"> Je change d'antivirus pour Avast -25%
 			</label>
 			<div class="upload hidden" id="file1">
 				<input type="file" name="justificatif_changement" accept="application/pdf,image/*">
@@ -307,7 +313,7 @@ if ( $product->is_in_stock() ) : ?>
 
 			<!-- Option 2 -->
 			<label>
-				<input type="checkbox" <?php if ($remise_r) echo 'checked disabled'; ?> name="option_remise[]"  id="option2" class="optionRemise" data-group="2" data-file="file2" data-value="Renouvellement de licences -30%"> Renouvellement de licences -30%
+				<input type="checkbox" <?php if ($remise_r){ echo 'checked disabled'; }else if($desactiver2){echo 'disabled'; } ?> name="option_remise[]"  id="option2" class="optionRemise" data-group="2" data-file="file2" data-value="Renouvellement de licences -30%"> Renouvellement de licences -30%
 			</label>
 			
 			<div class="upload hidden" id="file2" style="display: flex;gap: 7px; align-items: center;justify-content: center;">
@@ -317,7 +323,7 @@ if ( $product->is_in_stock() ) : ?>
 
 			<!-- Option 3 -->
 			<label>
-				<input type="checkbox" <?php if ($remise_a) echo 'checked disabled'; ?> name="option_remise[]"  id="option3" class="optionRemise" data-group="3" data-file="file3" data-value="Administrations et mairies -30%"> Administrations et mairies -30%
+				<input type="checkbox" <?php if ($remise_a){ echo 'checked disabled'; }else if($desactiver3){echo 'disabled'; } ?> name="option_remise[]"  id="option3" class="optionRemise" data-group="3" data-file="file3" data-value="Administrations et mairies -30%"> Administrations et mairies -30%
 			</label>
 			<div class="upload hidden" id="file3">
 				<input type="file" name="justificatif_admin" accept="application/pdf,image/*">
@@ -325,7 +331,7 @@ if ( $product->is_in_stock() ) : ?>
 
 			<!-- Option 4 -->
 			<label>
-				<input type="checkbox" <?php if ($remise_e) echo 'checked disabled'; ?> name="option_remise[]"  id="option4" class="optionRemise" data-group="4" data-file="file4" data-value="Établissements scolaires et associations -50%"> Établissements scolaires et associations -50%
+				<input type="checkbox" <?php if ($remise_e){ echo 'checked disabled'; }else if($desactiver4){echo 'disabled'; } ?> name="option_remise[]"  id="option4" class="optionRemise" data-group="4" data-file="file4" data-value="Établissements scolaires et associations -50%"> Établissements scolaires et associations -50%
 			</label>
 			<div class="upload hidden" id="file4">
 				<input type="file" name="justificatif_association" accept="application/pdf,image/*">
@@ -339,7 +345,7 @@ if ( $product->is_in_stock() ) : ?>
 				?>
 					<button class="btn-remise btn-remise-style"  type="submit" name="submit_demande_remise">Appliquer ma remise</button>
 				<?php }else{?>
-					<a class="link-conn"  href=<?php echo esc_url( wc_get_page_permalink( 'myaccount' ) );?> target="_blank">Connectez-vous</a>
+					<a class="link-conn"  href=<?php echo esc_url( $login_url );?> target="_blank">Connectez-vous</a>
 				<?php }
 				?>
 			<?php }?>

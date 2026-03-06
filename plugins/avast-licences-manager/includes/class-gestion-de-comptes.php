@@ -44,8 +44,10 @@ class ALM_Gestion_De_Comptes {
         add_filter('wp_mail',  [$this, 'log_source'], 1, 1);
 
         add_action('woocommerce_before_edit_address_form_billing', [$this, 'wc_add_custom_edit_address_form_billing']);
+        add_action('woocommerce_after_checkout_billing_form', [$this, 'wc_add_custom_edit_address_form_billing']);
 
         add_action('woocommerce_customer_save_address',[$this, 'wc_save_custom_edit_address_form_billing'], 10, 2);
+        add_action('woocommerce_checkout_update_user_meta', [$this,'wc_save_custom_checkout_fields']);
 
         add_filter('manage_users_columns', [$this, 'auto_connexion_colomns']);
 
@@ -55,7 +57,21 @@ class ALM_Gestion_De_Comptes {
 
         add_action('admin_notices', [$this, 'afficher_lien_auto_connexion_admin']);
 
+        add_filter('woocommerce_registration_redirect', [$this, 'redirect_after_register']);
 
+        
+
+
+    }
+
+
+    public function redirect_after_register($redirect) {
+
+        if (isset($_REQUEST['redirect_to'])) {
+            return esc_url_raw($_REQUEST['redirect_to']);
+        }
+
+        return $redirect;
     }
 
     public function auto_connexion_colomns($columns) {
@@ -132,10 +148,12 @@ class ALM_Gestion_De_Comptes {
 
     public function wc_add_custom_edit_address_form_billing( ) {
 
-        $value = get_user_meta(get_current_user_id(), 'billing_type_client', true);
+        $billing_type_client_value = get_user_meta(get_current_user_id(), 'billing_type_client', true);
+        $denomination_value = get_user_meta(get_current_user_id(), 'billing_societe', true);
+        $siret_value = get_user_meta(get_current_user_id(), 'billing_numero_siret', true);
 
-        if (empty($value)) {
-            $value = 'particulier';
+        if (empty($billing_type_client_value)) {
+            $billing_type_client_value = 'particulier';
         }
 
         woocommerce_form_field('billing_type_client', [
@@ -145,27 +163,36 @@ class ALM_Gestion_De_Comptes {
             'class'   => ['form-row-wide'],
             'options' => [
                 'particulier' => __('Particulier', 'woocommerce'),
-                'entreprise'  => __('Entreprise', 'woocommerce'),
+                'professionnel'  => __('Professionnel', 'woocommerce'),
+                'association_ou_institution'  => __('Association ou Institution', 'woocommerce'),
+                'revendeur'  => __('Revendeur', 'woocommerce'),
             ],
             'default' => 'particulier'
-        ], $value);
+        ], $billing_type_client_value);
 
 
-        echo '<div id="billing-entreprise-fields" style="display:none;">';
+        echo '<div id="billing-denomination-field" style="display:none;">';
 
         // Champ 1
         woocommerce_form_field('billing_societe', [
             'type'  => 'text',
             'label' => __('Nom de l\'entreprise', 'woocommerce'),
             'class' => ['form-row-wide'],
-        ], get_user_meta(get_current_user_id(), 'billing_societe', true));
+        ], $denomination_value);
 
+       
+
+        echo '</div>';
+
+        echo '<div id="billing-siret-field" style="display:none;">';
+
+     
         // Champ 2
         woocommerce_form_field('billing_numero_siret', [
             'type'  => 'text',
             'label' => __('N° de SIRET', 'woocommerce'),
             'class' => ['form-row-wide'],
-        ], get_user_meta(get_current_user_id(), 'billing_numero_siret', true));
+        ], $siret_value);
 
         echo '</div>';
     }
@@ -173,6 +200,22 @@ class ALM_Gestion_De_Comptes {
     public function wc_save_custom_edit_address_form_billing($user_id, $load_address) {
 
         if ($load_address !== 'billing') return;
+
+        if (isset($_POST['billing_type_client'])) {
+            update_user_meta($user_id, 'billing_type_client', sanitize_text_field($_POST['billing_type_client']));
+        }
+
+        if (isset($_POST['billing_societe'])) {
+            update_user_meta($user_id, 'billing_societe', sanitize_text_field($_POST['billing_societe']));
+        }
+
+        if (isset($_POST['billing_numero_siret'])) {
+            update_user_meta($user_id, 'billing_numero_siret', sanitize_text_field($_POST['billing_numero_siret']));
+        }
+
+    }
+
+    public function wc_save_custom_checkout_fields($user_id) {
 
         if (isset($_POST['billing_type_client'])) {
             update_user_meta($user_id, 'billing_type_client', sanitize_text_field($_POST['billing_type_client']));
@@ -207,7 +250,7 @@ class ALM_Gestion_De_Comptes {
         $new_account_prefixe_tva = $_POST['account_prefixe_tva'];
         $type_client = $_POST['type_client'];
 
-        $user->set_role( 'customer_particulier' ); // <-- ton rôle (ou autre : subscriber, editor...)
+        $user->set_role( 'customer_direct' ); // <-- ton rôle (ou autre : subscriber, editor...)
         update_user_meta($user_id, 'ville', sanitize_text_field($_POST['ville']));
         update_user_meta($user_id, 'billing_city', sanitize_text_field($_POST['ville']));
         update_user_meta($user_id, 'code_postal', sanitize_text_field($_POST['code_postal']));
@@ -225,11 +268,14 @@ class ALM_Gestion_De_Comptes {
         update_user_meta($user_id, 'shipping_country', sanitize_text_field($_POST['pays']));
         update_user_meta($user_id, 'shipping_postcode', sanitize_text_field($_POST['code_postal']));
         update_user_meta($user_id, 'shipping_city', sanitize_text_field($_POST['ville']));
+        update_user_meta($user_id, 'billing_type_client', sanitize_text_field($type_client));
+        
 
         update_user_meta($user_id, 'type_client', sanitize_text_field($type_client));
         
         if ($type_client === 'association_ou_institution' ||  $type_client === 'professionnel') {
             update_user_meta($user_id, 'denomination', sanitize_text_field($_POST['denomination']));
+            update_user_meta($user_id, 'billing_societe', sanitize_text_field($_POST['denomination']));
         }
         
         if( isset($new_account_regime_tva)){
@@ -493,7 +539,7 @@ class ALM_Gestion_De_Comptes {
                 <td><input type="checkbox" name="optin_promos" id="optin_promos" value="yes" <?php checked($optin_promos, 'yes'); ?> /></td>
             </tr>
 
-            <?php if (in_array('customer_particulier', $user->roles)) : ?>
+            <?php if (in_array('customer_direct', $user->roles)) : ?>
                 <tr>
                     <th><label for="optin_expiration">Informer de l’expiration des licences</label></th>
                     <td><input type="checkbox" name="optin_expiration" id="optin_expiration" value="yes" <?php checked($optin_expiration, 'yes'); ?> /></td>
@@ -693,12 +739,12 @@ class ALM_Gestion_De_Comptes {
 
 /**
      * Ajouter le lien “Mes Devis” dans le menu Mon Compte
-     * Seulement pour les rôles customer_revendeur,customer_particulier
+     * Seulement pour les rôles customer_revendeur,customer_direct
      */
     public function add_devis_menu_link($items) {
         $user = wp_get_current_user();
 
-        if (in_array('customer_revendeur', $user->roles) || in_array('customer_particulier', $user->roles)) {
+        if (in_array('customer_revendeur', $user->roles) || in_array('customer_direct', $user->roles)) {
 
             // Insérer avant "clients" ou autre
             $new = [];
@@ -816,7 +862,7 @@ class ALM_Gestion_De_Comptes {
             'user_email' => $email,
             'first_name' => $prenom,
             'last_name'  => $nom,
-            'role'       => 'customer_particulier',
+            'role'       => 'customer_direct',
         ];
 
         $user_id = wp_insert_user($userdata);
@@ -844,7 +890,7 @@ class ALM_Gestion_De_Comptes {
         update_user_meta($user_id, 'billing_last_name', $nom);
         update_user_meta($user_id, 'billing_postcode', $code_postal);
         update_user_meta($user_id, 'billing_city', $ville);
-         update_user_meta($user_id, 'billing_type_client', 'particulier');
+         update_user_meta($user_id, 'billing_type_client', $type_client);
 
         /*
         // Envoi email au client avec ses identifiants
