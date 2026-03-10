@@ -879,13 +879,15 @@ function traiter_chaines_menu($chaine) {
 
 
 function shortcode_menu_entreprise($atts) {
+    $current_language = get_locale(); 
+
     $atts = shortcode_atts(['categories' => '', 'page' => 'default'], $atts, 'menu_entreprise');
     
     $requested_slugs = array_map('trim', explode(',', $atts['categories']));
     $slugs_str = preg_replace('/[^a-zA-Z0-9_]/', '_', implode('_', $requested_slugs));
     $page_clean = preg_replace('/[^a-zA-Z0-9_]/', '_', $atts['page']);
     
-    $cache_key = "cache_shortcode_menu_{$page_clean}_{$slugs_str}";
+    $cache_key = "cache_shortcode_menu_{$page_clean}_{$slugs_str}_{$current_language}";
     $cached = get_transient($cache_key);
     if ($cached !== false) return $cached;
     
