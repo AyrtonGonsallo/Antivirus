@@ -51,19 +51,21 @@ class ALM_Gestion_De_Comptes {
 
         add_filter('manage_users_columns', [$this, 'auto_connexion_colomns']);
 
+
         add_filter('manage_users_custom_column', [$this, 'auto_connexion_datas'], 10, 3);
 
         add_action('admin_init',[$this, 'creer_auto_connexion_link_admin'] );
 
         add_action('admin_notices', [$this, 'afficher_lien_auto_connexion_admin']);
 
-        add_filter('woocommerce_registration_redirect', [$this, 'redirect_after_register']);
+        //add_filter('woocommerce_registration_redirect', [$this, 'redirect_after_register']);
 
         
 
 
     }
 
+  
 
     public function redirect_after_register($redirect) {
 
@@ -75,7 +77,11 @@ class ALM_Gestion_De_Comptes {
     }
 
     public function auto_connexion_colomns($columns) {
+
+        unset( $columns['posts'] );
+        unset( $columns['role'] ); // Remove the "user_tag" column
         $columns['auto_login'] = 'Auto connexion';
+        $columns['type_client'] = 'Type de client';
         return $columns;
     }
 
@@ -92,6 +98,24 @@ class ALM_Gestion_De_Comptes {
             );
 
             return '<a class="button button-primary" href="'.$url.'">Auto connexion</a>';
+        }
+
+        if ($column_name === 'type_client') {
+
+            $user_info = get_userdata($user_id);
+             $billing_type_client_value = get_user_meta($user_id, 'billing_type_client', true);
+            $user_roles = $user_info->roles; // array de tous les rôles
+            if (in_array('customer_direct', $user_roles)) {
+                $role = 'Client Direct '.$billing_type_client_value;
+            } elseif (in_array('customer_revendeur', $user_roles)) {
+                $role = 'Revendeur';
+            } else {
+                $role = ''; // fallback
+            }
+
+           
+
+            return $role;
         }
 
         return $value;

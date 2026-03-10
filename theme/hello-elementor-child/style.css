@@ -314,8 +314,73 @@ a.cr-review-form-continue:hover{background-color: #00bbff !important;}
 .variables-prodct p.promo-end {font-size: 0.8em !important;margin-top: 15px!important;color:#000 !important;}
 body .single-product .quantity .qty {min-height: 51px !important;}
 ins { text-decoration: none !important;}
+.popup-overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    z-index: 9998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.poppup{
+    background: white;
+    padding: 30px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 80vh;
+    overflow-y: auto;
+    border-radius: 6px;
+}
 .single-product .col-dtls-product .prod-shop ins bdi{font-size: 76px !important;}
-.single-product .product .product_title, .page-compte h2, .alm-devis-form h2 {/*font-size:40px;*/position:relative;}
+.single-product .product .product_title, .page-compte h2, .alm-devis-form h2 {position:relative;}
+.popup-connexion h2 {
+    font-family: "Raleway", Raleway !important;
+    font-size: 25px !important;
+    font-weight: 700 !important;
+    position:relative;
+    z-index:1
+}
+.popup-connexion .show-password-input {
+    background-color: transparent !important;
+    border-radius: 0!important;
+    border: 0!important;
+    color: var(--wc-form-color-text, #000)!important;
+    cursor: pointer;
+    font-size: inherit;
+    line-height: inherit;
+    margin: 0!important;
+    padding: 0!important;
+    position: absolute !important;
+    right: .7em !important;
+    text-decoration: none;
+    top: 50%!important;
+    transform: translateY(-50%)!important;
+}
+.popup-connexion .woocommerce-button.button{
+    background-color: #FF7800!important;
+    border-style: solid!important;
+    border-width: 3px 3px 3px 3px!important;
+    border-color: #FF7800!important;
+    color: #FFFFFF!important;
+    border-radius: 9px 9px 9px 9px!important;
+    padding: 14px 19px 14px 19px!important;
+    float: left !important;
+    font-size: 15px !important;
+    margin-right: 1em !important;
+    
+}
+.popup-connexion .woocommerce-button.button:hover{
+    background-color: #FFFFFF!important;
+    border-color: #FF7800!important;
+    color: #FF7800!important;
+}
+.popup-connexion{
+    font-family: "Raleway", Raleway;
+    font-size: 14px;
+    font-weight: 400;
+}
 .single-product .product .product_title:after{
     content: "";
     background-color: #c0ebfa;
@@ -326,7 +391,7 @@ ins { text-decoration: none !important;}
     width: 164px;
     padding: 0px 0px 0px 0px;
     z-index: -1;}
-.page-compte h2:after{
+.page-compte h2:after,.popup-connexion h2:after{
     content: "";
     background-color: #c0ebfa;
     left: -12px;
@@ -335,7 +400,9 @@ ins { text-decoration: none !important;}
     height: 17px;
     width: 140px;
     padding: 0px 0px 0px 0px;
-    z-index: -1;}
+    z-index: -1;
+}
+
 .price:not(:has(del)) .woocommerce-Price-amount{
     font-size: 48px;
     font-weight: 800;
@@ -1417,6 +1484,7 @@ div.woocommerce-variation-price.remisable.has-remise-revendeur bdi, span.remisab
     margin: auto; 
     text-transform: unset;
     margin-block: 10px !important;
+    cursor: pointer;
 }
 .link-conn:hover{
     color: var(--e-global-color-primary) !important;
@@ -1432,3 +1500,4 @@ div.woocommerce-variation-price.remisable.has-remise-revendeur bdi, span.remisab
 #tefw_fields_content{
     display: none !important;
 }
+

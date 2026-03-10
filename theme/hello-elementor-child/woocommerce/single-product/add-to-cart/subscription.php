@@ -53,9 +53,9 @@ if($user_id){
 	$remise_e = get_user_remise_by_type($user_id,"Établissements scolaires et associations -50%");
 
 	$desactiver1 = $user_has_disabled_remises || $remise_r || $remise_a || $remise_e;
-    $desactiver2 = $user_has_disabled_remises || $remise_r;
-    $desactiver3 = $user_has_disabled_remises || $remise_r || $remise_e;
-    $desactiver4 = $user_has_disabled_remises || $remise_r || $remise_a || $remise_c;
+    $desactiver2 = $user_has_disabled_remises || $remise_c;
+    $desactiver3 = $user_has_disabled_remises || $remise_c || $remise_e;
+    $desactiver4 = $user_has_disabled_remises || $remise_a || $remise_c;
 	
 	$current_remises .= ($remise_c)?get_field('type', $remise_c):"";
 	$current_remises .= ($remise_r)?get_field('type', $remise_r):"";
@@ -345,7 +345,7 @@ if ( $product->is_in_stock() ) : ?>
 				?>
 					<button class="btn-remise btn-remise-style"  type="submit" name="submit_demande_remise">Appliquer ma remise</button>
 				<?php }else{?>
-					<a class="link-conn"  href=<?php echo esc_url( $login_url );?> target="_blank">Connectez-vous</a>
+					<a class="link-conn" >Connectez-vous</a>
 				<?php }
 				?>
 			<?php }?>
@@ -375,6 +375,15 @@ if ( $product->is_in_stock() ) : ?>
 
 		</form>
 	</div>
+
+
+	
+    
+    <div class="popup-overlay popup-connexion" style="display:none">
+        <div class="poppup">
+            <?php echo do_shortcode("[woocommerce_my_account]");?>
+        </div>
+    </div>
 <?php } ?>
 <style>
     .hidden { display:none !important; }
@@ -386,6 +395,219 @@ if ( $product->is_in_stock() ) : ?>
 ?>
 	<script>
 	jQuery(document).ready(function($) {
+
+		function load_form(){
+            const saved = localStorage.getItem('demandeRemiseAvantConnexion');
+
+            console.log("debut restauration")
+            if(!saved) return;
+
+            const data = JSON.parse(saved);
+            console.log("restauration a faire",data)
+
+            $.each(data, function(key,value){
+				console.log(key)
+				if (key === 'file_data') return;
+
+				if (key === 'remise_type'){
+					console.log("remise_type",value)
+					$('#remise_type').val(value);
+				}
+					
+
+                const el = $('#'+key);
+
+                if(el.length){
+					if (el.attr('type') === 'checkbox') {
+						el.prop('checked', value);
+
+						// Gérer l'affichage du fichier associé
+						const fileId = el.data('file');
+						if (fileId) {
+							console.log('#' + fileId);
+							
+							// N'AFFICHER QUE SI LA CHECKBOX EST COCHÉE
+							if (value) {
+								$('#' + fileId).removeClass('hidden').show();
+							} else {
+								$('#' + fileId).addClass('hidden').hide();
+							}
+						}
+					}
+                    
+
+                }else{
+
+                    const el2 = $('[name="'+key+'"]');
+
+                    if(el2.length){
+                        el2.val(value);
+                    }
+
+                }
+
+            });
+
+			// Restauration des fichiers si présents
+			if (data.files_data) {
+				restoreAllFiles(data.files_data);
+			}
+            // **vider la sauvegarde après restauration**
+            localStorage.removeItem('demandeRemiseAvantConnexion');
+            console.log("localStorage vidé après restauration");
+        }
+
+        
+
+        function restoreAllFiles(filesData) {
+			// Pour chaque input file
+			$.each(filesData, function(inputName, files) {
+				let fileInput;
+				
+				if (inputName.startsWith('file_')) {
+					// Cas où on a généré un nom par défaut
+					const index = inputName.split('_')[1];
+					fileInput = $('input[type="file"]').eq(index);
+				} else {
+					// Cas où l'input a un attribut name
+					fileInput = $('input[type="file"][name="' + inputName + '"]');
+				}
+				
+				if (fileInput.length === 0) {
+					// Fallback: prendre le premier input file
+					fileInput = $('input[type="file"]').first();
+				}
+				
+				if (fileInput.length > 0) {
+					restoreFilesToInput(fileInput, files);
+					console.log(fileInput)
+					$(".btn-remise").prop("disabled", false);
+				}
+			});
+		}
+
+		function restoreFilesToInput(fileInput, files) {
+			const dataTransfer = new DataTransfer();
+			let filesRestored = 0;
+			
+			// Recréer chaque fichier et l'ajouter au DataTransfer
+			files.forEach(function(fileData) {
+				// Convertir Base64 en Blob
+				const byteString = atob(fileData.content.split(',')[1]);
+				const arrayBuffer = new ArrayBuffer(byteString.length);
+				const uint8Array = new Uint8Array(arrayBuffer);
+				
+				for (let i = 0; i < byteString.length; i++) {
+					uint8Array[i] = byteString.charCodeAt(i);
+				}
+				
+				const blob = new Blob([uint8Array], {type: fileData.type});
+				const restoredFile = new File([blob], fileData.name, {
+					type: fileData.type,
+					lastModified: fileData.lastModified
+				});
+				
+				dataTransfer.items.add(restoredFile);
+				filesRestored++;
+			});
+			
+			// Assigner les fichiers à l'input
+			fileInput[0].files = dataTransfer.files;
+			
+			// Déclencher l'événement change
+			fileInput.trigger('change');
+			
+			// Afficher le résumé des fichiers restaurés
+			console.log(`${filesRestored} fichier(s) restauré(s) pour l'input ${fileInput.attr('name') || 'sans nom'}`);
+		}
+
+        $('.link-conn').on('click', function(e){
+            e.preventDefault();
+            const divform = $('.div-remise');
+            console.log("form a stocker",divform.find('input'))
+            let data = {};
+			let fileData = null;
+
+			// Gestion des fichiers - prend TOUS les fichiers de TOUS les inputs
+			const fileInputs = divform.find('input[type="file"]');
+			let filesProcessed = 0;
+			let totalFiles = 0;
+
+			// Compter le nombre total de fichiers à traiter
+			fileInputs.each(function() {
+				totalFiles += this.files.length;
+			});
+
+			if (totalFiles > 0) {
+				data['files_data'] = {}; // Objet pour stocker tous les fichiers
+				
+				fileInputs.each(function(inputIndex) {
+					const fileInput = $(this);
+					const inputName = fileInput.attr('name') || 'file_' + inputIndex;
+					
+					// Pour chaque fichier dans cet input
+					for (let i = 0; i < this.files.length; i++) {
+						const file = this.files[i];
+						const reader = new FileReader();
+						const fileId = inputName + '_' + i;
+						
+						// Stocker les métadonnées
+						if (!data['files_data'][inputName]) {
+							data['files_data'][inputName] = [];
+						}
+						
+						reader.onload = (function(currentFile, currentInputName, currentIndex) {
+							return function(e) {
+								data['files_data'][currentInputName].push({
+									name: currentFile.name,
+									type: currentFile.type,
+									size: currentFile.size,
+									lastModified: currentFile.lastModified,
+									content: e.target.result, // Base64 data URL
+									index: currentIndex
+								});
+								
+								filesProcessed++;
+								
+								// Si tous les fichiers sont traités, sauvegarder
+								if (filesProcessed === totalFiles) {
+									localStorage.setItem('demandeRemiseAvantConnexion', JSON.stringify(data));
+									console.log("Tous les fichiers sauvegardés:", data['files_data']);
+								}
+							};
+						})(file, inputName, i);
+						
+						reader.readAsDataURL(file);
+					}
+				});
+			} else {
+				// Pas de fichiers, sauvegarder directement
+				localStorage.setItem('demandeRemiseAvantConnexion', JSON.stringify(data));
+			}
+
+            divform.find('input').each(function(){
+                const el = $(this);
+                console.log("stockage",el.attr('name'))
+
+                if(el.attr('type') === 'file') return;
+
+                if(el.attr('type') === 'checkbox'){
+                    data[el.attr('id')] = el.prop('checked');
+                }else{
+                    data[el.attr('name')] = el.val();
+                }
+            });
+
+            localStorage.setItem('demandeRemiseAvantConnexion', JSON.stringify(data));
+            
+            $('.popup-overlay').fadeIn();
+        });
+
+        $('.popup-overlay').on('click', function(e){
+            if($(e.target).is('.popup-overlay')){
+                $(this).fadeOut();
+            }
+        });
 
 		$('.toggle-remise').on('click', function(){
 
@@ -572,6 +794,8 @@ if ( $product->is_in_stock() ) : ?>
 
 		//  désactiver au départ !
 		$(".btn-remise").prop("disabled", true);
+
+		load_form()
 
 	});
 	</script>

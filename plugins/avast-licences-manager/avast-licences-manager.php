@@ -21,6 +21,7 @@ require_once ALM_PATH . 'includes/class-crons-urls.php';
 require_once ALM_PATH . 'includes/class-revendeur.php';
 require_once ALM_PATH . 'includes/class-wcs.php';
 require_once ALM_PATH . 'includes/class-statistiques-antivirus.php';
+//require_once ALM_PATH . 'includes/class-ajax-login-register-popup.php';
 
 // Activation / Deactivation hooks
 register_activation_hook(__FILE__, ['ALM_Roles', 'add_roles']);
