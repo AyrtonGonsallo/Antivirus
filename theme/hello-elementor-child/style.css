@@ -1500,4 +1500,26 @@ div.woocommerce-variation-price.remisable.has-remise-revendeur bdi, span.remisab
 #tefw_fields_content{
     display: none !important;
 }
+.price-custom{
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 78%;
+}
+.custom-price.sale-price-home{
+    font-family: "Raleway", Raleway;
+    font-size: 48px;
+    font-weight: 800;
+    color: #000;
+}
 
+.custom-price.regular-price-home{
+        color: #FF1212;
+    font-family: "Raleway", Raleway;
+    font-size: 29px;
+    opacity: 1;
+    text-decoration: line-through;
+    font-weight: 400;
+}
+.custom-price.regular-price-home  bdi {
+    gap: 0px !important;
+}

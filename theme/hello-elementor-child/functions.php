@@ -133,7 +133,7 @@ function trp_flags_inline_shortcode($atts) {
 
         // 🔥 Correction : si FR → URL racine "/"
         if ( $code === 'fr' ) {
-            $translated_url = home_url('/');
+            $translated_url = str_replace("/fr/","/",$url_converter->get_url_for_language($code, $current_url));
         } else {
             $translated_url = $url_converter->get_url_for_language($code, $current_url);
         }
@@ -182,7 +182,7 @@ function trp_flags_hover_shortcode($atts) {
 
         // 🔥 Correction : langue FR renvoie "/"
         if ( $code === 'fr' ) {
-            $translated_url = home_url('/');
+            $translated_url = str_replace("/fr/","/",$url_converter->get_url_for_language($code, $current_url));
         } else {
             $translated_url = $url_converter->get_url_for_language($code, $current_url);
         }
@@ -1054,15 +1054,22 @@ add_shortcode('prix_promo_auto', function() {
 
     if ($product->is_type('simple') || $product->is_type('subscription')) {
 
+        $res="<div class='price-custom'>";
         if ($product->is_on_sale()) {
 
             $regular = (float) $product->get_regular_price();
             $sale    = (float) $product->get_sale_price();
 
             if ($regular > 0 && $sale > 0) {
-                $percent = round((($regular - $sale) / $regular) * 100);
-                return "<span style='color:green;font-weight:bold;text-align:center;'>Promo -{$percent}% *</span>";
+                $res.="<span class='custom-price regular-price-home'>".wc_price($regular)."</span>";
+                $res.="<span class='custom-price sale-price-home'>".wc_price($sale)."</span></div>";
+                return $res;
             }
+        }else{
+            $regular = (float) $product->get_regular_price();
+            $res.="<span class='custom-price sale-price-home'>".wc_price($regular)."</span></div>";
+            return $res;
+            
         }
     }
 
@@ -1078,16 +1085,27 @@ add_shortcode('prix_promo_auto', function() {
 
             // 🔥 On prend juste la première variation
             $variation = wc_get_product($children[0]);
+            $res="<div class='price-custom'>";
 
             if ($variation && $variation->is_on_sale()) {
 
-                $regular = (float) $variation->get_regular_price();
-                $sale    = (float) $variation->get_sale_price();
+                $regular_one = (float) $variation->get_regular_price();
+                $sale_one    = (float) $variation->get_sale_price();
+                $sale_min    = (float) $product->get_variation_price( 'min', true );
+                
 
-                if ($regular > 0 && $sale > 0) {
-                    $percent = round((($regular - $sale) / $regular) * 100);
-                    return "<span style='color:green;font-weight:bold;display: grid;width: 100%;text-align:center'>Promo -{$percent}% *</span>";
+                if ($regular_one > 0 && $sale_one > 0) {
+                    $percent = ($regular_one / $sale_one) ;
+                    $min_price = $product->get_variation_price( 'min', true );
+                    $regular_min = $sale_min * $percent;
+                    $res.="<span class='custom-price regular-price-home'>".wc_price($regular_min)."</span>";
+                    $res.="<span class='custom-price sale-price-home'>".wc_price($sale_min)."</span></div>";
+                    return $res;
                 }
+            }else{
+                $regular_min    = (float) $product->get_variation_price( 'min', true );
+                $res.="<span class='custom-price sale-price-home'>".wc_price($regular_min)."</span></div>";
+                return $res;
             }
         }
     }
