@@ -28,7 +28,15 @@ class ALM_Remise_Commerciale {
             wp_send_json_error();
         }
 
-        $user_id = get_current_user_id();
+
+        $est_revendeur = current_user_can('customer_revendeur'); // adapte selon ton rôle
+        if(!$est_revendeur){//client direct prendre remises utilisateur
+            $user_id = get_current_user_id();
+        }else{//prendre remises du client squr le panier
+            $user_id = WC()->session->get('alm_client_final');
+        }
+
+
         $mode = sanitize_text_field($_POST['mode']);
 
         if($mode === 'activate'){
@@ -101,7 +109,13 @@ class ALM_Remise_Commerciale {
     public function handle_demande_remise_creation() {
 
         if ( isset($_POST['submit_demande_remise']) && is_user_logged_in() ) {
+
+        if ( isset($_POST['client_id'])  ) {
+            $user_id = $_POST['client_id'];
+        }else{
             $user_id = get_current_user_id();
+        }
+            
 
             // Tableau pour associer option → input file
             $file_fields_map = [
@@ -234,7 +248,10 @@ class ALM_Remise_Commerciale {
                     // Headers pour email HTML
                     $headers = array('Content-Type: text/html; charset=UTF-8');
 
-                    wp_mail($email, $subject, $message, $headers);
+                    if ( !isset($_POST['client_id'])  ) {
+                        wp_mail($email, $subject, $message, $headers);
+                    }
+                    
 
                     
                 }
@@ -255,21 +272,26 @@ class ALM_Remise_Commerciale {
 
     }
 
-     private function get_user_remises($user_id) {
-        $today = current_time('d/m/Y g:i a'); // même format que date_de_creation
+     private function get_user_remises($user_id, $client_final_id = null) {
+
+        $meta_user_values = [$user_id];
+
+        if ($client_final_id) {
+            $meta_user_values[] = $client_final_id;
+        }
 
         $args = [
-            'post_type' => 'remise',
+            'post_type'   => 'remise',
             'post_status' => 'publish',
             'numberposts' => -1,
-            'meta_query' => [
+            'meta_query'  => [
                 [
-                    'key' => 'utilisateur',
-                    'value' => $user_id,
-                    'compare' => '='
+                    'key'     => 'utilisateur',
+                    'value'   => $meta_user_values,
+                    'compare' => 'IN'
                 ],
                 [
-                    'key' => 'statut',
+                    'key'     => 'statut',
                     'value'   => ['validee','activee'],
                     'compare' => 'IN'
                 ]
@@ -324,7 +346,16 @@ class ALM_Remise_Commerciale {
         $user_id = get_current_user_id();
         if (!$user_id) return;
 
-        $remises = $this->get_user_remises_commerciales($user_id);
+        $est_revendeur = current_user_can('customer_revendeur'); // adapte selon ton rôle
+        if(!$est_revendeur){//client direct prendre remises utilisateur
+            $remises = $this->get_user_remises_commerciales($user_id);
+        }else{//prendre remises du client squr le panier
+            $selected_client_id = WC()->session->get('alm_client_final');
+            $remises = $this->get_user_remises_commerciales($selected_client_id);
+        }
+
+
+        
         if (empty($remises)) return; //  PAS DE REMISE → PRIX PROMO NORMAL
 
         foreach ($cart->get_cart() as $cart_item) {
@@ -390,7 +421,15 @@ class ALM_Remise_Commerciale {
         $user_id = get_current_user_id();
         if (!$user_id) return;
 
-        $remises = $this->get_user_remises($user_id);
+        $est_revendeur = current_user_can('customer_revendeur'); // adapte selon ton rôle
+        if(!$est_revendeur){//client direct prendre remises utilisateur
+            $remises = $this->get_user_remises($user_id);
+        }else{//prendre remises du client squr le panier
+            $selected_client_id = WC()->session->get('alm_client_final');
+            $remises = $this->get_user_remises($user_id,$selected_client_id);
+        }
+
+        
         if (empty($remises)) return;
 
         // Commencer avec le sous-total

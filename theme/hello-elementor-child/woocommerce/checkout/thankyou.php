@@ -74,6 +74,18 @@ defined( 'ABSPATH' ) || exit;
 					</li>
 				<?php endif; ?>
 
+				<?php
+					$est_revendeur = current_user_can('customer_revendeur'); // adapte selon ton rôle
+					$selected_client_id  = $order->get_meta('client_final');
+					$client = get_user_by('id', $selected_client_id);
+				?>
+				<?php if ( $est_revendeur ) : ?>
+					<li class="woocommerce-order-overview__client-final client-final">
+						<?php esc_html_e( 'Client final', 'woocommerce' ); ?>
+						<strong><?php echo $client->display_name; ?></strong>
+					</li>
+				<?php endif; ?>
+
 			</ul>
 
 		<?php endif; ?>

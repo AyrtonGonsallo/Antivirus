@@ -86,6 +86,11 @@ class ALM_Statistiques_antivirus {
                 $order_link = admin_url('post.php?post=' . $order_id . '&action=edit');
                 $user_roles = $user ? $user->roles : ['Invité'];
                 $order_date = $order->get_date_created()->date('Y-m-d H:i:s'); 
+                $selected_client_id  = $order->get_meta('client_final');
+
+                if($selected_client_id){
+                    $client_final = get_user_by('id', $selected_client_id);
+                }
                 $status = wc_get_order_status_name($order->get_status());
                 $pdf_url = wp_nonce_url( add_query_arg( array(
                     'action'        => 'generate_wpo_wcpdf',
@@ -96,21 +101,17 @@ class ALM_Statistiques_antivirus {
                 $link_text = 'Facture';
                 $text = sprintf( '<p><a href="%s" target="_blank">%s</a></p>', esc_attr( $pdf_url ), esc_html( $link_text ) );
     
+                $billing_type_client_value = get_user_meta($user_id, 'billing_type_client', true);
+           
+                if (in_array('customer_direct', $user_roles)) {
+                    $roles_string = 'Client Direct '.$billing_type_client_value;
+                } elseif (in_array('customer_revendeur', $user_roles)) {
+                    $roles_string = 'Revendeur';
+                } else {
+                    $roles_string = ''; // fallback
+                }
+
                 
-
-                // Appliquer les transformations sur chaque rôle
-                $user_roles_formatted = array_map(function($role) {
-
-                    // Exemple : remplacer 'subscriber' par 'abonné'
-                    if ($role === 'subscriber') $role = 'abonné';
-
-                    // Supprimer 'customer_' si présent
-                    $role = str_replace('customer_', '', $role);
-
-                    // Mettre en majuscule première lettre
-                    return ucwords($role);
-
-                }, $user_roles);
                 
                 $subscriptions = wcs_get_subscriptions_for_order($order_id, array('order_type' => 'parent'));
                 $closest_date = null;
@@ -141,8 +142,9 @@ class ALM_Statistiques_antivirus {
                 echo '<td data-order="'.esc_attr($order_closest_date).'">'. esc_html(date('d/m/Y H:i', $closest_date)). '</td>';
                 echo '<td>' . wc_price($order->get_total()) . '</td>';
                 echo '<td>' . ($user ? esc_html($user->display_name) : 'Invité') . '<br>';
-                echo  ($user ? esc_html($user->user_email) : '') . '</td>';
-                echo '<td>' . implode('<br>', $user_roles_formatted) . '</td>';
+                echo  ($user ? esc_html($user->user_email) : '')  . '<br>';
+                echo  ($selected_client_id ? esc_html('Client final : '.$client_final->display_name) : '') . '</td>';
+                echo '<td>' . $roles_string . '</td>';
                 echo '<td>';
                     if (($subscriptions)) {
                         foreach ( $subscriptions as $subscription ) {
@@ -287,7 +289,7 @@ class ALM_Statistiques_antivirus {
         $output = fopen('php://output', 'w');
 
         // Colonnes
-        fputcsv($output, ['Commande', 'N° Facture', 'Mode paiement', 'Statut', 'Societe', 'Nom', 'Prenom', 'Email', 'Rôle', 'Date Commande', 'Date paiement', 'Date prochain paiement',   'Pays', 'Total HT','TVA %','Total TVA','Total TTC', 'Prix réel','Marge HT',  'Abonnements / Renouvellements']);
+        fputcsv($output, ['Commande', 'N° Facture', 'Mode paiement', 'Statut', 'Societe', 'Nom', 'Prenom', 'Email','Client final', 'Rôle', 'Date Commande', 'Date paiement', 'Date prochain paiement',   'Pays', 'Total HT','TVA %','Total TVA','Total TTC', 'Prix réel','Marge HT',  'Abonnements / Renouvellements']);
 
         foreach ($order_ids as $order_id) {
             $order = wc_get_order($order_id);
@@ -301,13 +303,22 @@ class ALM_Statistiques_antivirus {
             $prenom = get_user_meta($user->ID, 'first_name', true);
             $email = $user->user_email;
             $pays = get_user_meta($user->ID, 'pays', true);
+            $selected_client_id  = $order->get_meta('client_final');
+
+            if($selected_client_id){
+                $client_final = get_user_by('id', $selected_client_id);
+            }
+            $client_final_name = $selected_client_id ? $client_final->display_name : $user->display_name;
             // Transformer les rôles
-            $user_roles_formatted = array_map(function($role){
-                if ($role === 'subscriber') $role = 'abonné';
-                $role = str_replace('customer_', '', $role);
-                return ucwords($role);
-            }, $user_roles);
-            $roles_string = implode(' / ', $user_roles_formatted);
+            $billing_type_client_value = get_user_meta($user->ID, 'billing_type_client', true);
+           
+            if (in_array('customer_direct', $user_roles)) {
+                $roles_string = 'Client Direct '.$billing_type_client_value;
+            } elseif (in_array('customer_revendeur', $user_roles)) {
+                $roles_string = 'Revendeur';
+            } else {
+                $roles_string = ''; // fallback
+            }
             $status = wc_get_order_status_name($order->get_status());
             $total_ht = $order->get_total() - $order->get_total_tax();
             $total_ttc = $order->get_total();
@@ -373,6 +384,7 @@ class ALM_Statistiques_antivirus {
                 $nom,
                 $prenom,
                 $email,
+                $client_final_name,
                 $roles_string,
                 $order->get_date_created()->date('d/m/Y H:i'),
                 $order->get_date_paid()->date('d/m/Y H:i'),

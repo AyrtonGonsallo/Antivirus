@@ -39,6 +39,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<strong><?php echo wp_kses_post( $order->get_payment_method_title() ); ?></strong>
 	</li>
 	<?php endif; ?>
+	<?php
+		$est_revendeur = current_user_can('customer_revendeur'); // adapte selon ton rôle
+		$selected_client_id  = $order->get_meta('client_final');
+		$client = get_user_by('id', $selected_client_id);
+	?>
+	<?php if ( $est_revendeur ) : ?>
+		<li class="order-client-final">
+			<?php esc_html_e( 'Client final', 'woocommerce' ); ?>
+			<strong><?php echo $client->display_name; ?></strong>
+		</li>
+	<?php endif; ?>
 </ul>
 
 <?php do_action( 'woocommerce_receipt_' . $order->get_payment_method(), $order->get_id() ); ?>

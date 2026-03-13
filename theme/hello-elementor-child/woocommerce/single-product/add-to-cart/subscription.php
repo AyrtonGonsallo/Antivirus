@@ -63,6 +63,8 @@ if($user_id){
 	$current_remises .= ($remise_e)?get_field('type', $remise_e):"";
 
 	$remise = get_revendeur_remise($user_id);
+	$user = wp_get_current_user();
+	$is_revendeur = in_array('customer_revendeur', (array) $user->roles);
 	if (!empty($remise) && !$bloquer_remise_revendeur){
 		$percent = (float) get_field('pourcentage', $remise->ID);
 
@@ -339,38 +341,40 @@ if ( $product->is_in_stock() ) : ?>
 
 			<input type="hidden" name="remise_type" id="remise_type" value="<?php echo $current_remises; ?>">
 
-			<?php if($user_has_enabled_remises  || !($user_has_enabled_remises || $user_has_disabled_remises)){ //si il a des remises activees ou si il n'a aucune remise
+			<?php if( !$is_revendeur){ //si il est revendeur ne rien afficher
 			?>
-				<?php if($user_id){ //si il est connecte
+				<?php if($user_has_enabled_remises  || !($user_has_enabled_remises || $user_has_disabled_remises)){ //si il a des remises activees ou si il n'a aucune remise
 				?>
-					<button class="btn-remise btn-remise-style"  type="submit" name="submit_demande_remise">Appliquer ma remise</button>
-				<?php }else{?>
-					<a class="link-conn" >Connectez-vous</a>
+					<?php if($user_id){ //si il est connecte
+					?>
+						<button class="btn-remise btn-remise-style"  type="submit" name="submit_demande_remise">Appliquer ma remise</button>
+					<?php }else{?>
+						<a class="link-conn" >Connectez-vous</a>
+					<?php }
+					?>
+				<?php }?>
+
+				<?php if($user_has_disabled_remises){ //si il a des remises desactivees lui permettre de les activer
+				?>
+					<button 
+						type="button"
+						class=" toggle-remise btn-remise-style"
+						data-action="activate">
+						Activer mes remises
+					</button>
 				<?php }
 				?>
+
+				<?php if($user_has_enabled_remises){ //si il a des remises activees lui permettre de les desactiver
+				?>
+					<button 
+						type="button"
+						class="toggle-remise btn-remise-style"
+						data-action="deactivate">
+						Désactiver mes remises
+					</button>
+				<?php }?>
 			<?php }?>
-
-			<?php if($user_has_disabled_remises){ //si il a des remises desactivees lui permettre de les activer
-			?>
-				<button 
-					type="button"
-					class=" toggle-remise btn-remise-style"
-					data-action="activate">
-					Activer mes remises
-				</button>
-			<?php }
-			?>
-
-			<?php if($user_has_enabled_remises){ //si il a des remises activees lui permettre de les desactiver
-			?>
-				<button 
-					type="button"
-					class="toggle-remise btn-remise-style"
-					data-action="deactivate">
-					Désactiver mes remises
-				</button>
-			<?php }
-			?>
 
 
 		</form>

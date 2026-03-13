@@ -70,22 +70,16 @@ do_action( 'woocommerce_before_account_orders', $has_orders ); ?>
 								?> 
 
 								<?php
-									$est_revendeur = current_user_can('customer_revendeur');
-									if($est_revendeur){
-
-										echo  '<br>Clients<br>';
-										foreach ($order->get_items('line_item') as $item) {
-											foreach ($item->get_meta_data() as $meta) {
-												if($meta->key=='Client'){
-													//echo $meta->key . ' : ' . $meta->value . '<br>';
-													echo  $meta->value . '<br>';
-												}
-												
-											}
-										}
-									}
-								
+									$est_revendeur = current_user_can('customer_revendeur'); // adapte selon ton rôle
+									$selected_client_id  = $order->get_meta('client_final');
+									$client = get_user_by('id', $selected_client_id);
 								?>
+								<?php if ( $est_revendeur ) : ?>
+										<?php esc_html_e( 'Client final', 'woocommerce' ); ?>
+										: <strong><?php echo $client->display_name; ?></strong>
+								<?php endif; ?>
+
+								
 
 							<?php elseif ( 'order-actions' === $column_id ) : ?>
 								<?php

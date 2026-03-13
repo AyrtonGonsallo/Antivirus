@@ -17,6 +17,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
+$est_revendeur = current_user_can('customer_revendeur'); // adapte selon ton rôle
+$selected_client_id = WC()->session->get('alm_client_final');
 ?>
 <div class="cart_totals <?php echo ( WC()->customer->has_calculated_shipping() ) ? 'calculated_shipping' : ''; ?>">
 
@@ -106,9 +108,17 @@ defined( 'ABSPATH' ) || exit;
 
 	</table>
 
-	<div class="wc-proceed-to-checkout">
-		<?php do_action( 'woocommerce_proceed_to_checkout' ); ?>
-	</div>
+	<?php if($est_revendeur){?>
+		<?php if($selected_client_id ){?>
+			<div class="wc-proceed-to-checkout">
+				<?php do_action( 'woocommerce_proceed_to_checkout' ); ?>
+			</div>
+		<?php }?>
+	<?php }else{?>
+		<div class="wc-proceed-to-checkout">
+			<?php do_action( 'woocommerce_proceed_to_checkout' ); ?>
+		</div>
+	<?php }?>
 
 	<?php do_action( 'woocommerce_after_cart_totals' ); ?>
 

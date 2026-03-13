@@ -1051,7 +1051,7 @@ div#tva_regime_1_box2 {width: 100%;}
 form#demandeRemise {display: flex; gap: 13px; flex-direction: column;margin-top: 15px;}
 .elementor-form .elementor-field-type-text.elementor-field-group.elementor-column, .elementor-form .elementor-field-type-email.elementor-field-group.elementor-column, .elementor-form .elementor-field-type-textarea.elementor-field-group.elementor-column { grid-template-columns: 1fr;}
 .elementor-form .elementor-field-subgroup{ gap: 8px !important; margin-bottom: 0px;}
-.div-remise .upload.hidden{display:block !important;}
+
 .div-remise .upload.hidden input{width:100% !important;}	
 .paragrph p{min-height:0 !important;}
 .elementor-wc-products ul.products li.product .price{ line-height: 4.5em;}
@@ -1389,8 +1389,24 @@ div.cart_totals .recurring-total{
 #faq-load-more:hover, .btn-detail-faq:hover {
    border-color:var(--e-global-color-secondary) !important;
 }
+.form-client-final-cart{
+    display: grid;
+    grid-template-columns: 1.7fr 1.5fr 1fr;
+    gap: 20px;
+    margin: 30px 0px;
+    max-width: 566px;
+    align-items: center;
+}
 /**************** tableau ******************/
 @media (max-width: 600px) {
+    .form-client-final-cart{
+        display: grid;
+        grid-template-columns: 1.7fr;
+        gap: 20px;
+        margin: 30px 0px;
+        max-width: 566px;
+        align-items: center;
+    }
 .tab-respv.clmns-5 .elementor-element.e-con-full.e-flex.e-con.e-child {
         width: 100% !important;
         padding: 5px !important;

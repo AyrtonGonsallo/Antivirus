@@ -126,6 +126,6 @@ defined( 'ABSPATH' ) || exit;
     		gap: 5px;
 		}
 		#billing_type_client_field{
-			margin-top: -55px;
+			margin-top: -5px;
 		}
 	</style>

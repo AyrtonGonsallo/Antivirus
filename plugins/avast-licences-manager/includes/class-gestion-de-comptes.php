@@ -14,7 +14,7 @@ class ALM_Gestion_De_Comptes {
             add_filter('woocommerce_account_menu_items', [$this, 'add_clients_menu_link']);
             //→ Ajoute un nouveau lien dans le menu du compte WooCommerce (ex: “Mes clients”).
 
-            add_action('woocommerce_account_clients_endpoint', [$this, 'render_clients_page']);
+           // add_action('woocommerce_account_clients_endpoint', [$this, 'render_clients_page']);
             //→ Affiche la page correspondante quand l’URL /mon-compte/clients est visitée.
         
             
@@ -30,6 +30,8 @@ class ALM_Gestion_De_Comptes {
         add_filter('query_vars', [$this, 'add_clients_query_var'], 0);
         add_filter('woocommerce_account_menu_items', [$this, 'add_clients_menu_link']);
         add_action('woocommerce_account_clients_endpoint', [$this, 'render_clients_page']);
+        add_action('init', [$this, 'register_edit_client_endpoint']);
+        add_action('woocommerce_account_client_endpoint', [$this, 'render_edit_client_page']);
 
         add_action('init', [$this, 'register_mes_devis_endpoint']);
         add_filter('query_vars', [$this, 'add_mes_devis_query_var']);
@@ -39,6 +41,7 @@ class ALM_Gestion_De_Comptes {
 
         // Nouveau : gestion formulaire client revendeur
         add_action('template_redirect', [$this, 'handle_client_submission']);
+        add_action('template_redirect', [$this, 'handle_client_edition']);
 
 
         add_filter('wp_mail',  [$this, 'log_source'], 1, 1);
@@ -65,7 +68,24 @@ class ALM_Gestion_De_Comptes {
 
     }
 
-  
+    public function register_edit_client_endpoint() {
+        add_rewrite_endpoint('client', EP_ROOT | EP_PAGES);
+    }
+
+    public function render_edit_client_page() {
+
+        global $wp;
+
+        $client_id = isset($wp->query_vars['client']) ? intval($wp->query_vars['client']) : 0;
+
+        $template = plugin_dir_path(dirname(__FILE__)) . 'templates/account-client-details.php';
+
+        if (file_exists($template)) {
+            include $template;
+        } else {
+            echo "<p>Template introuvable.</p>";
+        }
+    }
 
     public function redirect_after_register($redirect) {
 
@@ -925,6 +945,102 @@ class ALM_Gestion_De_Comptes {
 
         // Redirection vers la même page avec paramètre pour afficher le message
         wp_safe_redirect( add_query_arg( 'client_added', 'true', wc_get_account_endpoint_url('clients') ) );
+        exit;
+    }
+
+
+    /**
+     * Gestion de la modification client revendeur depuis le formulaire
+     */
+    public function handle_client_edition() {
+        if ( ! is_account_page() || ! isset($_POST['submit_edit_client']) ) {
+            return;
+        }
+
+        if ( ! wp_verify_nonce( $_POST['edit_client_nonce_field'] ?? '', 'edit_client_nonce' ) ) {
+            wc_add_notice('Erreur de sécurité, veuillez réessayer.', 'error');
+            return;
+        }
+
+        if ( ! current_user_can('customer_revendeur') ) {
+            wc_add_notice('Vous n’êtes pas autorisé à modifier un client.', 'error');
+            return;
+        }
+
+        // Récupération et nettoyage des champs
+        $client_id   = $_POST['client_id'];
+        $type_client   = sanitize_text_field($_POST['type_client'] ?? '');
+        $denomination  = sanitize_text_field($_POST['denomination'] ?? '');
+        $nom           = sanitize_text_field($_POST['nom'] ?? '');
+        $prenom        = sanitize_text_field($_POST['prenom'] ?? '');
+        $civilite        = sanitize_text_field($_POST['civilite'] ?? '');
+        // Déduction du genre depuis la civilité
+        $genre = '';
+
+        switch ($civilite) {
+            case 'Monsieur':
+                $genre = 'm';
+                break;
+
+            case 'Madame':
+            case 'Mademoiselle':
+                $genre = 'f';
+                break;
+        }
+        $email         = sanitize_email($_POST['email'] ?? '');
+        $billing_phone     = sanitize_text_field($_POST['billing_phone'] ?? '');
+        $fax           = sanitize_text_field($_POST['fax'] ?? '');
+        $billing_address_1       = sanitize_text_field($_POST['billing_address_1'] ?? '');
+        $ville         = sanitize_text_field($_POST['ville'] ?? '');
+        $code_postal   = sanitize_text_field($_POST['code_postal'] ?? '');
+        $pays          = sanitize_text_field($_POST['pays'] ?? 'FR');
+
+        // Vérification des champs obligatoires
+        $errors = [];
+        foreach ( ['type_client','civilite','nom','prenom','email','billing_address_1','billing_phone','ville','code_postal','pays'] as $field ) {
+            if ( empty( ${$field} ) ) {
+                $errors[] = ucfirst(str_replace('_',' ',$field)).' est obligatoire.';
+            }
+        }
+
+        if ( ! empty($errors) ) {
+            foreach ( $errors as $err ) {
+                wc_add_notice($err, 'error');
+            }
+            return;
+        }
+
+        update_user_meta($client_id, 'type_client', $type_client);
+        update_user_meta($client_id, 'denomination', $denomination);
+        update_user_meta($client_id, 'first_name', $prenom);
+        wp_update_user([
+            'ID' => $client_id,
+            'user_email' => $email,
+            'display_name' => $nom.' '.$prenom,
+        ]);
+        update_user_meta($client_id, 'last_name', $nom);
+        update_user_meta($client_id, 'genre', $genre);
+        update_user_meta($client_id, 'billing_phone', $billing_phone);
+        update_user_meta($client_id, 'civilite', $civilite);
+        update_user_meta($client_id, 'fax', $fax);
+        update_user_meta($client_id, 'billing_address_1', $billing_address_1);
+        update_user_meta($client_id, 'ville', $ville);
+        update_user_meta($client_id, 'code_postal', $code_postal);
+        update_user_meta($client_id, 'pays', $pays);
+        update_user_meta( $client_id, 'billing_country', sanitize_text_field( $pays ) );
+        update_user_meta( $client_id, 'shipping_country', sanitize_text_field( $pays ) );
+         update_user_meta($client_id, 'billing_first_name', $prenom);
+        update_user_meta($client_id, 'billing_last_name', $nom);
+        update_user_meta($client_id, 'billing_postcode', $code_postal);
+        update_user_meta($client_id, 'billing_city', $ville);
+         update_user_meta($client_id, 'billing_type_client', $type_client);
+
+         $url = wc_get_account_endpoint_url('client') . $client_id;
+
+       
+
+        // Redirection vers la même page avec paramètre pour afficher le message
+        wp_safe_redirect( add_query_arg( 'client_edited', 'true', $url ) );
         exit;
     }
 

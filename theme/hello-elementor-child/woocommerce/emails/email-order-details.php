@@ -63,11 +63,23 @@ do_action( 'woocommerce_email_before_order_table', $order, $sent_to_admin, $plai
 		$order_number_string = __( 'Order #%s', 'woocommerce' );
 	}
 	echo wp_kses_post( $before . sprintf( $order_number_string . $after . ' (<time datetime="%s">%s</time>)', $order->get_order_number(), $order->get_date_created()->format( 'c' ), wc_format_datetime( $order->get_date_created() ) ) );
+	
+
 	if ( $email_improvements_enabled ) {
 		echo '</span>';
 	}
+
+	
 	?>
 </h2>
+
+<?php
+$selected_client_id  = $order->get_meta('client_final');
+$client = get_user_by('id', $selected_client_id);
+if($client){
+	echo '<h4>'.esc_html__( 'Client final', 'woocommerce' ).' : '.$client->display_name.'</h4>'; 
+}
+?>
 
 <div style="margin-bottom: <?php echo $email_improvements_enabled ? '24px' : '40px'; ?>;">
 	<table class="td font-family <?php echo esc_attr( $order_table_class ); ?>" cellspacing="0" cellpadding="6" style="width: 100%;" border="1">

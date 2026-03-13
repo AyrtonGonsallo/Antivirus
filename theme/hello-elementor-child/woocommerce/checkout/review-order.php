@@ -108,6 +108,17 @@ defined( 'ABSPATH' ) || exit;
 			<td><b><?php wc_cart_totals_order_total_html(); ?></b></td>
 		</tr>
 
+		<?php
+			$est_revendeur = current_user_can('customer_revendeur'); // adapte selon ton rôle
+			$selected_client_id = WC()->session->get('alm_client_final');
+			$client = get_user_by('id', $selected_client_id);
+		?>
+		<?php if ( $est_revendeur ) : ?>
+			<tr class="order-client-final">
+				<th><b><?php esc_html_e( 'Client final', 'woocommerce' ); ?></b></th>
+				<td><b><?php echo $client->display_name; ?></b></td>
+			</tr>
+		<?php endif; ?>
 		<?php do_action( 'woocommerce_review_order_after_order_total' ); ?>
 
 	</tfoot>

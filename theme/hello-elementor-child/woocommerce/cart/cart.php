@@ -49,12 +49,7 @@ $has_remise = user_has_remise(get_current_user_id());
 				<!-- ✔️ Nouvelle colonne Durée -->
 			
 
-				<!-- ✔️ Colonne Client si revendeur -->
-				<?php if ( $est_revendeur ) : ?>
-					<th scope="col" class="product-client">
-						<?php esc_html_e( 'Client', 'woocommerce' ); ?>
-					</th>
-				<?php endif; ?>
+				
 			</tr>
 		</thead>
 		<tbody>
@@ -321,31 +316,7 @@ $has_remise = user_has_remise(get_current_user_id());
 
 					
 
-						<?php if ( $est_revendeur ) : ?>
-							<?php 
-								$args = [
-									'role'       => 'customer_direct',
-									'meta_key'   => 'revendeur_id',
-									'meta_value' => $revendeur_id
-								];
-
-								$clients = get_users($args);
-								$selected_client = isset($cart_item['alm_client']) ? $cart_item['alm_client'] : '';
-							?>
-							<td class="product-client product-name">
-								<select name="alm_client[<?php echo $cart_item_key; ?>]" required class="automatic-sent">
-									<!-- Option par défaut -->
-									<option value="" disabled <?php selected( empty($selected_client) ); ?>>Sélectionnez un client</option>
-
-									<?php foreach ( $clients as $c ) : ?>
-										<option value="<?php echo $c->ID; ?>" <?php selected( $selected_client, $c->ID ); ?>>
-											<?php echo esc_html($c->display_name); ?>
-										</option>
-									<?php endforeach; ?>
-								</select>
-							</td>
-
-						<?php endif; ?>
+						
 
 
 					</tr>
@@ -377,8 +348,281 @@ $has_remise = user_has_remise(get_current_user_id());
 			<?php do_action( 'woocommerce_after_cart_contents' ); ?>
 		</tbody>
 	</table>
+
+
+	
 	<?php do_action( 'woocommerce_after_cart_table' ); ?>
 </form>
+
+<?php if ( $est_revendeur ) : ?>
+	<?php 
+		$args_all_clients = [
+			'role'       => 'customer_direct',
+			'meta_key'   => 'revendeur_id',
+			'meta_value' => $revendeur_id
+		];
+
+		$all_clients = get_users($args_all_clients);
+		$selected_client_id = WC()->session->get('alm_client_final');
+		if($selected_client_id){
+			$args_selected_client = [
+				'include'    => [$selected_client_id],   // chercher cet utilisateur précis
+				'role'       => 'customer_direct',
+				'meta_key'   => 'revendeur_id',
+				'meta_value' => $revendeur_id
+			];
+
+			$clients = get_users($args_selected_client);
+			$selected_client = !empty($clients) ? $clients[0] : null;
+
+						
+			$user_has_disabled_remises = has_user_disabled_remises($selected_client->ID);
+			$user_has_enabled_remises = has_user_enabled_remises($selected_client->ID);
+			$remise_c = get_user_remise_by_type($selected_client->ID,"Changement -25%");
+			$remise_r = get_user_remise_by_type($selected_client->ID,"Renouvellement de licences -30%");
+			$remise_a = get_user_remise_by_type($selected_client->ID,"Administrations et mairies -30%");
+			$remise_e = get_user_remise_by_type($selected_client->ID,"Établissements scolaires et associations -50%");
+
+			$desactiver1 = $user_has_disabled_remises || $remise_r || $remise_a || $remise_e;
+			$desactiver2 = $user_has_disabled_remises || $remise_c;
+			$desactiver3 = $user_has_disabled_remises || $remise_c || $remise_e;
+			$desactiver4 = $user_has_disabled_remises || $remise_a || $remise_c;
+
+			$current_remises .= ($remise_c)?get_field('type', $remise_c):"";
+			$current_remises .= ($remise_r)?get_field('type', $remise_r):"";
+			$current_remises .= ($remise_a)?get_field('type', $remise_a):"";
+			$current_remises .= ($remise_e)?get_field('type', $remise_e):"";
+		}
+
+		
+	?>
+
+	<form method="post" class="form-client-final-cart">
+		<label>Client final de la commande</label>
+
+		<select name="alm_client_global" required>
+			<option value="">Sélectionnez un client</option>
+
+			<?php foreach ($all_clients as $c) : ?>
+				<option value="<?php echo $c->ID; ?>" <?php selected($selected_client_id, $c->ID); ?>>
+					<?php echo esc_html($c->display_name); ?>
+				</option>
+			<?php endforeach; ?>
+
+		</select>
+
+		<button type="submit" name="save_client_cart">Enregistrer</button>
+	</form>
+
+	<?php if ( $selected_client ) : ?>
+		<div class="div-remise">
+			<form id="demandeRemise" method="post" enctype="multipart/form-data">
+				<span style="font-family: 'Raleway';font-weight: 800;text-align:center;"> LE CLIENT PEUX BÉNÉFICIER<br> D'UNE REMISE COMMERCIALE :</span>
+				<!-- Option 1 -->
+				<label>
+					<input type="checkbox" <?php if ($remise_c){ echo 'checked disabled'; }else if($desactiver1){echo 'disabled'; }  ?> name="option_remise[]"  id="option1" class="optionRemise" data-group="1" data-file="file1" data-value="Changement -25%"> Je change d'antivirus pour Avast -25%
+				</label>
+				<div class="upload hidden" id="file1">
+					<input type="file" name="justificatif_changement" accept="application/pdf,image/*">
+				</div>
+
+				<!-- Option 2 -->
+				<label>
+					<input type="checkbox" <?php if ($remise_r){ echo 'checked disabled'; }else if($desactiver2){echo 'disabled'; } ?> name="option_remise[]"  id="option2" class="optionRemise" data-group="2" data-file="file2" data-value="Renouvellement de licences -30%"> Renouvellement de licences -30%
+				</label>
+				
+				<div class="upload hidden" id="file2" style="display: flex;gap: 7px; align-items: center;justify-content: center;">
+					<input  style="width: 50%;padding: 0.5rem 0.4rem; height: 30px;" type="text" id="old_key" name="justificatif_text_renouvellement" placeholder="Ancienne licence"> ou
+					<input style="width: 50%;" type="file" name="justificatif_file_renouvellement" accept="application/pdf,image/*">
+				</div>
+
+				<!-- Option 3 -->
+				<label>
+					<input type="checkbox" <?php if ($remise_a){ echo 'checked disabled'; }else if($desactiver3){echo 'disabled'; } ?> name="option_remise[]"  id="option3" class="optionRemise" data-group="3" data-file="file3" data-value="Administrations et mairies -30%"> Administrations et mairies -30%
+				</label>
+				<div class="upload hidden" id="file3">
+					<input type="file" name="justificatif_admin" accept="application/pdf,image/*">
+				</div>
+
+				<!-- Option 4 -->
+				<label>
+					<input type="checkbox" <?php if ($remise_e){ echo 'checked disabled'; }else if($desactiver4){echo 'disabled'; } ?> name="option_remise[]"  id="option4" class="optionRemise" data-group="4" data-file="file4" data-value="Établissements scolaires et associations -50%"> Établissements scolaires et associations -50%
+				</label>
+				<div class="upload hidden" id="file4">
+					<input type="file" name="justificatif_association" accept="application/pdf,image/*">
+				</div>
+
+				<input type="hidden" name="remise_type" id="remise_type" value="<?php echo $current_remises; ?>">
+
+				<input type="hidden" name="client_id" value="<?php echo esc_attr($selected_client_id); ?>">
+
+			
+				<?php if($user_has_enabled_remises  || !($user_has_enabled_remises || $user_has_disabled_remises)){ //si il a des remises activees ou si il n'a aucune remise
+				?>
+					<button class="btn-remise btn-remise-style"  type="submit" name="submit_demande_remise">Appliquer la remise</button>
+					
+				<?php }?>
+
+				<?php if($user_has_disabled_remises){ //si il a des remises desactivees lui permettre de les activer
+				?>
+					<button 
+						type="button"
+						class=" toggle-remise btn-remise-style"
+						data-action="activate">
+						Activer les remises
+					</button>
+				<?php }
+				?>
+
+				<?php if($user_has_enabled_remises){ //si il a des remises activees lui permettre de les desactiver
+				?>
+					<button 
+						type="button"
+						class="toggle-remise btn-remise-style"
+						data-action="deactivate">
+						Désactiver les remises
+					</button>
+				<?php }?>
+			</form>
+		</div>
+
+
+
+
+		<style>
+			.hidden { display:none !important; }
+			.block-option { margin-bottom: 12px; }
+			label { font-weight: 500; cursor:pointer; }
+			.div-remise { 
+				background-color: #f5f3f3;
+				padding: 15px 28px; 
+				display: flex; 
+				flex-direction: column;
+				gap: 11px;
+				max-width: 397px; 
+				color:black;
+				font-size:16px;
+				margin:20px 0px;
+			}
+			
+
+		</style>
+
+		<script>
+		jQuery(document).ready(function($) {
+			function apply_reduction(element){
+				const $this = element ? $(element) : $('.optionRemise:checked').first();
+				const group = $this.length ? parseInt($this.data('group')) : null;
+				
+				console.log("selected group:",group)
+
+				// logique de combinaison
+				if (group === 1) {
+					// Option 1 seule → décocher toutes les autres
+					$('.optionRemise').not($this).prop('checked', false);
+				} else if (group === 2) {
+					// Option 2 peut être combinée avec 3 ou 4 → décocher 1
+					$('.optionRemise').each(function() {
+						if (parseInt($(this).data('group')) === 1) $(this).prop('checked', false);
+					});
+				} else if (group === 3) {
+					// décocher 1 et 4
+					$('.optionRemise').each(function() {
+						const g = parseInt($(this).data('group'));
+						if (g === 1 || g === 4) $(this).prop('checked', false);
+					});
+				} else if (group === 4) {
+					// décocher 1 et 3
+					$('.optionRemise').each(function() {
+						const g = parseInt($(this).data('group'));
+						if (g === 1 || g === 3) $(this).prop('checked', false);
+					});
+				}
+
+				// afficher tous les uploads correspondant aux cases cochées
+				$('.upload').addClass('hidden');
+				$('.optionRemise:checked').each(function() {
+					const fileId = $(this).data('file');
+					$('#' + fileId).removeClass('hidden');
+				});
+
+				// reconstruire hidden
+				let values = [];
+				$('.optionRemise:checked').each(function() {
+					values.push($(this).data('value'));
+				});
+				$('#remise_type').val(values.join(', '));
+				console.log("remises courantes",values.length,values.join(', '))
+				if(values.length<1 || $(".single_add_to_cart_button").hasClass("disabled")){
+					console.log("pas de remise")
+					$(".btn-remise").prop("disabled", true);
+				}else{
+					$(".btn-remise").prop("disabled", false);
+					
+				}
+			}
+
+			$('.optionRemise').on('change', function () {
+				apply_reduction(this);
+			});
+			apply_reduction(null);
+
+
+			//  désactiver au départ !
+			$(".btn-remise").prop("disabled", true);
+
+			$('.toggle-remise').on('click', function(){
+
+				let actionType = $(this).data('action');
+
+				$.post('<?php echo admin_url('admin-ajax.php'); ?>', {
+					action: 'toggle_user_remises',
+					mode: actionType
+				}, function(response){
+
+					if(response.success){
+						location.reload(); // simple
+					} else {
+						alert('Erreur');
+					}
+
+				});
+
+			});
+
+		});
+		</script>
+
+		<style>
+			.btn-remise:disabled {
+				background-color: #999 !important;
+				border-color: #777 !important;
+				cursor: not-allowed;
+				opacity: 0.5;
+				margin-block: 10px !important;
+			}
+			.btn-remise-style {
+				font-family:'Raleway';
+				font-weight:700;
+				margin-top:17px;
+				border-style: solid; 
+				border-width: 3px 3px 3px 3px; 
+				border-radius: 8px 8px 8px 8px; 
+				padding: 12px 30px 12px 30px; 
+				color: #FFFFFF; 
+				background-color: var(--e-global-color-primary); 
+				border-color: var(--e-global-color-primary); 
+				transition: all 0.2s;
+				width: fit-content;
+				margin: auto; 
+				text-transform: unset;
+				margin-block: 10px !important;
+			}
+			
+		</style>
+	<?php endif; ?>
+<?php endif; ?>
+
 
 <?php do_action( 'woocommerce_before_cart_collaterals' ); ?>
 

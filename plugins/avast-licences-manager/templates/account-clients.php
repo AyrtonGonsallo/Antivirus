@@ -27,6 +27,7 @@ $args = [
 ];
 
 $clients = get_users($args);
+$pays_par_groupe = include __DIR__ . '/../includes/countries.php';
 ?>
 
 <!-- DataTables CSS -->
@@ -47,6 +48,7 @@ $clients = get_users($args);
             <th>Ville</th>
             <th>Code Postal</th>
             <th>Pays</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -62,6 +64,9 @@ $clients = get_users($args);
             $ville         = get_user_meta($client->ID, 'ville', true);
             $code_postal   = get_user_meta($client->ID, 'code_postal', true);
             $pays          = get_user_meta($client->ID, 'pays', true);
+            $url = wc_get_account_endpoint_url('client') . $client->ID;
+
+
         ?>
         <tr>
             <td><?php echo esc_html($type_client); ?></td>
@@ -75,6 +80,7 @@ $clients = get_users($args);
             <td><?php echo esc_html($ville); ?></td>
             <td><?php echo esc_html($code_postal); ?></td>
             <td><?php echo esc_html($pays); ?></td>
+            <td><?php echo '<a href="'.$url.'">Voir</a>';?></td>
         </tr>
         <?php endforeach; ?>
     </tbody>
@@ -123,62 +129,8 @@ jQuery(document).ready(function($) {
 
 <br><br>
 <h2>Ajouter un client</h2>
-<?php
-    $pays_liste = [
-        'AL' => 'Albanie',
-        'DE' => 'Allemagne',
-        'AD' => 'Andorre',
-        'AT' => 'Autriche',
-        'BE' => 'Belgique',
-        'BY' => 'Biélorussie',
-        'BA' => 'Bosnie-Herzégovine',
-        'BG' => 'Bulgarie',
-        'HR' => 'Croatie',
-        'DK' => 'Danemark',
-        'ES' => 'Espagne',
-        'EE' => 'Estonie',
-        'FI' => 'Finlande',
-        'FR' => 'France',
-        'GR' => 'Grèce',
-        'HU' => 'Hongrie',
-        'IE' => 'Irlande',
-        'IS' => 'Islande',
-        'IT' => 'Italie',
-        'XK' => 'Kosovo',
-        'LV' => 'Lettonie',
-        'LI' => 'Liechtenstein',
-        'LT' => 'Lituanie',
-        'LU' => 'Luxembourg',
-        'MK' => 'Macédoine du Nord',
-        'MT' => 'Malte',
-        'MD' => 'Moldavie',
-        'MC' => 'Monaco',
-        'ME' => 'Montenegro',
-        'NO' => 'Norvège',
-        'NL' => 'Pays-Bas',
-        'PL' => 'Pologne',
-        'PT' => 'Portugal',
-        'CZ' => 'République Tchèque',
-        'RO' => 'Roumanie',
-        'GB' => 'Royaume-Uni (UK)',
-        'RU' => 'Russie',
-        'SM' => 'San Marino',
-        'RS' => 'Serbie',
-        'SK' => 'Slovaquie',
-        'SI' => 'Slovénie',
-        'SE' => 'Suède',
-        'CH' => 'Suisse',
-        'UA' => 'Ukraine',
-        'VA' => 'Vatican',
-        'AX' => 'Åland Islands',
-        'GG' => 'Guernesey',
-        'JE' => 'Jersey',
-        'IM' => 'Île de Man',
-        'FO' => 'Îles Féroé',
-        'GI' => 'Gibraltar',
-        'SJ' => 'Svalbard et Jan Mayen',
-    ];
-?>
+
+    
 <form method="post" class="woocommerce-EditAccountForm">
     
     <p class="form-row ">
@@ -263,11 +215,17 @@ jQuery(document).ready(function($) {
         <label for="pays">Pays <span class="required">*</span></label>
         
         <select name="pays" id="pays" required class="woocommerce-Input woocommerce-Input--text input-text">
-			<?php foreach ( $pays_liste as $code => $nom ) : ?>
-				<option value="<?php echo esc_attr($code); ?>" <?php selected($code, 'FR'); ?>>
-					<?php echo esc_html($nom); ?>
-				</option>
-			<?php endforeach; ?>
+			
+             <?php foreach ( $pays_par_groupe as $groupe => $pays ) : ?>
+                <optgroup label="<?php echo esc_attr($groupe); ?>">
+                    <?php foreach ( $pays as $pays_data ) : ?>
+                        <option value="<?php echo esc_attr($pays_data['value']); ?>" 
+                            <?php selected($pays_data['value'], 'FR'); ?>>
+                            <?php echo esc_html($pays_data['nom']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </optgroup>
+            <?php endforeach; ?>
 		</select>
     </p>
 

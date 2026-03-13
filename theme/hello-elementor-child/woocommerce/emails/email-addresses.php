@@ -42,7 +42,7 @@ $email_improvements_enabled = FeaturesUtil::feature_is_enabled( 'email_improveme
 					$billing_societe    = (get_user_meta($user_id, 'billing_societe', true));
 				?>
 				<?php if ( !empty( $billing_numero_siret ) ) : ?>
-					<br/><?php echo $billing_numero_siret;  ?></td>
+					<br/><?php echo $billing_numero_siret;  ?>
 				<?php endif; ?>
 				<?php if ( !empty( $billing_societe ) ) : ?>
 					<br/><?php echo $billing_societe; ?>

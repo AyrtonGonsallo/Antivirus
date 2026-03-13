@@ -56,6 +56,19 @@ if ( $show_downloads ) {
 
 	<h2 class="woocommerce-order-details__title"><?php esc_html_e( 'Order details', 'woocommerce' ); ?></h2>
 
+	<?php
+		$est_revendeur = current_user_can('customer_revendeur'); // adapte selon ton rôle
+		$selected_client_id  = $order->get_meta('client_final');
+		$client = get_user_by('id', $selected_client_id);
+	?>
+	<?php if ( $est_revendeur ) : ?>
+		<div class="order-client-final">
+			<strong>
+				<?php esc_html_e( 'Client final', 'woocommerce' ); ?> : <?php echo $client->display_name; ?>
+			</strong>
+		</div>
+	<?php endif; ?>
+
 	<table class="woocommerce-table woocommerce-table--order-details shop_table order_details">
 
 		<thead>

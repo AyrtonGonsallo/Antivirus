@@ -26,13 +26,36 @@ class ALM_Commandes_Panier {
         );
         */
 
+        add_action('init', [$this, 'alm_save_client_cart'] );
 
 
-
+        add_action('woocommerce_checkout_create_order', [$this,'alm_save_client_to_order'], 20, 2);
 
     }
 
 
+    
+
+    function alm_save_client_cart() {
+
+        if (!isset($_POST['save_client_cart'])) {
+            return;
+        }
+
+        if (!empty($_POST['alm_client_global'])) {
+
+            WC()->session->set('alm_client_final', intval($_POST['alm_client_global']));
+        }
+    }
+
+    function alm_save_client_to_order($order, $data) {
+
+        $client_id = WC()->session->get('alm_client_final');
+
+        if ($client_id) {
+            $order->update_meta_data('client_final', $client_id);
+        }
+    }
 
     function cw_replace_signup_fee_with_prix_force( $signup_fee, $product ) {
 
@@ -295,11 +318,12 @@ class ALM_Commandes_Panier {
         }
 
         if ( isset( $values['alm_client'] ) ) {
-            $client = get_user_by('id', $values['alm_client']);
+            $selected_client_id = WC()->session->get('alm_client_final');
+            $client = get_user_by('id', $selected_client_id);
             if ($client) {
                 $item->add_meta_data('Client', $client->display_name);
             } else {
-                $item->add_meta_data('Client', $values['alm_client']);
+                $item->add_meta_data('Client', $selected_client_id);
             }
         }
     }
