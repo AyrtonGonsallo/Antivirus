@@ -71,7 +71,7 @@ class RevendeurEmailSender {
                 update_user_meta($user_id, 'tefw_exempt', 1);
                 update_user_meta($user_id, 'tefw_exempt_name', $new_revendeur_account_nom.' '.$new_revendeur_account_prenom);
                 update_user_meta($user_id, 'tefw_exempt_reason', 'Exonération automatique compte revendeur');
-                update_user_meta($user_id, 'tefw_exempt_status', 'pending');
+                update_user_meta($user_id, 'tefw_exempt_status', 'approved');
 
                 // Send email notification to the admin
                 // 🔹 Email admin
@@ -103,7 +103,7 @@ class RevendeurEmailSender {
                 update_user_meta($user_id, 'tefw_exempt', 1);
                  update_user_meta($user_id, 'tefw_exempt_name', $new_revendeur_account_nom.' '.$new_revendeur_account_prenom);
                 update_user_meta($user_id, 'tefw_exempt_reason', 'Exonération automatique compte "Professionnel, Association ou Institution" pour un pays hors UE');
-                update_user_meta($user_id, 'tefw_exempt_status', 'pending');
+                update_user_meta($user_id, 'tefw_exempt_status', 'approved');
 
                 // Send email notification to the admin
                 // 🔹 Email admin

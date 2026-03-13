@@ -313,7 +313,7 @@ class ALM_Gestion_De_Comptes {
                 update_user_meta($user_id, 'tefw_exempt', 1);
                 update_user_meta($user_id, 'tefw_exempt_name', $_POST['prenom'].' '.$_POST['nom']);
                 update_user_meta($user_id, 'tefw_exempt_reason', 'Exonération automatique compte "Professionnel, Association ou Institution"');
-                update_user_meta($user_id, 'tefw_exempt_status', 'pending');
+                update_user_meta($user_id, 'tefw_exempt_status', 'approved');
 
                 // Send email notification to the admin
                 // 🔹 Email admin
@@ -348,7 +348,7 @@ class ALM_Gestion_De_Comptes {
                 update_user_meta($user_id, 'tefw_exempt', 1);
                 update_user_meta($user_id, 'tefw_exempt_name', $_POST['prenom'].' '.$_POST['nom']);
                 update_user_meta($user_id, 'tefw_exempt_reason', 'Exonération automatique compte "Professionnel, Association ou Institution" pour un pays hors UE');
-                update_user_meta($user_id, 'tefw_exempt_status', 'pending');
+                update_user_meta($user_id, 'tefw_exempt_status', 'approved');
 
                 // Send email notification to the admin
                 // 🔹 Email admin
