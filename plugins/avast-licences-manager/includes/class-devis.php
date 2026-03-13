@@ -67,10 +67,37 @@ class ALM_Devis {
 
         add_action('admin_post_calculer_variation_total', [$this, 'calculer_variation_total']);
 
+        add_filter('acf/fields/relationship/query/name=produit', [$this,'alm_acf_relation_search_id'], 10, 3);
+
+        add_filter('acf/fields/relationship/result/name=produit', [$this,'alm_acf_relation_result'], 10, 4);
 
 
 
     }
+
+
+    public function alm_acf_relation_search_id($args, $field, $post_id) {
+        if (!empty($_POST['s'])) {
+            $search = $_POST['s'];
+            
+            if (is_numeric($search)) {
+                // Si c'est un ID, chercher spécifiquement ce post
+                $args['post__in'] = array(intval($search));
+                $args['s'] = ''; // Désactiver la recherche textuelle
+            }
+            // Si ce n'est pas un ID, garder la recherche normale
+        }
+        
+        return $args;
+    }
+
+    function alm_acf_relation_result($text, $post, $field, $post_id) {
+
+        $text = 'ID ' . $post->ID . ' — ' . $post->post_title;
+
+        return $text;
+    }
+
 
     function meta_boxex_variation_details(){
         add_meta_box(
@@ -1319,94 +1346,113 @@ class ALM_Devis {
         update_field('field_698c460ac6d81', $client_final_id, $post_id);
         update_field('field_692eab163985b', $user_id, $post_id);
 
+        // Ajouter les remises
+        $file_fields_map = [
+            "Changement -25%" => 'justificatif_changement',
+            "Renouvellement de licences -30%"        => 'justificatif_text_renouvellement|justificatif_file_renouvellement',
+            "Administrations et mairies -30%"       => 'justificatif_admin',
+            "Établissements scolaires et associations -50%" => 'justificatif_association'
+        ];
+
+        $percentage_fields_map = [
+            "Revendeur -25%" => 25,
+            "Changement -25%" => 25,
+            "Renouvellement de licences -30%"        => 30,
+            "Administrations et mairies -30%"       => 30,
+            "Établissements scolaires et associations -50%" => 50
+        ];
+
+        $remise_fields_map = [
+            "Revendeur -25%" => 'remise_revendeur',
+            "Changement -25%" => 'remise_changer_avast',
+            "Renouvellement de licences -30%"        => 'remise_renewal',
+            "Administrations et mairies -30%"       => 'remise_administration_mairie',
+            "Établissements scolaires et associations -50%" => 'remise_etalissements'
+        ];
+
+        if ( !empty($_POST['remise_type']) ) {
+
+            $remises_types=($client_final_id)?$_POST['remise_type'].',Revendeur -25%':$_POST['remise_type'];
+
+            // Split sur la virgule pour récupérer chaque option
+            $remises_options = array_map('trim', explode(',', $remises_types));
+
+            foreach ($remises_options as $option) {
+
+                // 1️⃣ Créer la remise CPT
+                $remise_id = wp_insert_post([
+                    'post_type'   => 'remise',
+                    'post_title'  => ($client_final_id) ?"Demande de remise sur devis : $option - Utilisateur $user_id - client final $client_final_id":"Demande de remise sur devis : $option - Utilisateur $user_id",
+                    'post_status' => 'publish',
+                    'post_author' => $user_id,
+                ]);
+
+                if ( is_wp_error($remise_id) ) continue;
+
+                $remise_user_id = ($client_final_id) ?$client_final_id:$user_id;
+
+                // 2️⃣ Champs ACF
+                update_field('utilisateur', $remise_user_id, $remise_id);
+                update_field('compte', [$remise_user_id], $remise_id);
+                update_field('statut', 'appliquee au devis', $remise_id);
+                update_field('pourcentage', $percentage_fields_map[$option], $remise_id);
+                update_field('date_de_creation', current_time('d/m/Y g:i a'), $remise_id);
+                $expiration = date('Y-m-d H:i:s', strtotime('-1 month'));
+                update_field('date_dexpiration', $expiration, $remise_id);
+
+                // 3️⃣ Upload du fichier correspondant
+                $fields  = $file_fields_map[$option] ?? '';
+                $fieldnames = explode('|', $fields); // permet de gérer plusieurs champs
+                foreach ($fieldnames as $fieldname) {
+                    // Champ texte
+                    if (isset($_POST[$fieldname]) && !empty($_POST[$fieldname])) {
+                        update_field("justificatif_texte", sanitize_text_field($_POST[$fieldname]), $remise_id);
+                    }
+
+                    // Champ fichier
+                    if (isset($_FILES[$fieldname]) && !empty($_FILES[$fieldname]['name'])) {
+                        require_once(ABSPATH . 'wp-admin/includes/file.php');
+                        require_once(ABSPATH . 'wp-admin/includes/media.php');
+                        require_once(ABSPATH . 'wp-admin/includes/image.php');
+
+                        $file_id = media_handle_upload($fieldname, $remise_id);
+                        if (!is_wp_error($file_id)) {
+                            update_field("justificatif", $file_id, $remise_id);
+                        }
+                    }
+                }
+                
+            }
+
+            
+        }
+
+        $percent_tva = $_POST['percent_tva'];
+        $title_tva = $_POST['title_tva'];
+        $variations_ids = [];
+
         // 3) choix → "je ne sais pas quelle version"
         if ( $choix_av === 'idkn' ) {
             update_field('compt2save', $compt2save, $post_id);
+            $variation_id = wp_insert_post([
+                'post_type'  => 'variation-devis',
+                'post_status'=> 'publish',
+                'post_author'=> $user_id,
+                'post_title' => 'Variation - Devis #'.$post_id,
+            ]);
+            
+            foreach ($remises_options as $option) {
+                update_field($remise_fields_map[$option], $percentage_fields_map[$option], $variation_id);
+              
+            }
+            update_field('tva', $title_tva, $variation_id);
+            update_field('taux_tva', $percent_tva, $variation_id);
+            $variations_ids[] = $variation_id;
+            update_field('variations', $variations_ids, $post_id);
         }
 
         // 4) choix → "je sais ce dont j’ai besoin" (RÉPÉTEUR ACF)
         if ( $choix_av === 'ikn' && !empty($prod_qty)) {
-
-            // 5) remises
-
-            // Tableau pour associer option → input file
-            $file_fields_map = [
-                "Changement -25%" => 'justificatif_changement',
-                "Renouvellement de licences -30%"        => 'justificatif_text_renouvellement|justificatif_file_renouvellement',
-                "Administrations et mairies -30%"       => 'justificatif_admin',
-                "Établissements scolaires et associations -50%" => 'justificatif_association'
-            ];
-
-            $percentage_fields_map = [
-                "Changement -25%" => 25,
-                "Renouvellement de licences -30%"        => 30,
-                "Administrations et mairies -30%"       => 30,
-                "Établissements scolaires et associations -50%" => 50
-            ];
-
-            $remise_fields_map = [
-                "Changement -25%" => 'remise_changer_avast',
-                "Renouvellement de licences -30%"        => 'remise_renewal',
-                "Administrations et mairies -30%"       => 'remise_administration_mairie',
-                "Établissements scolaires et associations -50%" => 'remise_etalissements'
-            ];
-
-            if ( !empty($_POST['remise_type']) ) {
-
-                // Split sur la virgule pour récupérer chaque option
-                $remises_options = array_map('trim', explode(',', $_POST['remise_type']));
-
-                foreach ($remises_options as $option) {
-
-                    // 1️⃣ Créer la remise CPT
-                    $remise_id = wp_insert_post([
-                        'post_type'   => 'remise',
-                        'post_title'  => "Demande de remise sur devis : $option - Utilisateur $user_id",
-                        'post_status' => 'publish',
-                        'post_author' => $user_id,
-                    ]);
-
-                    if ( is_wp_error($remise_id) ) continue;
-
-                    // 2️⃣ Champs ACF
-                    update_field('utilisateur', $user_id, $remise_id);
-                    update_field('compte', [$user_id], $remise_id);
-                    update_field('statut', 'appliquee au devis', $remise_id);
-                    update_field('pourcentage', $percentage_fields_map[$option], $remise_id);
-                    update_field('date_de_creation', current_time('d/m/Y g:i a'), $remise_id);
-                    $expiration = date('Y-m-d H:i:s', strtotime('-1 month'));
-                    update_field('date_dexpiration', $expiration, $remise_id);
-
-                    // 3️⃣ Upload du fichier correspondant
-                    $fields  = $file_fields_map[$option] ?? '';
-                    $fieldnames = explode('|', $fields); // permet de gérer plusieurs champs
-                    foreach ($fieldnames as $fieldname) {
-                        // Champ texte
-                        if (isset($_POST[$fieldname]) && !empty($_POST[$fieldname])) {
-                            update_field("justificatif_texte", sanitize_text_field($_POST[$fieldname]), $remise_id);
-                        }
-
-                        // Champ fichier
-                        if (isset($_FILES[$fieldname]) && !empty($_FILES[$fieldname]['name'])) {
-                            require_once(ABSPATH . 'wp-admin/includes/file.php');
-                            require_once(ABSPATH . 'wp-admin/includes/media.php');
-                            require_once(ABSPATH . 'wp-admin/includes/image.php');
-
-                            $file_id = media_handle_upload($fieldname, $remise_id);
-                            if (!is_wp_error($file_id)) {
-                                update_field("justificatif", $file_id, $remise_id);
-                            }
-                        }
-                    }
-                    
-                }
-
-                
-            }
-
-            $percent_tva = $_POST['percent_tva'];
-            $title_tva = $_POST['title_tva'];
-            $variations_ids = [];
 
             
             switch ($duration) {
@@ -1433,6 +1479,7 @@ class ALM_Devis {
                     }
                     foreach ($remises_options as $option) {
                         update_field($remise_fields_map[$option], $percentage_fields_map[$option], $variation_id);
+                      
                     }
                     update_field('tva', $title_tva, $variation_id);
                     update_field('taux_tva', $percent_tva, $variation_id);
@@ -1461,6 +1508,7 @@ class ALM_Devis {
                     }
                     foreach ($remises_options as $option) {
                         update_field($remise_fields_map[$option], $percentage_fields_map[$option], $variation_id);
+                      
                     }
                     update_field('tva', $title_tva, $variation_id);
                     update_field('taux_tva', $percent_tva, $variation_id);
@@ -1489,6 +1537,7 @@ class ALM_Devis {
                     }
                     foreach ($remises_options as $option) {
                         update_field($remise_fields_map[$option], $percentage_fields_map[$option], $variation_id);
+                       
                     }
                     update_field('tva', $title_tva, $variation_id);
                     update_field('taux_tva', $percent_tva, $variation_id);

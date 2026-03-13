@@ -326,6 +326,10 @@ class ALM_Commandes_Panier {
                 $item->add_meta_data('Client', $selected_client_id);
             }
         }
+
+        // On supprime le flag et les remises pour les prochains ajouts normaux
+        WC()->session->__unset('from_devis');
+        WC()->session->__unset('devis_remises');
     }
 
 

@@ -383,6 +383,11 @@ class ALM_Remise_Commerciale {
 
         if (!WC()->session) return;
 
+        // Ne rien faire pour les renouvellements
+        if (function_exists('wcs_cart_contains_renewal') && wcs_cart_contains_renewal()) {
+            return;
+        }
+
         $remises = WC()->session->get('devis_remises');
 
         /*
@@ -391,6 +396,7 @@ class ALM_Remise_Commerciale {
         * ===============================
         */
         if (!empty($remises)) {
+            error_log("CAS 1 : Panier issu d’un devis");
 
             foreach ($remises as $remise) {
 
@@ -406,9 +412,7 @@ class ALM_Remise_Commerciale {
                 );
             }
 
-            // On supprime le flag et les remises pour les prochains ajouts normaux
-            WC()->session->__unset('from_devis');
-            WC()->session->__unset('devis_remises');
+            
 
             return; // 🔥 on bloque les remises classiques
         }
@@ -424,9 +428,11 @@ class ALM_Remise_Commerciale {
         $est_revendeur = current_user_can('customer_revendeur'); // adapte selon ton rôle
         if(!$est_revendeur){//client direct prendre remises utilisateur
             $remises = $this->get_user_remises($user_id);
+            error_log("CAS 2 : Panier normal client direct prendre remises utilisateur");
         }else{//prendre remises du client squr le panier
             $selected_client_id = WC()->session->get('alm_client_final');
             $remises = $this->get_user_remises($user_id,$selected_client_id);
+            error_log("CAS 2 : Panier normal prendre remises du client sur le panier");
         }
 
         

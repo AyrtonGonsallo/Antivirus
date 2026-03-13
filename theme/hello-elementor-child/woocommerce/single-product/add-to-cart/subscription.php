@@ -75,6 +75,7 @@ if($user_id){
 			$prix_base = $regular_price;//remise toujours sur prix de base si revendeur sans commerciale
 			$class_remise_revendeur = "has-remise-revendeur";
 		}else{
+			
 			$prix_base = $product->is_on_sale() ? $sale_price : $regular_price;//remise sur prix promo si revendeur sans commerciale
 		}
 		$class_barrer_autres_prix = "barrer-car-remise";
@@ -84,6 +85,7 @@ if($user_id){
 		$prix_remise_revendeur = round($prix_remise_revendeur, 2);
 		$prix_remise_depart = $prix_remise_revendeur;
 		$class_hide_remise_revendeur = '';
+		
 
 	}else{
 		$class_hide_remise_revendeur = 'hide_remise_revendeur';

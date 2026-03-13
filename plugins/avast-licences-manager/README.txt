@@ -26,3 +26,8 @@ https://worldpressit.com/
 Worldpressit.com:
 mylene.audebert@gmail.com
 dnz%ZO3M&wDtrC6Q
+
+
+expiratuon devis 
+test.antivirusedition.com/?send_devis_expiring=1&key=ma_clef_ultra_secrete_123
+https://test.antivirusedition.com/wp-json/alm/v1/subscriptions

@@ -33,7 +33,7 @@ class ALM_Wcs {
 
         // Loop through subscriptions protected objects
         foreach ( $subscriptions as $subscription ) {
-            if($subscription->get_id()!=13940){
+            if($subscription->get_id()!=29357){
                 continue;
             }
             // Unprotected data in an accessible array
@@ -77,34 +77,34 @@ class ALM_Wcs {
                     $fee_name = $fee->get_name();
 
                     // Supprimer la remise -25%
-                    if ($fee_name === "Remise Changement -25%") {
+                    if (strpos(strtolower($fee_name), 'remise changement') !== false) {
                         echo "possede changement mais on va le retirer\n";
                         $subscription->remove_item($fee_id);
                     }
 
                     // Vérifier si déjà -30%
-                    if ($fee_name === "Remise Renouvellement de licences -30%") {
+                    if (strpos(strtolower($fee_name), 'remise renouvellement de licences') !== false) {
                         echo "possede déja Renouvellement de licences \n";
                         $has_renewal = true;
                     }
 
                     // Si autre remise spécifique → on stoppe tout
                     if (
-                        $fee_name === "Remise Établissements scolaires et associations -50%"
+                        strpos(strtolower($fee_name), 'remise établissements scolaires et associations') !== false
                     ) {
                         echo "possede remise Établissements scolaires et associations\n";
                         $base_total  += $fee->get_total();
                     }
 
                     if (
-                        $fee_name === "Remise Administrations et mairies -30%" 
+                        strpos(strtolower($fee_name), 'remise administrations et mairies') !== false
                     ) {
                         echo "possede remise Administrations et mairies\n";
                         $base_total  += $fee->get_total();
                     }
 
                     if (
-                        $fee_name === "Remise revendeur - 25 %" 
+                        strpos(strtolower($fee_name), 'remise revendeur') !== false
                     ) {
                         echo "possede remise revendeur\n";
                         $base_total  += $fee->get_total();

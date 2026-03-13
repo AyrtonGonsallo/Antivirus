@@ -46,14 +46,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
         $total_ht  = (float) get_field('total_ht', $variation_id);
        
         $remise_fields_map = [
-            "remise_changer_avast" => 'Remise changement',
-            "remise_renewal"        => 'Remise renouvellement de licences',
-            "remise_administration_mairie"       => 'Remise administrations et mairies',
-            "remise_etalissements" => 'Remise établissements scolaires et associations',
+            "remise_changer_avast" => 'Remise changement sur devis ',
+            "remise_renewal"        => 'Remise renouvellement de licences sur devis ',
+            "remise_administration_mairie"       => 'Remise administrations et mairies sur devis ',
+            "remise_etalissements" => 'Remise établissements scolaires et associations sur devis ',
             "remise_cumulee" => 'Autre remise',
             "remise_statutaire" => 'Autre remise',
             "remise_commerciale" => 'Autre remise',
-            "remise_revendeur" => 'Remise revendeur',
+            "remise_revendeur" => 'Remise revendeur sur devis ',
         ];
 
          $remise_fields = [
@@ -110,7 +110,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
                     // 🔥 calcul sur la base actuelle, pas sur le total initial
                     $montant_remise = ($percent / 100) * $base_calcul;
 
-                    error_log("remise $label $percent % = $montant_remise sur $base_calcul");
+                    error_log("remise sur devis $label $percent % = $montant_remise sur $base_calcul");
 
                     $remises_devis[] = [
                         'label'  => "$label $percent %",
