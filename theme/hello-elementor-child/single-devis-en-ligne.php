@@ -31,6 +31,25 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         update_field('motif_de_refus_client', $motif, $variation_id);
         wc_add_notice("Refus envoyé avec succès.", "success");
         wp_safe_redirect('/mon-compte/mes-devis/');
+
+
+        $subject = "Un devis a été refusé";
+        $message = "
+        Bonjour,
+
+        La variation $variation_id du devis $devis_id a été refusé.
+
+        Motif :
+        $motif
+
+        Cordialement.
+        ";
+
+        $headers = array('Content-Type: text/plain; charset=UTF-8');
+        $headers[] = 'Bcc: ayrtongonsallo444@gmail.com';
+        // envoi
+        wp_mail('antivirusedition@gmail.com', $subject, $message, $headers);
+
         exit;
     }
 }
@@ -126,10 +145,30 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
             WC()->session->set('devis_remises', $remises_devis);
             WC()->session->set('from_devis', true);
 
+            $client_final = get_field('client_final', $devis_id);
+            if($client_final){
+                $client_final_id = $client_final->ID;
+                WC()->session->set('alm_client_final', $client_final_id);
+            }
+
             
             update_field('statut', 'accepte', $variation_id);
             update_field('status', '4', $devis_id);
             wc_add_notice("Votre devis à été converti en panier.", "success");
+
+            $subject = "Un devis a été converti";
+            $message = "
+            Bonjour,
+
+            Le devis $devis_id a été converti en panier.
+
+            Cordialement.
+            ";
+
+            $headers = array('Content-Type: text/plain; charset=UTF-8');
+            $headers[] = 'Bcc: ayrtongonsallo444@gmail.com';
+            // envoi
+            wp_mail('antivirusedition@gmail.com', $subject, $message, $headers);
             
             wp_safe_redirect(wc_get_cart_url());
             exit;

@@ -589,7 +589,7 @@ class ALM_Devis {
                 </div>
                 <div id="idknowForm"> 
                     <div class="">
-                        <label for="compt2save" class="" style="margin-bottom: 12px;">
+                        <label for="compt2save"   class="" style="margin-bottom: 12px;">
                             Indiquez simplement les ordinateurs à protéger :							
                         </label>
                         <textarea class="" name="compt2save" maxlength="200" id="compt2save" rows="4"></textarea>				
@@ -614,9 +614,11 @@ class ALM_Devis {
                             <!-- Option par défaut -->
                             <option value="" disabled>Sélectionnez un client</option>
 
-                            <?php foreach ( $clients as $c ) : ?>
+                            <?php foreach ( $clients as $c ) : 
+                                $denomination_cf  = get_user_meta($c->ID, 'denomination', true);
+                                ?>
                                 <option value="<?php echo $c->ID; ?>" >
-                                    <?php echo esc_html($c->display_name); ?>
+                                    <?php echo esc_html($c->display_name.' - '.$denomination_cf); ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -714,9 +716,9 @@ class ALM_Devis {
 
                 <div class="">
                     <label for="comment" class="" style="margin-bottom: 12px;">
-                        Ajouter un commentaire à ma demande :<span class="required">*</span>							
+                        Ajouter un commentaire à ma demande :							
                     </label>
-                    <textarea class="" name="comment" id="comment" maxlength="200" rows="4" required></textarea>				
+                    <textarea class="" name="comment" id="comment" maxlength="200" rows="4" ></textarea>				
                 </div>
 
                 <div class="div-form2">
@@ -740,22 +742,20 @@ class ALM_Devis {
                     <br>
                     <div id="login_nouveau" style="display: block;"><!--<form action="devis.php?dest=devis#btm" method="post" name="frm_signup" onsubmit="return(Control_SignUp_Client(this,'AJOUT'))">-->
                         <?php 
-                            $pays_liste = [
-                                'FR' => 'France',
-                                'BE' => 'Belgique',
-                                'CH' => 'Suisse',
-                                'LU' => 'Luxembourg',
-                                'DE' => 'Allemagne',
-                            ]; 
+                            $pays_par_groupe =  include __DIR__ . '/countries.php';
                             ?>
                             <div class="radio" style="display: flex; flex-direction: row; gap: 40px;">
                                 <label>
-                                    <input style="margin-right:20px;" type="radio" checked="" name="new_account_type_compte" value="PAR">
+                                    <input style="margin-right:20px;" type="radio" checked="" name="new_account_type_compte" value="particulier">
                                     Particulier 
                                 </label>
                                 <label>
-                                    <input style="margin-right:20px;" type="radio" name="new_account_type_compte" value="PRO" >
-                                    Professionnel, Association ou Institution
+                                    <input style="margin-right:20px;" type="radio" name="new_account_type_compte" value="professionnel" >
+                                    Professionnel
+                                </label>
+                                <label>
+                                    <input style="margin-right:20px;" type="radio" name="new_account_type_compte" value="association_ou_institution" >
+                                    Association ou Institution
                                 </label>
                             </div>
                             <br>
@@ -771,10 +771,10 @@ class ALM_Devis {
                             <div class="count-clmn" style="">
                             <div>
                             <label>Genre : <span class="required">*</span></label>
-                            <select title="Genre" id="genre" class="input_required" name="new_account_genre"  alt="Genre">
-                                <option value="m" alt="Genre">Monsieur</option>
-                                <option value="f" alt="Genre">Madame</option>
-                                <option value="f" alt="Genre">Mademoiselle</option>
+                            <select title="Genre" id="genre" class="input_required" name="new_account_civilite"  alt="Genre">
+                                <option value="Monsieur" alt="Genre">Monsieur</option>
+                                <option value="Madame" alt="Genre">Madame</option>
+                                <option value="Mademoiselle" alt="Genre">Mademoiselle</option>
                                 <option selected="" value="" alt="Genre">
                                     ----------
                                 </option>
@@ -807,14 +807,91 @@ class ALM_Devis {
                             <div>
                             <label>Pays : <span class="required">*</span></label>
                             <select name="new_account_pays" id="pays" required class="">
-                                <?php foreach ( $pays_liste as $code => $nom ) : ?>
-                                    <option value="<?php echo esc_attr($code); ?>" >
-                                        <?php echo esc_html($nom); ?>
-                                    </option>
+                                <?php foreach ( $pays_par_groupe as $groupe => $pays ) : ?>
+                                    <optgroup label="<?php echo esc_attr($groupe); ?>">
+                                        <?php foreach ( $pays as $pays_data ) : ?>
+                                            <option value="<?php echo esc_attr($pays_data['value']); ?>" 
+                                                <?php selected($pays_data['value'], 'FR'); ?>>
+                                                <?php echo esc_html($pays_data['nom']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </optgroup>
                                 <?php endforeach; ?>
                             </select>
                             </div>
                             
+                            <div class="no-souk-style">
+                                <div id="boxtva" name="boxtva" style="display: block;">            
+                                    <b>Régime de TVA applicable :</b>
+                                    <br><br>
+                                
+                                    
+                                    <div id="fact_tva" style="width: 100%; display: flex; align-items: flex-start; gap: 7px;">
+                                        <input type="radio" id="regime_2" checked="" name="new_account_regime_tva" value="2" style="width: auto" >
+                                        <label style="line-height: 1.5;"><b>Facturation TTC faisant ressortir la TVA</b> (pays de l'union) <br>Facturation avec TVA de 20%</label>
+                                    </div>
+                                
+                                    <div id="fact_ht_ue_hf">
+                                        <div style="display: flex;align-items: flex-start;justify-content: flex-start;gap: 7px;">
+                                        <input type="radio" id="regime_1" name="new_account_regime_tva" value="1" style="width: auto" >
+                                        <label style="line-height: 1.5;"><b>Facturation HT</b> (pour les pays de l'union Européenne, hors France) Merci de justifier ci dessous d'un numéro de TVA Intra valide :</label>
+                                        </div>
+                                        <div id="tva_regime_1_box">
+                                            <div id="tva_regime_1_box2" class="w-66">
+                                            N° TVA intracommunautaire:
+                                            <select title="Prefixe TVA" id="prefixe_tva" name="new_account_prefixe_tva" alt="Prefixe TVA">
+                                                <option selected="" value="" alt="Prefixe TVA">--</option>
+                                                <option value="AT" alt="Prefixe TVA">AT</option>
+                                                <option value="BE" alt="Prefixe TVA">BE</option>
+                                                <option value="BG" alt="Prefixe TVA">BG</option>
+                                                <option value="CY" alt="Prefixe TVA">CY</option>
+                                                <option value="CZ" alt="Prefixe TVA">CZ</option>
+                                                <option value="DE" alt="Prefixe TVA">DE</option>
+                                                <option value="DK" alt="Prefixe TVA">DK</option>
+                                                <option value="EE" alt="Prefixe TVA">EE</option>
+                                                <option value="EL" alt="Prefixe TVA">EL</option>
+                                                <option value="ES" alt="Prefixe TVA">ES</option>
+                                                <option value="FI" alt="Prefixe TVA">FI</option>
+                                                <option value="FR" alt="Prefixe TVA">FR</option>
+                                                <option value="GB" alt="Prefixe TVA">GB</option>
+                                                <option value="HU" alt="Prefixe TVA">HU</option>
+                                                <option value="IE" alt="Prefixe TVA">IE</option>
+                                                <option value="IT" alt="Prefixe TVA">IT</option>
+                                                <option value="LT" alt="Prefixe TVA">LT</option>
+                                                <option value="LU" alt="Prefixe TVA">LU</option>
+                                                <option value="LV" alt="Prefixe TVA">LV</option>
+                                                <option value="MT" alt="Prefixe TVA">MT</option>
+                                                <option value="NL" alt="Prefixe TVA">NL</option>
+                                                <option value="PL" alt="Prefixe TVA">PL</option>
+                                                <option value="PT" alt="Prefixe TVA">PT</option>
+                                                <option value="RO" alt="Prefixe TVA">RO</option>
+                                                <option value="SE" alt="Prefixe TVA">SE</option>
+                                                <option value="SI" alt="Prefixe TVA">SI</option>
+                                                <option value="SK" alt="Prefixe TVA">SK</option>
+                                            </select>
+                                            <input  style="width: auto" type="text" name="new_account_tva_intra" value="" size="25" maxlength="30" onblur="IsRequiredOk(this)">
+                                            </div>
+                                            <br>
+                                            <span style="font-size:11px;position: relative;top: -24px;"> 
+                                                Obligatoire pour facturation Hors TVA pour les sociétés situées dans un pays de l'Union Européenne et hors de France.
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div id="fact_ht">
+                                        <div style="display: flex;align-items: flex-start;justify-content: flex-start;gap: 7px;">
+                                        <input type="radio" id="regime_3" name="new_account_regime_tva" value="3" style="width: auto" >
+                                        <label style="line-height: 1.5;"><b>Facturation HT</b> </label>
+                                        </div>
+                                    </div>	
+                                    <br>
+                                    <div id="text-franchise-tva">
+                                        <b>Franchise de TVA</b><p>
+                                        Contactez-nous pour que nous puissions paramétrer spécifiquement votre compte, sur présentation d'un justificatif de situation, et vous permettre de passer vos commandes avec le taux de TVA qui vous est applicable.</p></td>
+                                    </div>
+                                </div>
+                            </div>
+
+
                             <div>
                             <!-- <b>Mes identifiants de connexion :</b>   <br> -->  
                             <label>Adresse Email : <span class="required">*</span></label>
@@ -866,6 +943,84 @@ class ALM_Devis {
             <script>
                 jQuery(document).ready(function($) {
 
+                    const $selectPAYS = $('#pays');
+                    const $boxtva = $('#boxtva');
+                    const $fact_tvaField = $('#fact_tva');
+                    const $fact_htField = $('#fact_ht');
+                    const $fact_ht_ue_hfField = $('#fact_ht_ue_hf');
+                    $fact_htField.hide();
+                    $fact_ht_ue_hfField.hide();
+
+                    function get_selected_pays_or_group(){
+                        let selectedOption = $(this).find('option:selected');
+                        let paysValue = selectedOption.val();
+
+                        // 🔥 récupérer le label du optgroup parent
+                        let groupe = selectedOption.parent('optgroup').attr('label');
+
+                        console.log('Pays : ' + paysValue );
+                        console.log('Groupe : ' + groupe);
+
+                        // Exemple condition
+                        if(groupe === "Pays de l'Europe") {
+                            if(paysValue=="FR"){
+                                console.log('france choisie');
+                                $fact_tvaField.show();
+                                $fact_htField.hide();
+                                $fact_ht_ue_hfField.hide();
+                            }else{
+                                console.log('Pays Européen choisi');
+                                $fact_tvaField.show();
+                                $fact_htField.hide();
+                                $fact_ht_ue_hfField.show();
+                            }
+                            $('#regime_2').prop('checked', true);
+                            $('#text-franchise-tva').show()
+                        }
+
+                        if(groupe === "Les DOM-TOM") {
+                            console.log('DOM-TOM choisi');
+                            $fact_tvaField.show();
+                            $fact_htField.hide();
+                            $fact_ht_ue_hfField.show();
+                            $('#regime_2').prop('checked', true);
+                            $('#text-franchise-tva').show()
+                        }
+
+                        if(groupe === "Les pays Hors UE") {
+                            console.log('Hors UE choisi');
+                            $fact_tvaField.hide();
+                            $fact_htField.show();
+                            $fact_ht_ue_hfField.hide();
+                            $('#regime_3').prop('checked', true);
+                            $('#text-franchise-tva').hide()
+                        }
+                    }
+
+                    $selectPAYS.on('change', get_selected_pays_or_group);
+
+                    
+                    $('#tva_regime_1_box').hide();
+
+                    $('input[name="new_account_regime_tva"]').on('change', function() {
+
+                        if ($('#regime_1').is(':checked')) {
+                            $('#tva_regime_1_box').show();
+                        }
+
+                        if ($('#regime_2').is(':checked')) {
+                            $('#tva_regime_1_box').hide();
+                        }
+                        if ($('#regime_3').is(':checked')) {
+                            $('#tva_regime_1_box').hide();
+                        }
+                    });
+
+
+
+
+
+
                     // cacher tout au début
                     $('#iknowForm').hide();
                     $('#dnom_sos').hide();
@@ -895,7 +1050,7 @@ class ALM_Devis {
                     });
 
                     $('input[name="new_account_type_compte"]').on('change', function() {
-                        if ($(this).val() === 'PRO') {
+                        if ($(this).val() != 'particulier') {
                             $('#dnom_sos').show();
                         } else {
                             $('#dnom_sos').hide();
@@ -905,10 +1060,26 @@ class ALM_Devis {
 
                     function checkofflogfields() {
                         
-                        let offlogfieldsFilled = true;
+                        let offlogfieldsFilled = false;
                         let msg = '';
-                        if($('#comment').val().trim() === '') {
-                            offlogfieldsFilled = false;
+                        let hasquantityValue = false;
+
+                        $('.alm-qty').each(function() {
+                            let val = parseFloat($(this).val()) || 0;
+
+                            if (val > 0) {
+                                hasquantityValue = true;
+                                return false; // stop la boucle
+                            }
+                        });
+
+                        if (hasquantityValue) {
+                            console.log("je sais et au moins un quantity > 0");
+                            offlogfieldsFilled = true;
+                        }
+                        if($('#compt2save').val().trim() !== '') {
+                            console.log("je ne sais pas mais il a saisi le texte");
+                            offlogfieldsFilled = true;
                         }
                         //console.log("check",$('#comment').val().trim())
                         $('button[type="submit"]').prop('disabled', !(offlogfieldsFilled ));
@@ -997,7 +1168,7 @@ class ALM_Devis {
                     }else{
                         console.log("remplir champs standards")
                         $('button[type="submit"]').prop('disabled', true);
-                        $('#comment').on('input', function() {
+                        $('#compt2save, .alm-qty').on('input', function() {
                             checkofflogfields();
                         });
 
@@ -1182,7 +1353,8 @@ class ALM_Devis {
         if ( !isset($_POST['goal']) ) return;
         if ( isset($_POST['goal']) && $_POST['goal'] !== 'devis_en_ligne' ) return;
         
-       
+       $percent_tva = $_POST['percent_tva'];
+        $title_tva = $_POST['title_tva'];
 
         // Connexion WordPress
         if ( !function_exists('wp_get_current_user') ) return;
@@ -1228,12 +1400,17 @@ class ALM_Devis {
                         exit;
                 }
 
+                $new_account_regime_tva = sanitize_text_field($_POST['new_account_regime_tva'] ?? '');
+                $new_account_prefixe_tva = sanitize_text_field($_POST['new_account_prefixe_tva'] ?? '');
+                $new_account_tva_intra = sanitize_text_field($_POST['new_account_tva_intra'] ?? '');
+
+
                 $new_account_nom = sanitize_text_field($_POST['new_account_nom'] ?? '');
                 $new_account_prenom = sanitize_text_field($_POST['new_account_prenom'] ?? '');
                 $new_account_type_compte = sanitize_text_field($_POST['new_account_type_compte'] ?? '');
-                $type_client = ($new_account_type_compte=="PAR")?"Particulier ":"Professionnel, Association ou Institution";
+                $type_client = $new_account_type_compte;
                 $new_account_societe = sanitize_text_field($_POST['new_account_societe'] ?? '');
-                $new_account_genre = sanitize_text_field($_POST['new_account_genre'] ?? '');
+                $new_account_civilite = sanitize_text_field($_POST['new_account_civilite'] ?? '');
                 $new_account_telephone = sanitize_text_field($_POST['new_account_telephone'] ?? '');
                 $new_account_adresse = sanitize_text_field($_POST['new_account_adresse'] ?? '');
                 $new_account_ville = sanitize_text_field($_POST['new_account_ville'] ?? '');
@@ -1263,13 +1440,112 @@ class ALM_Devis {
 
                     // Ajout des meta
                     update_user_meta($user_id, 'type_client', $type_client);
-                    update_user_meta($user_id, 'denomination', $new_account_societe);
-                    update_user_meta($user_id, 'genre', $new_account_genre);
                     update_user_meta($user_id, 'billing_phone', $new_account_telephone);
                     update_user_meta($user_id, 'billing_address_1', $new_account_adresse);
                     update_user_meta($user_id, 'ville', $new_account_ville);
                     update_user_meta($user_id, 'code_postal', $new_account_code_postal);
                     update_user_meta($user_id, 'pays', $new_account_pays);
+                    update_user_meta( $user_id, 'billing_first_name', $new_account_prenom );
+                    update_user_meta( $user_id, 'billing_last_name', $new_account_nom );
+                    update_user_meta($user_id, 'billing_country', $new_account_pays);
+                    update_user_meta($user_id, 'civilite', $new_account_civilite);
+                    update_user_meta( $user_id, 'shipping_first_name', $new_account_prenom );
+                    update_user_meta( $user_id, 'shipping_last_name', $new_account_nom );
+                    update_user_meta($user_id, 'shipping_country', $new_account_pays);
+                    update_user_meta($user_id, 'billing_postcode', $new_account_code_postal);
+                    update_user_meta($user_id, 'billing_city', $new_account_ville);
+                    update_user_meta($user_id, 'billing_type_client', $type_client);
+
+                    if ($type_client === 'association_ou_institution' ||  $type_client === 'professionnel') {
+                        update_user_meta($user_id, 'denomination', $new_account_societe);
+                        update_user_meta($user_id, 'billing_societe', $new_account_societe);
+                    }
+                    
+                    if( isset($new_account_regime_tva)){
+                        $headers = array(
+                            'Content-Type: text/plain; charset=UTF-8',
+                            'Cc: ayrtongonsallo444@gmail.com'
+                        );
+                        $regime=$new_account_regime_tva;
+                        if($regime==1){
+                            $title_tva = 'Tva intra communautaire '.$new_account_prefixe_tva;
+                            update_user_meta( $user_id, 'new_account_regime_tva', "HT_UE" );
+                            update_user_meta($user_id, 'new_account_prefixe_tva', ($new_account_prefixe_tva));
+                            update_user_meta($user_id, 'new_account_tva_intra', ($new_account_tva_intra));
+
+                            //taxe
+                            update_user_meta($user_id, 'tefw_exempt', 1);
+                            update_user_meta($user_id, 'tefw_exempt_name', $new_account_prenom.' '.$new_account_nom);
+                            update_user_meta($user_id, 'tefw_exempt_reason', 'Exonération automatique compte "Professionnel, Association ou Institution"');
+                            update_user_meta($user_id, 'tefw_exempt_status', 'approved');
+
+                            // Send email notification to the admin
+                            // 🔹 Email admin
+                            $admin_email = get_option('admin_email');
+
+                            $subject = 'Nouvelle demande d\'exonération de taxe pour un pays de l\'ue';
+
+                            $message = "
+                            Un nouveau compte professionnel, association ou institution a été créé. Il a automatiquement généré une demande d'exonération de TVA.
+
+                            Nom : {$new_account_nom}
+                            Prénom : {$new_account_prenom}
+                            Email : {$new_account_email}
+                            ID utilisateur : {$user_id}
+                            Pays : {$new_account_pays}
+                            Type client : {$type_client}
+                            Prefixe tva : {$new_account_prefixe_tva}
+                            N° TVA intracommunautaire : {$new_account_tva_intra}
+
+                            Connectez-vous au back office du site et rendez-vous dans 'Tax Exepmtion > Exempt customers' pour changer le statut de cette demande.
+                            
+                            ";
+
+                            
+
+                            wp_mail($admin_email, $subject, $message,$headers);
+
+
+
+                        }else if ($regime==3){
+                            $percent_tva = 0;
+                            $title_tva = 'pas de tva';
+                            update_user_meta( $user_id, 'new_account_regime_tva', "HT" );
+
+                            //taxe
+                            update_user_meta($user_id, 'tefw_exempt', 1);
+                            update_user_meta($user_id, 'tefw_exempt_name', $new_account_prenom.' '.$new_account_nom);
+                            update_user_meta($user_id, 'tefw_exempt_reason', 'Exonération automatique compte "Professionnel, Association ou Institution" pour un pays hors UE');
+                            update_user_meta($user_id, 'tefw_exempt_status', 'approved');
+
+                            // Send email notification to the admin
+                            // 🔹 Email admin
+                            $admin_email = get_option('admin_email');
+
+                            $subject = 'Nouvelle demande d\'exonération de taxe pour un pays hors UE';
+
+                            $message = "
+                            Un nouveau compte professionnel, association ou institution a été créé. Il a automatiquement généré une demande d'exonération de TVA.
+
+                            Nom : {$new_account_nom}
+                            Prénom : {$new_account_prenom}
+                            Email : {$new_account_email}
+                            ID utilisateur : {$user_id}
+                            Pays : {$new_account_pays}
+                            Type client : {$type_client}
+
+                            Connectez-vous au back office du site et rendez-vous dans 'Tax Exepmtion > Exempt customers' pour changer le statut de cette demande.
+                            
+                            ";
+
+                            wp_mail($admin_email, $subject, $message,$headers);
+
+                        }
+                        else{
+                            update_user_meta( $user_id, 'new_account_regime_tva', "TVA" );
+
+                        }
+                    }
                 }
             }
         }
@@ -1346,6 +1622,13 @@ class ALM_Devis {
         update_field('field_698c460ac6d81', $client_final_id, $post_id);
         update_field('field_692eab163985b', $user_id, $post_id);
 
+        $percentage_revendeur = 25;
+        if($client_final_id){
+            //aller chercher sa remise
+            $remise_revendeur = get_revendeur_remise($user_id);
+            $percentage_revendeur = (float) get_field('pourcentage', $remise_revendeur->ID);
+        }
+
         // Ajouter les remises
         $file_fields_map = [
             "Changement -25%" => 'justificatif_changement',
@@ -1372,7 +1655,7 @@ class ALM_Devis {
 
         if ( !empty($_POST['remise_type']) ) {
 
-            $remises_types=($client_final_id)?$_POST['remise_type'].',Revendeur -25%':$_POST['remise_type'];
+            $remises_types = $_POST['remise_type'];
 
             // Split sur la virgule pour récupérer chaque option
             $remises_options = array_map('trim', explode(',', $remises_types));
@@ -1427,8 +1710,7 @@ class ALM_Devis {
             
         }
 
-        $percent_tva = $_POST['percent_tva'];
-        $title_tva = $_POST['title_tva'];
+        
         $variations_ids = [];
 
         // 3) choix → "je ne sais pas quelle version"
@@ -1440,7 +1722,10 @@ class ALM_Devis {
                 'post_author'=> $user_id,
                 'post_title' => 'Variation - Devis #'.$post_id,
             ]);
-            
+            if($client_final_id){
+                //aller chercher sa remise revendeur
+                update_field('remise_revendeur', $percentage_revendeur, $variation_id);
+            }
             foreach ($remises_options as $option) {
                 update_field($remise_fields_map[$option], $percentage_fields_map[$option], $variation_id);
               
@@ -1477,9 +1762,13 @@ class ALM_Devis {
                             ], $variation_id);
                         }
                     }
+                    
                     foreach ($remises_options as $option) {
                         update_field($remise_fields_map[$option], $percentage_fields_map[$option], $variation_id);
-                      
+                    }
+                    if($client_final_id){
+                        //aller chercher sa remise revendeur
+                        update_field('remise_revendeur', $percentage_revendeur, $variation_id);
                     }
                     update_field('tva', $title_tva, $variation_id);
                     update_field('taux_tva', $percent_tva, $variation_id);
@@ -1508,7 +1797,10 @@ class ALM_Devis {
                     }
                     foreach ($remises_options as $option) {
                         update_field($remise_fields_map[$option], $percentage_fields_map[$option], $variation_id);
-                      
+                    }
+                    if($client_final_id){
+                        //aller chercher sa remise revendeur
+                        update_field('remise_revendeur', $percentage_revendeur, $variation_id);
                     }
                     update_field('tva', $title_tva, $variation_id);
                     update_field('taux_tva', $percent_tva, $variation_id);
@@ -1537,7 +1829,10 @@ class ALM_Devis {
                     }
                     foreach ($remises_options as $option) {
                         update_field($remise_fields_map[$option], $percentage_fields_map[$option], $variation_id);
-                       
+                    }
+                    if($client_final_id){
+                        //aller chercher sa remise revendeur
+                        update_field('remise_revendeur', $percentage_revendeur, $variation_id);
                     }
                     update_field('tva', $title_tva, $variation_id);
                     update_field('taux_tva', $percent_tva, $variation_id);
@@ -1566,6 +1861,10 @@ class ALM_Devis {
                     foreach ($remises_options as $option) {
                         update_field($remise_fields_map[$option], $percentage_fields_map[$option], $variation1_id);
                     }
+                    if($client_final_id){
+                        //aller chercher sa remise revendeur
+                        update_field('remise_revendeur', $percentage_revendeur, $variation1_id);
+                    }
                     update_field('tva', $title_tva, $variation1_id);
                     update_field('taux_tva', $percent_tva, $variation1_id);
 
@@ -1591,6 +1890,10 @@ class ALM_Devis {
                     foreach ($remises_options as $option) {
                         update_field($remise_fields_map[$option], $percentage_fields_map[$option], $variation2_id);
                     }
+                    if($client_final_id){
+                        //aller chercher sa remise revendeur
+                        update_field('remise_revendeur', $percentage_revendeur, $variation2_id);
+                    }
                     update_field('tva', $title_tva, $variation2_id);
                     update_field('taux_tva', $percent_tva, $variation2_id);
 
@@ -1615,6 +1918,10 @@ class ALM_Devis {
                     }
                     foreach ($remises_options as $option) {
                         update_field($remise_fields_map[$option], $percentage_fields_map[$option], $variation3_id);
+                    }
+                    if($client_final_id){
+                        //aller chercher sa remise revendeur
+                        update_field('remise_revendeur', $percentage_revendeur, $variation3_id);
                     }
                     update_field('tva', $title_tva, $variation3_id);
                     update_field('taux_tva', $percent_tva, $variation3_id);

@@ -10,6 +10,11 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly
 }
+
+function get_span_only($html) {
+    preg_match('/<span.*?>.*?<\/span>/', $html, $matches);
+    return $matches[0] ?? '';
+}
 ?>
 <table class="shop_table order_details">
 	<thead>
@@ -82,7 +87,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 						?>
 					</td>
 					<td class="product-total">
-						<?php echo wp_kses_post( $subscription->get_formatted_line_subtotal( $item ) ); ?>
+						<?php echo wc_price($item->get_total()); ?>
 					</td>
 				</tr>
 				<?php
@@ -106,7 +111,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			?>
 			<tr>
 				<th scope="row" <?php echo ( $allow_item_removal ) ? 'colspan="2"' : ''; ?>><?php echo esc_html( $total['label'] ); ?></th>
-				<td><?php echo wp_kses_post( $total['value'] ); ?></td>
+				<td><?php echo get_span_only( $total['value'] ); ?></td>
 			</tr>
 		<?php endforeach; ?>
 	</tfoot>

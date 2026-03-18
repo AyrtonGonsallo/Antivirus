@@ -19,6 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<thead>
 		<tr>
 			<th class="subscription-id order-number woocommerce-orders-table__header woocommerce-orders-table__header-order-number woocommerce-orders-table__header-subscription-id"><span class="nobr"><?php esc_html_e( 'Subscription', 'woocommerce-subscriptions' ); ?></span></th>
+			<th class="subscription-client-final woocommerce-orders-table__header"><span class="nobr"><?php esc_html_e( 'Client final', 'woocommerce-subscriptions' ); ?></span></th>
 			<th class="subscription-status order-status woocommerce-orders-table__header woocommerce-orders-table__header-order-status woocommerce-orders-table__header-subscription-status"><span class="nobr"><?php esc_html_e( 'Status', 'woocommerce-subscriptions' ); ?></span></th>
 			<th class="subscription-next-payment order-date woocommerce-orders-table__header woocommerce-orders-table__header-order-date woocommerce-orders-table__header-subscription-next-payment"><span class="nobr"><?php echo esc_html_x( 'Next payment', 'table heading', 'woocommerce-subscriptions' ); ?></span></th>
 			<th class="subscription-total order-total woocommerce-orders-table__header woocommerce-orders-table__header-order-total woocommerce-orders-table__header-subscription-total"><span class="nobr"><?php echo esc_html_x( 'Total', 'table heading', 'woocommerce-subscriptions' ); ?></span></th>
@@ -37,6 +38,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 				</a>
 				<?php do_action( 'woocommerce_my_subscriptions_after_subscription_id', $subscription ); ?>
 			</td>
+			<td class="subscription-id order-number woocommerce-orders-table__cell woocommerce-orders-table__cell-subscription-id woocommerce-orders-table__cell-order-number" data-title="<?php esc_attr_e( 'ID', 'woocommerce-subscriptions' ); ?>">
+				<?php 	
+					$order = wc_get_order($subscription->get_parent_id());
+					$est_revendeur = current_user_can('customer_revendeur'); // adapte selon ton rôle
+					$selected_client_id  = $order->get_meta('client_final');
+					$client = get_user_by('id', $selected_client_id);
+					$denomination_cf  = get_user_meta($selected_client_id, 'denomination', true);
+				?>
+				<?php if ( $est_revendeur ) : ?>
+					<?php echo $client->display_name.' - '.$denomination_cf; ?> 
+				<?php endif; ?>
+			</td>
 			<td class="subscription-status order-status woocommerce-orders-table__cell woocommerce-orders-table__cell-subscription-status woocommerce-orders-table__cell-order-status" data-title="<?php esc_attr_e( 'Status', 'woocommerce-subscriptions' ); ?>">
 				<?php echo esc_attr( wcs_get_subscription_status_name( $subscription->get_status() ) ); ?>
 			</td>
@@ -47,7 +60,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<?php endif; ?>
 			</td>
 			<td class="subscription-total order-total woocommerce-orders-table__cell woocommerce-orders-table__cell-subscription-total woocommerce-orders-table__cell-order-total" data-title="<?php echo esc_attr_x( 'Total', 'Used in data attribute. Escaped', 'woocommerce-subscriptions' ); ?>">
-				<?php echo wp_kses_post( $subscription->get_formatted_order_total() ); ?>
+				<?php echo wc_price($subscription->get_total()); ?>
 			</td>
 			<td class="subscription-actions order-actions woocommerce-orders-table__cell woocommerce-orders-table__cell-subscription-actions woocommerce-orders-table__cell-order-actions">
 				<a href="<?php echo esc_url( $subscription->get_view_order_url() ) ?>" class="woocommerce-button button view<?php echo esc_attr( wc_wp_theme_get_element_class_name( 'button' ) ? ' ' . wc_wp_theme_get_element_class_name( 'button' ) : '' ); ?>"><?php echo esc_html_x( 'View', 'view a subscription', 'woocommerce-subscriptions' ); ?></a>

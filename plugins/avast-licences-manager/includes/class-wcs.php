@@ -33,7 +33,7 @@ class ALM_Wcs {
 
         // Loop through subscriptions protected objects
         foreach ( $subscriptions as $subscription ) {
-            if($subscription->get_id()!=29357){
+            if($subscription->get_id()!= 29466){
                 continue;
             }
             // Unprotected data in an accessible array

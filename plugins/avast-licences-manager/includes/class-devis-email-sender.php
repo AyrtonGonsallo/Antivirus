@@ -178,7 +178,11 @@ class DevisEmailSender {
             $headers,
             $pdf_files // tableau de fichiers attachés
         );
+        self::send_email_admin($post_id,'Devis traité !','Une notification de devis traité à été envoyée au client');
+        
         return $sent;
+
+
         
     }
 
@@ -327,6 +331,7 @@ class DevisEmailSender {
             $headers,
             $pdf_files // tableau de fichiers attachés
         );
+        self::send_email_admin($post_id,'Devis crée !','Un devis à été fait.');
         return $sent;
         
     }
@@ -486,9 +491,102 @@ class DevisEmailSender {
             $headers,
             $pdf_files // tableau de fichiers attachés
         );
+
+        self::send_email_admin($post_id,'Devis qui expire','Une notification de devis expirant à été envoyée au client');
         return $sent;
         
     }
 
 
+
+
+    public static function send_email_admin($post_id,$subject,$message_perso) {
+        $id = $post_id;
+        if (!$id) return;
+
+        // 1️⃣ Récupérer les informations du devis
+        $user = get_field('utilisateur', $post_id); // champ ACF user
+        
+        if (!$user) {
+            wp_safe_redirect(admin_url("edit.php?post_type=devis-en-ligne&mail=error"));
+            exit;
+        }
+
+        $variations  = get_field('variations', $post_id);
+       
+        $user_email = $user->user_email;
+        $user_id = $user->ID;
+        
+        $date_de_creation   = get_field('date_de_creation', $post_id);
+        $date_de_creation_formatted = $date_de_creation ? (new DateTime($date_de_creation))->format('d/m/Y \à H\hi') : '';
+        $note_client     =    get_field('note_client', $post_id);
+        $software_duration     =    get_field('software_duration', $post_id)["label"];
+       
+        $today = current_time('d/m/Y g:i a'); // même format que date_de_creation
+
+
+       
+               
+        $lien_logo_png = site_url().'/wp-content/uploads/2025/11/avast-logo.png';
+
+
+        
+        $message = '
+            <div style="
+                width:100%;
+                font-family:Arial, sans-serif;
+            ">
+
+                <div class="content1" style="
+                    max-width:600px;
+                    margin:0 auto;
+                    background:white;
+                    padding:30px;
+                    border-radius:8px;
+                    text-align:start;
+                    box-shadow:0 0 10px rgba(0,0,0,0.08);
+                ">
+
+                <h4 style="margin:20px 0;color:#FF7800;font-weight:bolder;text-align:center;font-size:18px;">'.$subject.'</h4>
+                
+                    
+                        Bonjour,
+
+                        <br><br>
+                        '.$message_perso.'
+                    
+    <h3 style="margin-top:30px; color:#444;text-transform:uppercase;text-align:start">Voici le récapitulatif de votre demande :</h3><br><br>
+------------------------------------------------------<br>
+                    Numéro de la demande de devis multiples : '.$post_id.'
+                    Date de la demande : '.$date_de_creation_formatted.'<br>
+                    Demande : '.$note_client.'<br>
+                    Durée : '.$software_duration.'<br>
+------------------------------------------------------<br>
+
+                    
+
+                </div>
+
+            </div>
+            ';
+
+
+
+        // 3️⃣ Préparer les headers 
+        $headers = array(
+            'Content-Type: text/html; charset=UTF-8',
+            'Cc: ayrtongonsallo444@gmail.com'
+        );
+
+
+        // 4️⃣ Envoyer avec wp_mail et pièce jointe
+        $sent = wp_mail(
+            'antivirusedition@gmail.com',
+            $subject,
+            $message,
+            $headers,
+        );
+        return $sent;
+        
+    }
 }

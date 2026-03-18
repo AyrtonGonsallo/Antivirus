@@ -37,17 +37,22 @@ if ( ! empty( $licenseKeys ) ): ?>
     <h3 class="product-name">
         <?php if ($product): ?>
             <a href="<?php echo esc_url(get_post_permalink($productId)); ?>">
-                <span><?php echo ($licenseKeyData['name']); ?></span>
+                <span><?php echo esc_html($licenseKeyData['name']); ?></span>
             </a>
         <?php else: ?>
             <span><?php echo esc_html(__('Product', 'license-manager-for-woocommerce') . ' #' . $productId); ?></span>
         <?php endif; ?>
     </h3>
+  
+	
 
     <table class="shop_table shop_table_responsive my_account_orders">
         <thead>
             <tr>
                 <th class="license-key"><?php esc_html_e('License key', 'license-manager-for-woocommerce'); ?></th>
+                
+                <th class="final-customer"><?php esc_html_e('Client final', 'license-manager-for-woocommerce'); ?></th>
+                
                 <th class="activation"><?php esc_html_e('Activation status', 'license-manager-for-woocommerce'); ?></th>
                 <th class="valid-until"><?php esc_html_e('Valid until', 'license-manager-for-woocommerce'); ?></th>
                 <th class="actions"></th>
@@ -62,9 +67,22 @@ if ( ! empty( $licenseKeys ) ): ?>
                 $timesActivated    = $license->getTimesActivated() ? $license->getTimesActivated() : '0';
                 $timesActivatedMax = $license->getTimesActivatedMax() ? $license->getTimesActivatedMax() : '&infin;';
                 $order             = wc_get_order($license->getOrderId());
+                $est_revendeur = current_user_can('customer_revendeur'); // adapte selon ton rôle
+                $selected_client_id  = $order->get_meta('client_final');
+                $client = get_user_by('id', $selected_client_id);
+                $denomination_cf  = get_user_meta($selected_client_id, 'denomination', true);
                 ?>
                 <tr>
                     <td><span class="lmfwc-myaccount-license-key"><?php echo esc_html($license->getDecryptedLicenseKey()); ?></span></td>
+                    
+                        <td>
+                            <span class="lmfwc-myaccount-final-customer">
+                                <?php if ( $est_revendeur ) : ?>
+                                    <?php echo $client->display_name.' - '.$denomination_cf; ?> 
+                                <?php endif; ?>
+                            </span>
+                        </td>
+                    
                     <td>
                         <span><?php echo esc_html($timesActivated); ?></span>
                         <span>/</span>

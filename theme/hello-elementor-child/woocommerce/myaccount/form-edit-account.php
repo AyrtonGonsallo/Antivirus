@@ -53,7 +53,7 @@ do_action( 'woocommerce_before_edit_account_form' );
 		$code_postal = get_user_meta($user_id, 'code_postal', true);
 		$selected_pays = get_user_meta($user_id, 'pays', true);
 
-		$pays_par_groupe =  = include get_stylesheet_directory() . '/countries.php';
+		$pays_par_groupe =  include get_stylesheet_directory() . '/countries.php';
 		
 	 
 	

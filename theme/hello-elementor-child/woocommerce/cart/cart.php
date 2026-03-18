@@ -364,6 +364,7 @@ $has_remise = user_has_remise(get_current_user_id());
 
 		$all_clients = get_users($args_all_clients);
 		$selected_client_id = WC()->session->get('alm_client_final');
+		
 		if($selected_client_id){
 			$args_selected_client = [
 				'include'    => [$selected_client_id],   // chercher cet utilisateur précis
@@ -403,9 +404,11 @@ $has_remise = user_has_remise(get_current_user_id());
 		<select name="alm_client_global" required>
 			<option value="">Sélectionnez un client</option>
 
-			<?php foreach ($all_clients as $c) : ?>
+			<?php foreach ($all_clients as $c) : 
+				$denomination_cf  = get_user_meta($c->ID, 'denomination', true);
+				?>
 				<option value="<?php echo $c->ID; ?>" <?php selected($selected_client_id, $c->ID); ?>>
-					<?php echo esc_html($c->display_name); ?>
+					<?php echo esc_html($c->display_name.' - '.$denomination_cf); ?>
 				</option>
 			<?php endforeach; ?>
 

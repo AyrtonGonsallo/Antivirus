@@ -29,7 +29,7 @@ class DevisPDFGenerator {
         $option        = get_field('option', $post_id);
         $date_de_creation_formatted = $date_de_creation ? (new DateTime($date_de_creation))->format('d/m/Y \à H\hi') : '';
         $date_expiration_formatted  = $date_expiration ? (new DateTime($date_expiration))->format('d/m/Y \à H\hi') : '';
-        
+        $my_account_url = wc_get_page_permalink('myaccount');
         $user_id = $user->ID;
         $prenom = get_user_meta($user_id, 'first_name', true);
         $nom = get_user_meta($user_id, 'last_name', true);
@@ -236,9 +236,8 @@ class DevisPDFGenerator {
                 <div class="section-title">Notes</div>
                 <div class="message-box">
                     Pour valider ce devis et passer votre commande, connectez-vous à votre espace client sur notre site à cette adresse:
-                    http://www.AntivirusEdition.com/login.php
+                    '.$my_account_url.'
                     Utilisez votre adresse email travelerchek@gmail.com ainsi que votre mot de passe pour vous y connecter.
-                    Vous pourrez choisir de régler votre commande parmi les modes de paiement suivants:
                 </div>
             </div>
 
