@@ -25,7 +25,6 @@ $downloads     = WC()->customer->get_downloadable_products();
 $has_downloads = (bool) $downloads;
 
 do_action( 'woocommerce_before_account_downloads', $has_downloads ); ?>
-<a href="/comment-installer-mon-logiciel/" target="_blank">Téléchargez votre logiciel Avast ici avec la procédure d'installation</a>
 <?php if ( $has_downloads ) : ?>
 
 	<?php do_action( 'woocommerce_before_available_downloads' ); ?>
@@ -43,5 +42,6 @@ do_action( 'woocommerce_before_account_downloads', $has_downloads ); ?>
 	?>
 
 <?php endif; ?>
+<a href="/comment-installer-mon-logiciel/" target="_blank" style="font-weight:bolder;margin:20px 0px">Téléchargez votre logiciel Avast ici avec la procédure d'installation</a>
 
 <?php do_action( 'woocommerce_after_account_downloads', $has_downloads ); ?>

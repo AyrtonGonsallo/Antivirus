@@ -37,7 +37,7 @@ if ( ! empty( $licenseKeys ) ): ?>
     <h3 class="product-name">
         <?php if ($product): ?>
             <a href="<?php echo esc_url(get_post_permalink($productId)); ?>">
-                <span><?php echo esc_html($licenseKeyData['name']); ?></span>
+                <span><?php echo ($licenseKeyData['name']); ?></span>
             </a>
         <?php else: ?>
             <span><?php echo esc_html(__('Product', 'license-manager-for-woocommerce') . ' #' . $productId); ?></span>
@@ -53,7 +53,7 @@ if ( ! empty( $licenseKeys ) ): ?>
                 
                 <th class="final-customer"><?php esc_html_e('Client final', 'license-manager-for-woocommerce'); ?></th>
                 
-                <th class="activation"><?php esc_html_e('Activation status', 'license-manager-for-woocommerce'); ?></th>
+                <th class="activation"><?php esc_html_e('Nombre de licences', 'license-manager-for-woocommerce'); ?></th>
                 <th class="valid-until"><?php esc_html_e('Valid until', 'license-manager-for-woocommerce'); ?></th>
                 <th class="actions"></th>
             </tr>
@@ -84,9 +84,7 @@ if ( ! empty( $licenseKeys ) ): ?>
                         </td>
                     
                     <td>
-                        <span><?php echo esc_html($timesActivated); ?></span>
-                        <span>/</span>
-                        <span><?php echo esc_html($timesActivatedMax); ?></span>
+                        1
                     </td>
                     <td><?php
                     if ($license->getExpiresAt()) {

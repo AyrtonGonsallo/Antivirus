@@ -124,9 +124,21 @@ class ALM_Gestion_De_Comptes {
 
             $user_info = get_userdata($user_id);
              $billing_type_client_value = get_user_meta($user_id, 'billing_type_client', true);
+             
             $user_roles = $user_info->roles; // array de tous les rôles
             if (in_array('customer_direct', $user_roles)) {
-                $role = 'Client Direct '.$billing_type_client_value;
+                $revendeur_id   = get_user_meta($user_id, 'revendeur_id', true);
+                
+                if($revendeur_id){
+                    $revendeur_info = get_userdata($revendeur_id);
+                    $prenom = $revendeur_info->first_name;
+                    $nom = $revendeur_info->last_name;
+                    $role = 'Client du revendeur '.$prenom . ' ' . $nom;
+                }else{
+                    $role = 'Client Direct '.$billing_type_client_value;
+                }
+
+                
             } elseif (in_array('customer_revendeur', $user_roles)) {
                 $role = 'Revendeur';
             } else {

@@ -445,7 +445,7 @@ class ALM_Remise_Commerciale {
         foreach ($remises as $remise) {
             $percent = (float) get_field('pourcentage', $remise);
             $type    = get_field('type', $remise);
-            $titre   =  'Remise '.$type;
+            $titre   =  'Remise '.explode('-', $type)[0].'-'.$percent.'%';
 
             if ($percent > 0 && $prix_actuel > 0) {
                 

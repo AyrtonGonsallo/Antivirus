@@ -72,6 +72,7 @@ class ALM_Wcs {
             if (!empty($fees)) {
                 echo "Remises / Fees:\n";
                 foreach ($fees as $fee_id => $fee) {
+                    //La remise renouvellement ne se cumule pas avec les remises commerciales ou les promotions
                     echo "- " . $fee->get_name() . " : " . $fee->get_total() . "\n";
 
                     $fee_name = $fee->get_name();
