@@ -401,7 +401,7 @@ $has_remise = user_has_remise(get_current_user_id());
 	<form method="post" class="form-client-final-cart">
 		<label>Client final de la commande</label>
 
-		<select name="alm_client_global" required>
+		<select name="alm_client_global" required class="automatic-sent2">
 			<option value="">Sélectionnez un client</option>
 
 			<?php foreach ($all_clients as $c) : 
@@ -414,7 +414,7 @@ $has_remise = user_has_remise(get_current_user_id());
 
 		</select>
 
-		<button type="submit" name="save_client_cart">Enregistrer</button>
+		<button type="submit" name="save_client_cart" style='visibility:hidden'>Enregistrer</button>
 	</form>
 
 	<?php if ( $selected_client ) : ?>
@@ -656,6 +656,15 @@ jQuery(document).ready(function($) {
         // Déclencher le clic automatiquement
         $('button[name="update_cart"]').trigger('click');
     });
+
+	$(document).on('change', 'select.automatic-sent2', function () {
+
+       
+        // Déclencher le clic automatiquement
+        $('button[name="save_client_cart"]').trigger('click');
+    });
+
+	
 
 });
 	</script>

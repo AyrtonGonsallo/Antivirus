@@ -269,7 +269,7 @@ body .afrfq-continue-button:hover{ background-color: var(--e-global-color-second
     text-align: center !important;
 }
 .devis-form button#send-button:hover, .alm-revendeur-form button#send-button:hover{background-color:transparent;color:var(--e-global-color-primary);}
-.count-clmn{gap: 5%;column-count: 2 !important;}
+.count-clmn{gap: 5%;max-width: 700px;}
 /************************************* page revendeur ****************************************"***/
 div.w-66#tva_regime_1_box2 {
     display: grid;

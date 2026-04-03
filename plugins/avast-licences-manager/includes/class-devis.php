@@ -590,7 +590,7 @@ class ALM_Devis {
                 <div id="idknowForm"> 
                     <div class="">
                         <label for="compt2save"   class="" style="margin-bottom: 12px;">
-                            Indiquez simplement les ordinateurs à protéger :							
+                            Indiquez simplement les ordinateurs à protéger : <span class="required">*</span>							
                         </label>
                         <textarea class="" name="compt2save" maxlength="200" id="compt2save" rows="4"></textarea>				
                     </div>
@@ -650,9 +650,9 @@ class ALM_Devis {
                
 
             <div class="duree-devis-form">
-                <h2>Durée</h2><br>
+                <h2>Durée <span class="required">*</span></h2><br>
                 <div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 15px; align-items: center; align-content: center;">
-                   <input type="radio" name="alm_software_duration" id="duration_1" value="1-year" required checked>
+                   <input type="radio" name="alm_software_duration" id="duration_1" value="1-year">
                    <label for="duration_1">1 an</label><br>
 
                    <input type="radio" name="alm_software_duration" id="duration_2" value="2-years">
@@ -758,6 +758,8 @@ class ALM_Devis {
                                     Association ou Institution
                                 </label>
                             </div>
+
+                            
                             <br>
                             <div id="dnom_sos" style="">
                                 <div class="count-clmn" style="">
@@ -948,8 +950,20 @@ class ALM_Devis {
                     const $fact_tvaField = $('#fact_tva');
                     const $fact_htField = $('#fact_ht');
                     const $fact_ht_ue_hfField = $('#fact_ht_ue_hf');
+                    const $typeClient = $('input[name="new_account_type_compte"]');
+                    $boxtva.hide();
                     $fact_htField.hide();
                     $fact_ht_ue_hfField.hide();
+
+                    function toggleOptinExpiration() {
+                        const value = $('input[name="new_account_type_compte"]:checked').val();
+                        console.log('$typeClient.val()',value)
+                        if (value === 'association_ou_institution' || value === 'professionnel') {
+                            $boxtva.show();
+                        } else {
+                            $boxtva.hide();
+                        }
+                    }
 
                     function get_selected_pays_or_group(){
                         let selectedOption = $(this).find('option:selected');
@@ -996,6 +1010,11 @@ class ALM_Devis {
                             $('#text-franchise-tva').hide()
                         }
                     }
+
+                    // Au chargement initial
+                    toggleOptinExpiration();
+
+                   
 
                     $selectPAYS.on('change', get_selected_pays_or_group);
 
@@ -1050,6 +1069,7 @@ class ALM_Devis {
                     });
 
                     $('input[name="new_account_type_compte"]').on('change', function() {
+                        toggleOptinExpiration()
                         if ($(this).val() != 'particulier') {
                             $('#dnom_sos').show();
                         } else {
@@ -1064,22 +1084,31 @@ class ALM_Devis {
                         let msg = '';
                         let hasquantityValue = false;
 
-                        $('.alm-qty').each(function() {
-                            let val = parseFloat($(this).val()) || 0;
+                        let statut_iknow = $('#iknow').is(':checked');
+                        let statut_idknow = $('#idknow').is(':checked');
+                        console.log("statut_iknow", statut_iknow);
+                        console.log("statut_idknow", statut_idknow);
 
-                            if (val > 0) {
-                                hasquantityValue = true;
-                                return false; // stop la boucle
+                        if(statut_iknow){
+                            $('.alm-qty').each(function() {
+                                let val = parseFloat($(this).val()) || 0;
+
+                                if (val > 0) {
+                                    hasquantityValue = true;
+                                    return false; // stop la boucle
+                                }
+                            });
+
+                            if (hasquantityValue) {
+                                console.log("je sais et au moins un quantity > 0");
+                                offlogfieldsFilled = true;
                             }
-                        });
-
-                        if (hasquantityValue) {
-                            console.log("je sais et au moins un quantity > 0");
-                            offlogfieldsFilled = true;
                         }
-                        if($('#compt2save').val().trim() !== '') {
-                            console.log("je ne sais pas mais il a saisi le texte");
-                            offlogfieldsFilled = true;
+                        if(statut_idknow){
+                            if($('#compt2save').val().trim() !== '') {
+                                console.log("je ne sais pas mais il a saisi le texte");
+                                offlogfieldsFilled = true;
+                            }
                         }
                         //console.log("check",$('#comment').val().trim())
                         $('button[type="submit"]').prop('disabled', !(offlogfieldsFilled ));
@@ -1168,7 +1197,8 @@ class ALM_Devis {
                     }else{
                         console.log("remplir champs standards")
                         $('button[type="submit"]').prop('disabled', true);
-                        $('#compt2save, .alm-qty').on('input', function() {
+                       
+                        $('#compt2save, .alm-qty, #idknow, #iknow, input[name="alm_software_duration"]').on('change', function() {
                             checkofflogfields();
                         });
 
