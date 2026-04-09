@@ -269,16 +269,17 @@ body .afrfq-continue-button:hover{ background-color: var(--e-global-color-second
     text-align: center !important;
 }
 .devis-form button#send-button:hover, .alm-revendeur-form button#send-button:hover{background-color:transparent;color:var(--e-global-color-primary);}
-.count-clmn{gap: 5%;max-width: 700px;}
+.count-clmn{gap: 5%;max-width: 500px;}
 /************************************* page revendeur ****************************************"***/
 div.w-66#tva_regime_1_box2 {
     display: grid;
-    width: 66%;
     gap: 10px;margin-top: 15px;
-    grid-template-columns: 1fr 1fr 0.01fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
     align-items: center;
 }
-
+#prefixe_tva{
+    padding: 0px !important;
+}
 div.w-100#tva_regime_1_box2 {
     display: grid;
     width: 100%;

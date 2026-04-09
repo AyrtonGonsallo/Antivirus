@@ -360,6 +360,7 @@ do_action( 'woocommerce_before_edit_account_form' );
 
 			// Au chargement initial
 			toggleOptinExpiration();
+			get_selected_pays_or_group();
 
 			// À chaque changement
 			$roleField.on('change', toggleOptinExpiration);
