@@ -72,154 +72,234 @@ class ALM_Wcs {
 
          
             $fees = $subscription->get_fees();
+            $cron_execute  = $subscription->get_meta('_cron_execute');
+            if ($cron_execute==2) {
 
-            $has_renewal = false;
-            $base_total  = (float) $subscription->get_subtotal();
-            echo "base total avant: ".$base_total."\n";
-            $existing_renewal = null;
-            
-            $has_renewal = false;
-            $has_gouv = false;
-            $has_edu = false;
+                echo "Cron déjà exécuté deux fois affichage\n";
 
-            if (!empty($fees)) {
+                $base_total = (float) $subscription->get_subtotal();
+                $current_base_total = $base_total;
+                echo "base total avant: ".$base_total."\n";
 
-                echo "Remises / Fees:\n";
+                $total_discount = 0;
 
                 foreach ($fees as $fee_id => $fee) {
 
-                    $fee_name = $fee->get_name();
-                    $fee_name_lower = mb_strtolower($fee_name, 'UTF-8');
+                    $name = $fee->get_name();
 
-                    echo "- " . $fee_name . " : " . $fee->get_total() . "\n";
-                    if($test){
-                        echo "- fee_name_lower : " .$fee_name_lower. "\n";
-                    }
-                    
+                    if (preg_match('/(\d+)\s*%/', $name, $matches)) {
 
-                    // -----------------------------
-                    // 1. Revendeur
-                    // -----------------------------
-                    if (strpos($fee_name_lower, 'remise revendeur') !== false) {
-                        echo "possede remise revendeur\n";
-                        $base_total += $fee->get_total();
-                        continue;
-                    }
+                        $percent = (int) $matches[1];
 
-                    // -----------------------------
-                    // 2. Changement (supprimer)
-                    // -----------------------------
-                    if (strpos($fee_name_lower, 'remise changement') !== false) {
-                        echo "possede changement mais on va le retirer\n";
-                        $subscription->remove_item($fee_id);
-                        continue;
-                    }
 
-                    // -----------------------------
-                    // 3. Déjà renouvellement
-                    // -----------------------------
-                    if (strpos($fee_name_lower, 'remise renouvellement de licences') !== false) {
-                        echo "possede déjà renouvellement\n";
-                        $existing_renewal = $fee;
-                        $has_renewal = true;
-                        continue;
-                    }
+                        // calcul sur base initiale
+                        $current_discount = round($current_base_total * $percent / 100, 2);
+                        $current_base_total-=$current_discount;
+                        // cumul global
+                        $total_discount += $current_discount;
 
-                    // -----------------------------
-                    // 4. Cas spéciaux
-                    // -----------------------------
-
-                    if (strpos($fee_name_lower, 'établissements scolaires') !== false) {
-                        echo "possede remise Établissements scolaires\n";
-
-                        $base_total += $fee->get_total();
-                        $subscription->remove_item($fee_id);
-
-                        $has_edu = true;
-                        continue;
-                    }
-
-                    if (strpos($fee_name_lower, 'administrations et mairies') !== false) {
-                        echo "possede remise Administrations\n";
-
-                        $base_total += $fee->get_total();
-                        $subscription->remove_item($fee_id);
-
-                        $has_gouv = true;
-                        continue;
-                    }
-
-                    if (strpos($fee_name_lower, 'autre remise') !== false) {
-                        echo "possede autre remise\n";
-
-                        $base_total += $fee->get_total();
-                        $subscription->remove_item($fee_id);
-
-                        continue;
+                        echo "$percent % dans $name donne -$current_discount\n";
                     }
                 }
 
-                echo "A renouvellement ? : " . $has_renewal . "\n";
+                echo "Total des remises: $total_discount\n";
 
-                // =====================================================
-                // DETERMINER LE TAUX FINAL (PRIORITÉ)
-                // =====================================================
-                
-                $rate = 0.30;
-                $label_suffix = "-30%";
+              
+            }else if ($cron_execute==1) {
 
-                if ($has_edu) {
-                    echo "Taux retenu EDU -60%\n";
-                    $rate = 0.60;
-                    $label_suffix = "EDU -60%";
-                } elseif ($has_gouv) {
-                    echo "Taux retenu GOUV -50%\n";
-                    $rate = 0.50;
-                    $label_suffix = "GOUV -50%";
+                echo "Cron déjà exécuté une fois recalcul des pourcentages\n";
+
+                $base_total = (float) $subscription->get_subtotal();
+                $current_base_total = $base_total;
+                echo "base total avant: ".$base_total."\n";
+
+                $total_discount = 0;
+
+                foreach ($fees as $fee_id => $fee) {
+
+                    $name = $fee->get_name();
+
+                    if (preg_match('/(\d+)\s*%/', $name, $matches)) {
+
+                        $percent = (int) $matches[1];
+
+
+                        // calcul sur base initiale
+                        $current_discount = round($current_base_total * $percent / 100, 2);
+                        $current_base_total-=$current_discount;
+                        // cumul global
+                        $total_discount += $current_discount;
+
+                        // appliquer à chaque fee (en négatif)
+                        $fee->set_total(-$current_discount);
+                        $fee->set_amount(-$current_discount);
+                        echo "$percent % dans $name donne -$current_discount\n";
+                    }
                 }
 
-                echo "Taux retenu : " . $rate . "\n";
+                echo "Total des remises: $total_discount\n";
 
-                $discount_amount = round($base_total * $rate, 2);
-
-                echo "base total apres: " . $base_total . "\n";
-                echo "discount_amount : " . $discount_amount . "\n";
-
-                // =====================================================
-                // CAS 1 : PAS DE RENOUVELLEMENT
-                // =====================================================
-                if (!$has_renewal) {
-
-                    $renewal_fee = new WC_Order_Item_Fee();
-                    $renewal_fee->set_name("Remise Renouvellement de licences " . $label_suffix);
-                    $renewal_fee->set_amount(-$discount_amount);
-                    $renewal_fee->set_total(-$discount_amount);
-                    $renewal_fee->set_tax_status('none');
-
-                    $subscription->add_item($renewal_fee);
-
-                }
-                // =====================================================
-                // CAS 2 : EXISTE DEJA → ON MET À JOUR
-                // =====================================================
-                elseif ($existing_renewal &&  ($has_edu || $has_gouv) ) {
-
-                    echo "mise à jour de la remise existante\n";
-
-                    $existing_renewal->set_name("Remise Renouvellement de licences " . $label_suffix);
-                    $existing_renewal->set_amount(-$discount_amount);
-                    $existing_renewal->set_total(-$discount_amount);
-                    $existing_renewal->set_tax_status('none');
-                }
-
-                // =====================================================
-                // RECALCUL
-                // =====================================================
                 if(!$test){
+                    // recalcul WooCommerce
+                    $subscription->update_meta_data('_cron_execute', 2);
                     $subscription->calculate_totals(true);
                     $subscription->save();
                 }
+            }else{
+
+                echo "Cron non execute\n";
+                $has_renewal = false;
+                $base_total  = (float) $subscription->get_subtotal();
+                echo "base total avant: ".$base_total."\n";
+                $existing_renewal = null;
+                
+                $has_renewal = false;
+                $has_gouv = false;
+                $has_edu = false;
+
+                if (!empty($fees)) {
+
+                    echo "Remises / Fees:\n";
+
+                    foreach ($fees as $fee_id => $fee) {
+
+                        $fee_name = $fee->get_name();
+                        $fee_name_lower = mb_strtolower($fee_name, 'UTF-8');
+
+                        echo "- " . $fee_name . " : " . $fee->get_total() . "\n";
+                        if($test){
+                            echo "- fee_name_lower : " .$fee_name_lower. "\n";
+                        }
+                        
+
+                        // -----------------------------
+                        // 1. Revendeur
+                        // -----------------------------
+                        if (strpos($fee_name_lower, 'remise revendeur') !== false) {
+                            echo "possede remise revendeur\n";
+                            $base_total += $fee->get_total();
+                            continue;
+                        }
+
+                        // -----------------------------
+                        // 2. Changement (supprimer)
+                        // -----------------------------
+                        if (strpos($fee_name_lower, 'remise changement') !== false) {
+                            echo "possede changement mais on va le retirer\n";
+                            $subscription->remove_item($fee_id);
+                            continue;
+                        }
+
+                        // -----------------------------
+                        // 3. Déjà renouvellement
+                        // -----------------------------
+                        if (strpos($fee_name_lower, 'remise renouvellement de licences') !== false) {
+                            echo "possede déjà renouvellement\n";
+                            $existing_renewal = $fee;
+                            $has_renewal = true;
+                            continue;
+                        }
+
+                        // -----------------------------
+                        // 4. Cas spéciaux
+                        // -----------------------------
+
+                        if (strpos($fee_name_lower, 'établissements scolaires') !== false) {
+                            echo "possede remise Établissements scolaires mais on va le retirer\n";
+
+                            $base_total += $fee->get_total();
+                            $subscription->remove_item($fee_id);
+
+                            $has_edu = true;
+                            continue;
+                        }
+
+                        if (strpos($fee_name_lower, 'administrations et mairies') !== false) {
+                            echo "possede remise Administrations mais on va le retirer\n";
+                            $base_total += $fee->get_total();
+                            $subscription->remove_item($fee_id);
+
+                            $has_gouv = true;
+                            continue;
+                        }
+
+                        if (strpos($fee_name_lower, 'autre remise') !== false) {
+                            echo "possede autre remise mais on va le retirer\n";
+
+                            $base_total += $fee->get_total();
+                            $subscription->remove_item($fee_id);
+
+                            continue;
+                        }
+                    }
+
+                    echo "A renouvellement ? : " . $has_renewal . "\n";
+
+                    // =====================================================
+                    // DETERMINER LE TAUX FINAL (PRIORITÉ)
+                    // =====================================================
+                    
+                    $rate = 0.30;
+                    $label_suffix = "-30%";
+
+                    if ($has_edu) {
+                        echo "Taux retenu EDU -60%\n";
+                        $rate = 0.60;
+                        $label_suffix = "EDU -60%";
+                    } elseif ($has_gouv) {
+                        echo "Taux retenu GOUV -50%\n";
+                        $rate = 0.50;
+                        $label_suffix = "GOUV -50%";
+                    }
+
+                    echo "Taux retenu : " . $rate . "\n";
+
+                    $discount_amount = round($base_total * $rate, 2);
+
+                    echo "base total apres: " . $base_total . "\n";
+                    echo "discount_amount : " . $discount_amount . "\n";
+
+                    // =====================================================
+                    // CAS 1 : PAS DE RENOUVELLEMENT
+                    // =====================================================
+                    if (!$has_renewal) {
+
+                        $renewal_fee = new WC_Order_Item_Fee();
+                        $renewal_fee->set_name("Remise Renouvellement de licences " . $label_suffix);
+                        $renewal_fee->set_amount(-$discount_amount);
+                        $renewal_fee->set_total(-$discount_amount);
+                        $renewal_fee->set_tax_status('none');
+
+                        $subscription->add_item($renewal_fee);
+
+                    }
+                    // =====================================================
+                    // CAS 2 : EXISTE DEJA → ON MET À JOUR
+                    // =====================================================
+                    elseif ($existing_renewal &&  ($has_edu || $has_gouv) ) {
+
+                        echo "mise à jour de la remise existante\n";
+
+                        $existing_renewal->set_name("Remise Renouvellement de licences " . $label_suffix);
+                        $existing_renewal->set_amount(-$discount_amount);
+                        $existing_renewal->set_total(-$discount_amount);
+                        $existing_renewal->set_tax_status('none');
+                    }
+
+                    // =====================================================
+                    // RECALCUL
+                    // =====================================================
+                    if(!$test){
+                        $subscription->update_meta_data('_cron_execute', 1);
+                        $subscription->calculate_totals(true);
+                        $subscription->save();
+                        
+                    }
+                }
+
             }
+            
+            
 
 
 
