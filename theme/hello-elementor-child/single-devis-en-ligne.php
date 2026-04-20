@@ -258,7 +258,7 @@ get_header();
 
             echo "<p><strong>Date de création:</strong> $date_de_creation_formatted</p>";
             echo "<p><strong>Date d'expiration:</strong> $date_expiration_formatted</p>";
-            echo "<p><strong>Status:</strong> $status_label</p>";
+            echo "<p><strong>Statut:</strong> $status_label</p>";
             echo "<p><strong>Type de devis:</strong> $type_de_devis_label</p>";
             echo "<p><strong>Durée du logiciel:</strong> $software_duration</p>";
             echo "<p><strong>Note client:</strong> $note_client</p>";

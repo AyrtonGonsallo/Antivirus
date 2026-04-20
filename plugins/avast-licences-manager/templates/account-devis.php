@@ -149,12 +149,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
             //var_dump($type_de_devis);
             $date_de_creation_formatted = $date_de_creation ? (new DateTime($date_de_creation))->format('d/m/Y \à H\hi') : '';
             $date_expiration_formatted  = $date_expiration ? (new DateTime($date_expiration))->format('d/m/Y \à H\hi') : '';
+            $sort_date_de_creation = $date_de_creation ? $date_de_creation : '';
+            $sort_date_expiration = $date_expiration ? $date_expiration : '';
 
         ?>
         <tr>
             <td><?php echo $devis->ID; ?></td>
-            <td><?php echo esc_html($date_de_creation_formatted); ?></td>
-            <td><?php echo esc_html($date_expiration_formatted); ?></td>
+            <td data-order="<?php echo esc_attr($sort_date_de_creation);?>"><?php echo esc_html($date_de_creation_formatted); ?></td>
+            <td data-order="<?php echo esc_attr($sort_date_expiration);?>"><?php echo esc_html($date_expiration_formatted); ?></td>
             <td><?php echo esc_html($status); ?></td>
             <td><?php echo esc_html($type_de_devis); ?></td>
             <td> 

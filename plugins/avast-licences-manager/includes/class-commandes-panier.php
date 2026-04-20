@@ -17,23 +17,26 @@ class ALM_Commandes_Panier {
        
        // add_action( 'woocommerce_update_cart_action_cart_updated', [$this, 'save_custom_cart_item_data']);
 
-       /*
-       add_filter(
-            'woocommerce_subscriptions_product_sign_up_fee',
-            [$this, 'cw_replace_signup_fee_with_prix_force'],
-            10,
-            2
-        );
-        */
 
         add_action('init', [$this, 'alm_save_client_cart'] );
 
 
         add_action('woocommerce_checkout_create_order', [$this,'alm_save_client_to_order'], 20, 2);
 
+        add_filter('woocommerce_add_to_cart_validation', [$this,'bloquer_panier_si_devis_converti'], 10, 3);
+
+        add_action('woocommerce_thankyou', [$this,'vider_donnees_dans_commande_si_devis_converti']);
+
     }
 
 
+    function bloquer_panier_si_devis_converti($passed, $product_id, $quantity) {
+    if (WC()->session->get('from_devis')) {
+        wc_add_notice("Vous ne pouvez pas modifier le panier car vous avez converti un devis.", "error");
+        return false;
+    }
+    return $passed;
+}
     
 
     function alm_save_client_cart() {
@@ -55,34 +58,6 @@ class ALM_Commandes_Panier {
         if ($client_id) {
             $order->update_meta_data('client_final', $client_id);
         }
-    }
-
-    function cw_replace_signup_fee_with_prix_force( $signup_fee, $product ) {
-
-        if ( is_admin() && ! defined( 'DOING_AJAX' ) ) {
-            return $signup_fee;
-        }
-
-        if ( ! WC()->cart ) {
-            return $signup_fee;
-        }
-
-        foreach ( WC()->cart->get_cart() as $cart_item ) {
-
-            // 🎯 On cible uniquement les produits issus d’un devis
-            if (
-                isset( $cart_item['prix_force'] ) &&
-                (
-                    $cart_item['product_id'] == $product->get_id()
-                    || $cart_item['variation_id'] == $product->get_id()
-                )
-            ) {
-                // 💰 ON REMPLACE LE SIGN-UP FEE
-                return (float) $cart_item['prix_force'];
-            }
-        }
-
-        return $signup_fee;
     }
 
 
@@ -327,9 +302,16 @@ class ALM_Commandes_Panier {
             }
         }
 
+    
+    }
+
+    function vider_donnees_dans_commande_si_devis_converti($order_id) {
+
+        
         // On supprime le flag et les remises pour les prochains ajouts normaux
         WC()->session->__unset('from_devis');
         WC()->session->__unset('devis_remises');
+        WC()->session->__unset('alm_client_final');
     }
 
 

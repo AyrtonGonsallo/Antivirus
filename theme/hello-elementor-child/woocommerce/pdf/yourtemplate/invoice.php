@@ -213,7 +213,8 @@
 <?php else : ?>	
 	<htmlpagefooter name="docFooter"><!-- required for mPDF engine -->
 		<div id="footer">
-			AntivirusEdition.com 6 rue des écoliers 56140 Caro Siret: 444800247 RCS Nantes APE: 6202A - N° intracommunautaire de TVA: FR77444800247
+			AntivirusEdition.com | 6 rue des écoliers 56140 Caro | Siret: 444800247 | RCS Nantes | APE: 6202A<br> 
+			N° intracommunautaire de TVA: FR77444800247
 		</div>
 	</htmlpagefooter><!-- required for mPDF engine -->
 <?php endif; ?>

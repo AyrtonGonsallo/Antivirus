@@ -628,12 +628,24 @@ class ALM_Devis {
 
 
                         <?php
-                        
+                        $percent_tva = 0;
+                        $title_tva = 'Pas de Tva';
+                        $revendeur_account_regime_tva = get_user_meta($user_id, 'new_revendeur_account_regime_tva', true);
+                        $account_regime_tva = get_user_meta($user_id, 'new_account_regime_tva', true);
+                       
+                        if(($account_regime_tva=="HT") || ($account_regime_tva=="HT_UE") || ($revendeur_account_regime_tva=="HT") || ($revendeur_account_regime_tva=="HT_UE")){
+                            
+                            $percent_tva = 0;
+                            $title_tva = 'Pas de Tva';
+                        }else{
                             $customer = new WC_Customer( $user_id );
                             $tax_rates = WC_Tax::get_rates("",$customer );
                             $first_rate = reset($tax_rates);
                             $percent_tva = $first_rate['rate'];
                             $title_tva = $first_rate['label'];
+                        }
+                        
+                            
 
                             echo '<input type="hidden" name="title_tva" id="title_tva" value="'.$title_tva.'">';
                             echo '<input type="hidden" name="percent_tva" id="percent_tva" value="'.$percent_tva.'">';

@@ -547,11 +547,11 @@ class ALM_Statistiques_antivirus {
 
         $deleted_ids = [];
 
-        foreach ($subscriptions as $subscription) {
+        foreach ($subscriptions as $subs) {
 
-            $sub_id = $subscription->get_id();
+            $sub_id = $subs->get_id();
 
-            $subscription->delete(true); // suppression définitive
+            $subs->delete(true); // suppression définitive
 
             $deleted_ids[] = $sub_id;
         }

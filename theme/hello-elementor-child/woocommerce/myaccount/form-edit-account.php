@@ -149,7 +149,7 @@ do_action( 'woocommerce_before_edit_account_form' );
         <label for="role">Type de compte</label>
         <select  id="role" required disabled>
 			<option value="">Sélectionnez...</option>
-			<option value="customer_direct" <?php selected($role,'customer_direct'); ?>>Particulier</option>
+			<option value="customer_direct" <?php selected($role,'customer_direct'); ?>>Client direct</option>
 			<option value="customer_revendeur" <?php selected($role,'customer_revendeur'); ?>>Revendeur</option>
 		</select>
     </p>
@@ -165,6 +165,7 @@ do_action( 'woocommerce_before_edit_account_form' );
     </p>
 
 	<?php 
+	
 		if($role == 'customer_revendeur'){
 			$account_regime_tva = get_user_meta($user->ID, 'new_revendeur_account_regime_tva', true);
 			$selected_regime=($account_regime_tva=="HT")?3:2;
@@ -179,6 +180,9 @@ do_action( 'woocommerce_before_edit_account_form' );
 			$account_prefixe_tva = get_user_meta($user->ID, 'new_account_prefixe_tva', true);
 			$account_tva_intra = get_user_meta($user->ID, 'new_account_tva_intra', true);
 		}
+
+		echo 'account_regime_tva : '.$account_regime_tva;
+		echo 'selected_regime : '.$selected_regime;
 		?>
 		<div id="boxtva" name="boxtva" >            
 			<b>Régime de TVA applicable :<span class="required">*</span></b>
@@ -332,7 +336,7 @@ do_action( 'woocommerce_before_edit_account_form' );
 						$fact_htField.hide();
 						$fact_ht_ue_hfField.show();
 					}
-					$('#regime_2').prop('checked', true);
+					//$('#regime_2').prop('checked', true);
 					$('#text-franchise-tva').show()
 				}
 

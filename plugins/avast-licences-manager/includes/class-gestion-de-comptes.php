@@ -536,6 +536,8 @@ class ALM_Gestion_De_Comptes {
         update_user_meta($user_id, 'denomination', sanitize_text_field($_POST['denomination']));
         update_user_meta($user_id, 'ville', sanitize_text_field($_POST['ville']));
         update_user_meta($user_id, 'code_postal', sanitize_text_field($_POST['code_postal']));
+        update_user_meta($user_id, 'billing_postcode', sanitize_text_field($_POST['code_postal']));
+        update_user_meta($user_id, 'shipping_postcode', sanitize_text_field($_POST['code_postal']));
         update_user_meta($user_id, 'pays', sanitize_text_field($_POST['pays']));
         update_user_meta( $user_id, 'billing_country', sanitize_text_field( $_POST['pays'] ) );
         update_user_meta( $user_id, 'shipping_country', sanitize_text_field( $_POST['pays'] ) );
@@ -544,18 +546,45 @@ class ALM_Gestion_De_Comptes {
         update_user_meta($user_id, 'billing_phone', sanitize_text_field($_POST['billing_phone']));
         update_user_meta($user_id, 'optin_promos', isset($_POST['optin_promos']) ? 'yes' : 'no');
         update_user_meta($user_id, 'optin_expiration', isset($_POST['optin_expiration']) ? 'yes' : 'no');
+
+        $user_info = get_userdata($user_id);
+             
+        $user_roles = $user_info->roles; // array de tous les rôles
+       
         if( isset($_POST['new_revendeur_account_regime_tva'])){
             $regime=$_POST['new_revendeur_account_regime_tva'];
             if($regime==1){
-                update_user_meta( $user_id, 'new_revendeur_account_regime_tva', "HT" );
-                update_user_meta($user_id, 'new_revendeur_account_prefixe_tva', sanitize_text_field($_POST['new_revendeur_account_prefixe_tva']));
-                update_user_meta($user_id, 'new_revendeur_account_tva_intra', sanitize_text_field($_POST['new_revendeur_account_tva_intra']));
-            }else{
+                if (in_array('customer_revendeur', $user_roles)) {
+                    update_user_meta( $user_id, 'new_revendeur_account_regime_tva', "HT_UE" );
+                    update_user_meta($user_id, 'new_revendeur_account_prefixe_tva', sanitize_text_field($_POST['new_revendeur_account_prefixe_tva']));
+                    update_user_meta($user_id, 'new_revendeur_account_tva_intra', sanitize_text_field($_POST['new_revendeur_account_tva_intra']));
+                }else{
+                    update_user_meta( $user_id, 'new_account_regime_tva', "HT_UE" );
+                    update_user_meta($user_id, 'new_account_prefixe_tva', sanitize_text_field($_POST['new_revendeur_account_prefixe_tva']));
+                    update_user_meta($user_id, 'new_account_tva_intra', sanitize_text_field($_POST['new_revendeur_account_tva_intra']));
+                }
+                
+            }
+            else if($regime==3){
+                if (in_array('customer_revendeur', $user_roles)) {
+                    update_user_meta( $user_id, 'new_revendeur_account_regime_tva', "HT" );
+                  }else{
+                    update_user_meta( $user_id, 'new_account_regime_tva', "HT" );
+                }
+                
+            }
+            else if($regime==2){
                 update_user_meta( $user_id, 'new_revendeur_account_regime_tva', "TVA" );
+                if (in_array('customer_revendeur', $user_roles)) {
+                    update_user_meta( $user_id, 'new_revendeur_account_regime_tva', "TVA" );
+                }else{
+                    update_user_meta( $user_id, 'new_account_regime_tva', "TVA" );
+                }
 
             }
 
         }
+      
     }
 
      public function show_admin_user_fields($user) {
