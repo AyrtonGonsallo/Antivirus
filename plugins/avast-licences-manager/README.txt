@@ -30,4 +30,8 @@ dnz%ZO3M&wDtrC6Q
 
 expiratuon devis 
 test.antivirusedition.com/?send_devis_expiring=1&key=ma_clef_ultra_secrete_123
-https://test.antivirusedition.com/wp-json/alm/v1/subscriptions
+https://test.antivirusedition.com/wp-json/alm/v1/subscriptions?subs_id=32772
+https://test.antivirusedition.com/wp-json/alm/v1/subscriptions?test=1&subs_id=32772
+
+https://test.antivirusedition.com/wp-json/alm/v1/cron_subscriptions
+https://test.antivirusedition.com/wp-json/alm/v1/cron_subscriptions?sauvegarder=1
