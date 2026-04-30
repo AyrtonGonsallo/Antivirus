@@ -471,6 +471,27 @@ if($user_id){
 
 		});
 
+		function normalizeRemises(values) {
+			const hasRenouvellement = values.some(v => v.toLowerCase().includes('renouvellement'));
+			const hasAdmin = values.some(v => v.toLowerCase().includes('administrations'));
+			const hasEcole = values.some(v => 
+				v.toLowerCase().includes('établissements') || v.toLowerCase().includes('associations')
+			);
+
+			// Cas 1 : renouvellement + administrations → 50%
+			if (hasRenouvellement && hasAdmin) {
+				return ['renouvellement administration -50%'];
+			}
+
+			// Cas 2 : renouvellement + écoles → 60%
+			if (hasRenouvellement && hasEcole) {
+				return ['renouvellement école -60%'];
+			}
+
+			// Sinon on ne change rien
+			return values;
+		}
+
         function  apply_reduction(element){
 			 const $this = element ? $(element) : $('.optionRemise:checked').first();
     		const group = $this.length ? parseInt($this.data('group')) : null;
@@ -513,8 +534,9 @@ if($user_id){
                 values.push($(this).data('value'));
             });
             $('#remise_type').val(values.join(', '));
-            console.log("remises courantes",values.length,values.join(', '))
-            if(values.length<1 || $(".single_add_to_cart_button").hasClass("disabled")){
+			valuesToApply = normalizeRemises(values);
+            console.log("remises courantes",valuesToApply.length,valuesToApply.join(', '))
+            if(valuesToApply.length<1 || $(".single_add_to_cart_button").hasClass("disabled")){
                 console.log("pas de remise")
                 $(".btn-remise").prop("disabled", true);
                 $(".prix-remise").hide();
@@ -543,7 +565,7 @@ if($user_id){
 
                 console.log("Contient remise :", hasRemise);
                 console.log("Contient prix :", hasPrix);
-                let currency = $('.woocommerce-Price-currencySymbol').first().text();
+                let currency = $('.remisable .woocommerce-Price-currencySymbol').first().text();
 				let formule = ""
 
                 // Exemple de condition
@@ -559,7 +581,7 @@ if($user_id){
 					 console.log("prixRemiseRevendeur",prixRemiseRevendeur)
 					 console.log("prixApresRR",prixApresRR)
                      formule += `<span class="price"><del aria-hidden="true">${prixApresRR.toFixed(2)} ${currency}</del></span>`
-                      values.forEach((v, index, array) => {
+                      valuesToApply.forEach((v, index, array) => {
                         const match = v.match(/-([0-9]+)%/);
                         if (match) {
                             const pourcentage = parseInt(match[1], 10);
@@ -586,7 +608,7 @@ if($user_id){
 
                     console.log(`Prix départ: ${prixActuel.toFixed(2)} ${currency}`);
 
-                    values.forEach((v, index, array) => {
+                    valuesToApply.forEach((v, index, array) => {
                         const match = v.match(/-([0-9]+)%/);
                         if (match) {
                             const pourcentage = parseInt(match[1], 10);

@@ -414,7 +414,7 @@ class ALM_Remise_Commerciale {
 
             
 
-            return; // 🔥 on bloque les remises classiques
+            return; //  on bloque les remises classiques
         }
 
         /*
@@ -442,10 +442,14 @@ class ALM_Remise_Commerciale {
         $prix_actuel = $cart->get_subtotal();
         error_log("prix_actuel $prix_actuel ");
 
-        foreach ($remises as $remise) {
-            $percent = (float) get_field('pourcentage', $remise);
-            $type    = get_field('type', $remise);
-            $titre   =  'Remise '.explode('-', $type)[0].'-'.$percent.'%';
+        $remises_normalisees = $this->normalize_acf_remises($remises);
+        $remises_analysees = $this->replaces_remises($remises_normalisees);
+
+        foreach ($remises_analysees as $remise) {
+            
+            $percent = $remise['pourcentage'];
+            $type    = $remise['type'];
+            $titre   = 'Remise ' . $type;
 
             if ($percent > 0 && $prix_actuel > 0) {
                 
@@ -486,6 +490,103 @@ class ALM_Remise_Commerciale {
             */
     }
 
+
+    
+    //identifier les 2 si oui les supprimer et renvoyer un noueau tableau. 
+    // Attention au cas ou ily en a plus de 2 ne supprimer que ces 2 remplacer et garder les autres
+    public function replaces_remises($remises_a_analyser) {
+
+        $hasRenouvellement = false;
+        $hasAdmin = false;
+        $hasEcole = false;
+
+        foreach ($remises_a_analyser as $remise) {
+            $type = mb_strtolower($remise['type'], 'UTF-8');
+
+            if (strpos($type, 'renouvellement de licences') !== false) {
+                $hasRenouvellement = true;
+            }
+
+            if (strpos($type, 'administrations et mairies') !== false) {
+                $hasAdmin = true;
+            }
+
+            if (strpos($type, 'établissements scolaires') !== false) {
+                $hasEcole = true;
+            }
+        }
+
+        $newRemises = [];
+        $usedRenouvellement = false;
+
+        foreach ($remises_a_analyser as $remise) {
+
+            $type = mb_strtolower($remise['type'], 'UTF-8');
+
+            // Cas 1
+            if ($hasRenouvellement && $hasAdmin) {
+
+                if (strpos($type, 'renouvellement de licences') !== false && !$usedRenouvellement) {
+                    $newRemises[] = [
+                        'type' => 'renouvellement administration -50%',
+                        'pourcentage' => 50
+                    ];
+                    $usedRenouvellement = true;
+                    continue;
+                }
+
+                if (strpos($type, 'administrations et mairies') !== false) {
+                    continue;
+                }
+            }
+
+            // Cas 2
+            if ($hasRenouvellement && $hasEcole) {
+
+                if (strpos($type, 'renouvellement de licences') !== false && !$usedRenouvellement) {
+                    $newRemises[] = [
+                        'type' => 'renouvellement école -60%',
+                        'pourcentage' => 60
+                    ];
+                    $usedRenouvellement = true;
+                    continue;
+                }
+
+                if (strpos($type, 'établissements scolaires') !== false) {
+                    continue;
+                }
+            }
+
+            // garder tel quel
+            $newRemises[] = $remise;
+        }
+
+        return $newRemises;
+    } 
+
+    public function normalize_acf_remises($remises) {
+        $normalized = [];
+
+        foreach ($remises as $remise) {
+            $type = mb_strtolower(get_field('type', $remise), 'UTF-8');
+            if (strpos($type, 'revendeur') !== false ) {
+                $pourcentage = (float) get_field('pourcentage', $remise);
+                $normalized[] = [
+                    'type' => "revendeur -$pourcentage%",
+                    'pourcentage' => $pourcentage
+                ];
+            }else{
+                $normalized[] = [
+                    'type' => get_field('type', $remise),
+                    'pourcentage' => (float) get_field('pourcentage', $remise)
+                ];
+            }
+            
+        }
+
+        return $normalized;
+    }
+    
 
 
 
