@@ -20,6 +20,7 @@ class ALM_Gestion_De_Comptes {
             
         // Hooks WooCommerce
         add_action('woocommerce_save_account_details', [$this, 'save_account_fields']);
+        add_action('profile_update', [$this, 'save_account_fields']);
         add_action( 'user_register', [$this, 'wc_save_custom_registration_field'], 10, 1 );
 
         // Back Office WordPress
@@ -530,6 +531,8 @@ class ALM_Gestion_De_Comptes {
         return $args;
     }
 
+    
+
 
     public function save_account_fields($user_id) {
          
@@ -550,6 +553,10 @@ class ALM_Gestion_De_Comptes {
         $user_info = get_userdata($user_id);
              
         $user_roles = $user_info->roles; // array de tous les rôles
+
+        if (in_array('customer_revendeur', $user_roles)) {
+            update_user_meta( $user_id, 'paiment_en_fin_de_mois', $_POST['paiment_en_fin_de_mois']);
+        }
        
         if( isset($_POST['new_revendeur_account_regime_tva'])){
             $regime=$_POST['new_revendeur_account_regime_tva'];
@@ -607,6 +614,7 @@ class ALM_Gestion_De_Comptes {
         $code_postal    = get_user_meta($user->ID, 'code_postal', true);
         $pays           = get_user_meta($user->ID, 'pays', true);
         $revendeur_id   = get_user_meta($user->ID, 'revendeur_id', true);
+        $paiment_en_fin_de_mois = (get_user_meta($user->ID, 'paiment_en_fin_de_mois', true))?get_user_meta($user->ID, 'paiment_en_fin_de_mois', true):0;
 
         ?>
         <h2>Préférences Avast</h2>
@@ -715,6 +723,38 @@ class ALM_Gestion_De_Comptes {
                 <th><label for="new_revendeur_account_tva_intra">Numéro tva intracommunautaire</label></th>
                 <td>
                     <input type="text" name="new_revendeur_account_tva_intra" id="new_revendeur_account_tva_intra" value="<?php echo esc_attr($new_revendeur_account_tva_intra); ?>" class="regular-text" />
+                </td>
+            </tr>
+
+            <?php }?>
+
+            <?php if (in_array('customer_revendeur', $user->roles)) { ?>
+            <tr>
+                <th>
+                    <label>Paiement en fin de mois</label>
+                </th>
+                <td>
+                    <label>
+                        <input 
+                            type="radio" 
+                            name="paiment_en_fin_de_mois" 
+                            value="1"
+                            <?php checked($paiment_en_fin_de_mois, 1); ?>
+                        />
+                        Oui
+                    </label>
+
+                    <br>
+
+                    <label>
+                        <input 
+                            type="radio" 
+                            name="paiment_en_fin_de_mois" 
+                            value="0"
+                            <?php checked($paiment_en_fin_de_mois, 0); ?>
+                        />
+                        Non
+                    </label>
                 </td>
             </tr>
 
