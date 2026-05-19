@@ -39,6 +39,7 @@ if($user_id){
 
 	$user = wp_get_current_user();
 	$is_revendeur = in_array('customer_revendeur', (array) $user->roles);
+	
 }
 
 ?>
@@ -638,7 +639,7 @@ if($user_id){
                 // Arrondi (à l’entier ou 2 décimales selon ton besoin)
                 prixFinal = (prixFinal.toFixed(2)); // ou toFixed(2)
                 // Affichage
-                $(".prix-remise").text(prixFinal+" €");
+                $(".prix-remise").text(`${prixFinal} ${currency}`);
                 
 
                 $(".remisable bdi").css("text-decoration", "line-through");

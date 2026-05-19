@@ -31,7 +31,7 @@ defined( 'ABSPATH' ) || exit;
 			<span class="price">
 				<span class="woocommerce-Price-amount amount">
 					<bdi>{{{ data.variation.prix_remise_revendeur }}}&nbsp;
-						<span class="woocommerce-Price-currencySymbol">€</span>
+						<span class="woocommerce-Price-currencySymbol">{{{ data.variation.currency_symbol }}}</span>
 					</bdi>
 				</span> 
 			</span>

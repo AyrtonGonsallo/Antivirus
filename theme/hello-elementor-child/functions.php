@@ -691,6 +691,9 @@ add_filter('woocommerce_available_variation', function ($variation_data, $produc
     $bloquer_remise_revendeur = get_field('bloquer_remise_revendeur', $product->get_id());       // true / false
     $bloquer_remise_commerciale = get_field('bloquer_remise_commerciale', $product->get_id());
     $user_has_enabled_remises = has_user_enabled_remises($user_id);
+    $currency_symbol = get_woocommerce_currency_symbol();
+    $variation_data['currency_symbol'] = $currency_symbol;
+
 
     if ($variation->is_on_sale()) {
 
