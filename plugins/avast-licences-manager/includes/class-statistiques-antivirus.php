@@ -92,6 +92,10 @@ class ALM_Statistiques_antivirus {
                     $client_final = get_user_by('id', $selected_client_id);
                 }
                 $status = wc_get_order_status_name($order->get_status());
+                $methode = $order->get_payment_method_title();
+                if($methode =="Paiement en fin de mois"){
+                    $status.=" (en fin de mois)";
+                }
                 $pdf_url = wp_nonce_url( add_query_arg( array(
                     'action'        => 'generate_wpo_wcpdf',
                     'document_type' => 'invoice',
@@ -136,7 +140,7 @@ class ALM_Statistiques_antivirus {
 
                 echo '<tr>';
                 echo '<td><input type="checkbox" class="rowCheck"></td>';
-                echo '<td><a href="' . esc_url($order_link) . '" target="_blank">#'. esc_html($order_id) . '</a><br>'.$text.'</td>';
+                echo '<td><span style="display:none" class="order_id">'.$order_id.'</span> <a href="' . esc_url($order_link) . '" target="_blank">#'. esc_html($order_id) . '</a><br>'.$text.'</td>';
                 echo '<td>' . ($status) . '</td>';
                 echo '<td  data-order="'.esc_attr($order_date).'">' . esc_html($order->get_date_created()->date('d/m/Y H:i')) . '</td>';
                 echo '<td data-order="'.esc_attr($order_closest_date).'">'. esc_html(date('d/m/Y H:i', $closest_date)). '</td>';
@@ -230,11 +234,13 @@ class ALM_Statistiques_antivirus {
                     // Récupérer tous les order_id cochés
                     let orderIds = [];
                     $('.rowCheck:checked').each(function(){
-                        let orderId = $(this).closest('tr').find('td:nth-child(2) a').text().replace('#','').trim();
+                        let orderId = $(this).closest('tr').find('td:nth-child(2) .order_id').text().trim();
                         if (orderId) {
                             orderIds.push(orderId);
                         }
                     });
+
+                    console.log('orderIds',orderIds)
 
                     if (orderIds.length === 0) {
                         alert('Veuillez sélectionner au moins une commande');
@@ -278,6 +284,8 @@ class ALM_Statistiques_antivirus {
             wp_send_json_error('Aucune commande sélectionnée');
             wp_die();
         }
+
+        error_log('ids : '  . $_POST['orders']);
 
         // Tableau d'IDs
         $order_ids = array_map('intval', explode(',', $_POST['orders']));
@@ -387,7 +395,7 @@ class ALM_Statistiques_antivirus {
                 $client_final_name,
                 $roles_string,
                 $order->get_date_created()->date('d/m/Y H:i'),
-                $order->get_date_paid()->date('d/m/Y H:i'),
+                ($order->get_date_paid())?$order->get_date_paid()->date('d/m/Y H:i'):'',
                 $order_closest_date,
                 $pays,
                 $total_ht,

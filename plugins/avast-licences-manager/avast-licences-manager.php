@@ -2,8 +2,8 @@
 /**
  * Plugin Name: Avast Licences Manager
  * Description: Gestion des comptes revendeurs, devis, renouvellements et licences Avast.
- * Version: 1.0.0
- * Author: Generated
+ * Version: 1.5.0
+ * Author: Ayrton
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -21,6 +21,7 @@ require_once ALM_PATH . 'includes/class-crons-urls.php';
 require_once ALM_PATH . 'includes/class-revendeur.php';
 require_once ALM_PATH . 'includes/class-wcs.php';
 require_once ALM_PATH . 'includes/class-statistiques-antivirus.php';
+require_once ALM_PATH . 'includes/class-paiements-extentions.php';
 //require_once ALM_PATH . 'includes/class-ajax-login-register-popup.php';
 
 // Activation / Deactivation hooks
@@ -37,6 +38,7 @@ add_action('plugins_loaded', function() {
     new ALM_Wcs();
     new ALM_Statistiques_antivirus();
     new ALM_Crons_Urls();
+    new ALM_Paiements_extentions();
     
 
     

@@ -535,63 +535,95 @@ class ALM_Gestion_De_Comptes {
 
 
     public function save_account_fields($user_id) {
-         
-        update_user_meta($user_id, 'denomination', sanitize_text_field($_POST['denomination']));
-        update_user_meta($user_id, 'ville', sanitize_text_field($_POST['ville']));
-        update_user_meta($user_id, 'code_postal', sanitize_text_field($_POST['code_postal']));
-        update_user_meta($user_id, 'billing_postcode', sanitize_text_field($_POST['code_postal']));
-        update_user_meta($user_id, 'shipping_postcode', sanitize_text_field($_POST['code_postal']));
-        update_user_meta($user_id, 'pays', sanitize_text_field($_POST['pays']));
-        update_user_meta( $user_id, 'billing_country', sanitize_text_field( $_POST['pays'] ) );
-        update_user_meta( $user_id, 'shipping_country', sanitize_text_field( $_POST['pays'] ) );
-        update_user_meta($user_id, 'civilite', sanitize_text_field($_POST['civilite']));
-        update_user_meta($user_id, 'billing_address_1', sanitize_text_field($_POST['billing_address_1']));
-        update_user_meta($user_id, 'billing_phone', sanitize_text_field($_POST['billing_phone']));
-        update_user_meta($user_id, 'optin_promos', isset($_POST['optin_promos']) ? 'yes' : 'no');
-        update_user_meta($user_id, 'optin_expiration', isset($_POST['optin_expiration']) ? 'yes' : 'no');
+
+        // helper safe POST
+        $post = $_POST;
+
+        $get = function($key) use ($post) {
+            return isset($post[$key]) ? sanitize_text_field($post[$key]) : '';
+        };
+
+        update_user_meta($user_id, 'denomination', $get('denomination'));
+        update_user_meta($user_id, 'ville', $get('ville'));
+        update_user_meta($user_id, 'code_postal', $get('code_postal'));
+
+        update_user_meta($user_id, 'billing_postcode', $get('code_postal'));
+        update_user_meta($user_id, 'shipping_postcode', $get('code_postal'));
+
+        update_user_meta($user_id, 'pays', $get('pays'));
+        update_user_meta($user_id, 'billing_country', $get('pays'));
+        update_user_meta($user_id, 'shipping_country', $get('pays'));
+
+        update_user_meta($user_id, 'civilite', $get('civilite'));
+        update_user_meta($user_id, 'billing_address_1', $get('billing_address_1'));
+        update_user_meta($user_id, 'billing_phone', $get('billing_phone'));
+
+        update_user_meta(
+            $user_id,
+            'optin_promos',
+            isset($post['optin_promos']) ? 'yes' : 'no'
+        );
+
+        update_user_meta(
+            $user_id,
+            'optin_expiration',
+            isset($post['optin_expiration']) ? 'yes' : 'no'
+        );
 
         $user_info = get_userdata($user_id);
-             
-        $user_roles = $user_info->roles; // array de tous les rôles
+        $user_roles = $user_info ? $user_info->roles : [];
 
-        if (in_array('customer_revendeur', $user_roles)) {
-            update_user_meta( $user_id, 'paiment_en_fin_de_mois', $_POST['paiment_en_fin_de_mois']);
+        // ⚠️ FIX NOM CHAMP (important)
+        if (in_array('customer_revendeur', $user_roles, true)) {
+
+            if (isset($post['paiement_en_fin_de_mois'])) {
+                update_user_meta(
+                    $user_id,
+                    'paiement_en_fin_de_mois', // corrigé
+                    sanitize_text_field($post['paiement_en_fin_de_mois'])
+                );
+            }
         }
-       
-        if( isset($_POST['new_revendeur_account_regime_tva'])){
-            $regime=$_POST['new_revendeur_account_regime_tva'];
-            if($regime==1){
-                if (in_array('customer_revendeur', $user_roles)) {
-                    update_user_meta( $user_id, 'new_revendeur_account_regime_tva', "HT_UE" );
-                    update_user_meta($user_id, 'new_revendeur_account_prefixe_tva', sanitize_text_field($_POST['new_revendeur_account_prefixe_tva']));
-                    update_user_meta($user_id, 'new_revendeur_account_tva_intra', sanitize_text_field($_POST['new_revendeur_account_tva_intra']));
-                }else{
-                    update_user_meta( $user_id, 'new_account_regime_tva', "HT_UE" );
-                    update_user_meta($user_id, 'new_account_prefixe_tva', sanitize_text_field($_POST['new_revendeur_account_prefixe_tva']));
-                    update_user_meta($user_id, 'new_account_tva_intra', sanitize_text_field($_POST['new_revendeur_account_tva_intra']));
-                }
-                
-            }
-            else if($regime==3){
-                if (in_array('customer_revendeur', $user_roles)) {
-                    update_user_meta( $user_id, 'new_revendeur_account_regime_tva', "HT" );
-                  }else{
-                    update_user_meta( $user_id, 'new_account_regime_tva', "HT" );
-                }
-                
-            }
-            else if($regime==2){
-                update_user_meta( $user_id, 'new_revendeur_account_regime_tva', "TVA" );
-                if (in_array('customer_revendeur', $user_roles)) {
-                    update_user_meta( $user_id, 'new_revendeur_account_regime_tva', "TVA" );
-                }else{
-                    update_user_meta( $user_id, 'new_account_regime_tva', "TVA" );
-                }
 
-            }
+        if (isset($post['new_revendeur_account_regime_tva'])) {
 
+            $regime = (int) $post['new_revendeur_account_regime_tva'];
+
+            $is_revendeur = in_array('customer_revendeur', $user_roles, true);
+
+            $prefix_key = $is_revendeur
+                ? 'new_revendeur_account_prefixe_tva'
+                : 'new_account_prefixe_tva';
+
+            $tva_key = $is_revendeur
+                ? 'new_revendeur_account_tva_intra'
+                : 'new_account_tva_intra';
+
+            if ($regime === 1) {
+
+                update_user_meta($user_id,
+                    $is_revendeur ? 'new_revendeur_account_regime_tva' : 'new_account_regime_tva',
+                    'HT_UE'
+                );
+
+                update_user_meta($user_id, $prefix_key, $get('new_revendeur_account_prefixe_tva'));
+                update_user_meta($user_id, $tva_key, $get('new_revendeur_account_tva_intra'));
+
+            } elseif ($regime === 3) {
+
+                update_user_meta($user_id,
+                    $is_revendeur ? 'new_revendeur_account_regime_tva' : 'new_account_regime_tva',
+                    'HT'
+                );
+
+            } elseif ($regime === 2) {
+
+                update_user_meta($user_id,
+                    $is_revendeur ? 'new_revendeur_account_regime_tva' : 'new_account_regime_tva',
+                    'TVA'
+                );
+            }
         }
-      
     }
 
      public function show_admin_user_fields($user) {
@@ -614,14 +646,14 @@ class ALM_Gestion_De_Comptes {
         $code_postal    = get_user_meta($user->ID, 'code_postal', true);
         $pays           = get_user_meta($user->ID, 'pays', true);
         $revendeur_id   = get_user_meta($user->ID, 'revendeur_id', true);
-        $paiment_en_fin_de_mois = (get_user_meta($user->ID, 'paiment_en_fin_de_mois', true))?get_user_meta($user->ID, 'paiment_en_fin_de_mois', true):0;
+        $paiement_en_fin_de_mois = (get_user_meta($user->ID, 'paiement_en_fin_de_mois', true))?get_user_meta($user->ID, 'paiement_en_fin_de_mois', true):0;
 
         ?>
         <h2>Préférences Avast</h2>
         <table class="form-table">
             <tr>
                 <th><label for="billing_address_1">Adresse</label></th>
-                <td><input type="text" name="billing_address_1" id="billing_address_1" value="<?php echo esc_attr($billing_address); ?>" class="regular-text" /></td>
+                <td><input type="text" name="billing_address_1" id="billing_address_1" value="<?php echo esc_attr($billing_address_1); ?>" class="regular-text" /></td>
             </tr>
             <tr>
                 <th><label for="billing_phone">Téléphone</label></th>
@@ -731,15 +763,15 @@ class ALM_Gestion_De_Comptes {
             <?php if (in_array('customer_revendeur', $user->roles)) { ?>
             <tr>
                 <th>
-                    <label>Paiement en fin de mois</label>
+                    <label>Paiement en fin de mois </label>
                 </th>
                 <td>
                     <label>
                         <input 
                             type="radio" 
-                            name="paiment_en_fin_de_mois" 
+                            name="paiement_en_fin_de_mois" 
                             value="1"
-                            <?php checked($paiment_en_fin_de_mois, 1); ?>
+                            <?php checked($paiement_en_fin_de_mois, 1); ?>
                         />
                         Oui
                     </label>
@@ -749,9 +781,9 @@ class ALM_Gestion_De_Comptes {
                     <label>
                         <input 
                             type="radio" 
-                            name="paiment_en_fin_de_mois" 
+                            name="paiement_en_fin_de_mois" 
                             value="0"
-                            <?php checked($paiment_en_fin_de_mois, 0); ?>
+                            <?php checked($paiement_en_fin_de_mois, 0); ?>
                         />
                         Non
                     </label>
