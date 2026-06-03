@@ -357,7 +357,7 @@ function shortcode_cross_sell() {
 					<div class="e-con-inner">
 		<div class="elementor-element elementor-element-6ff704f e-con-full e-flex e-con e-child" data-id="6ff704f" data-element_type="container">
 				<div class="elementor-element elementor-element-9939b02 elementor-widget elementor-widget-heading" data-id="9939b02" data-element_type="widget" data-widget_type="heading.default">
-					<h2 class="elementor-heading-title elementor-size-default">Ventes croisées</h2>				</div>
+					<h2 class="elementor-heading-title elementor-size-default">Vous pourriez être intéressé par…</h2>				</div>
 				<div class="elementor-element elementor-element-25ec2da elementor-widget-divider--view-line elementor-widget elementor-widget-divider" data-id="25ec2da" data-element_type="widget" data-widget_type="divider.default">
 							<div class="elementor-divider">
 			<span class="elementor-divider-separator">

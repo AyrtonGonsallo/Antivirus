@@ -20,6 +20,7 @@ require_once ALM_PATH . 'includes/class-devis.php';
 require_once ALM_PATH . 'includes/class-crons-urls.php';
 require_once ALM_PATH . 'includes/class-revendeur.php';
 require_once ALM_PATH . 'includes/class-wcs.php';
+require_once ALM_PATH . 'includes/class-expiration-renouvellement-cron.php';
 require_once ALM_PATH . 'includes/class-statistiques-antivirus.php';
 require_once ALM_PATH . 'includes/class-paiements-extentions.php';
 //require_once ALM_PATH . 'includes/class-ajax-login-register-popup.php';
@@ -39,7 +40,7 @@ add_action('plugins_loaded', function() {
     new ALM_Statistiques_antivirus();
     new ALM_Crons_Urls();
     new ALM_Paiements_extentions();
-    
+    new ALM_Expiration_renewal_cron();
 
     
 });

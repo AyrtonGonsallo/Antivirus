@@ -61,7 +61,13 @@ do_action( 'woocommerce_before_account_orders', $has_orders ); ?>
 								<time datetime="<?php echo esc_attr( $order->get_date_created()->date( 'c' ) ); ?>"><?php echo esc_html( wc_format_datetime( $order->get_date_created() ) ); ?></time>
 
 							<?php elseif ( 'order-status' === $column_id ) : ?>
-								<?php echo esc_html( wc_get_order_status_name( $order->get_status() ) ); ?>
+								<?php 
+									echo esc_html( wc_get_order_status_name( $order->get_status() ) ); 
+									$paiement_differe = $order->get_meta('_paiement_differe');
+									if ($order->get_meta('_paiement_differe') === 'yes') {
+										echo(' ( paiement en fin de mois )');
+									}
+								?>
 
 							<?php elseif ( 'order-total' === $column_id ) : ?>
 								<?php
@@ -82,12 +88,17 @@ do_action( 'woocommerce_before_account_orders', $has_orders ); ?>
 								
 
 							<?php elseif ( 'order-actions' === $column_id ) : ?>
+								
 								<?php
 								$actions = wc_get_account_orders_actions( $order );
 
 								if ( ! empty( $actions ) ) {
 									foreach ( $actions as $key => $action ) { // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
-										if ( empty( $action['aria-label'] ) ) {
+									
+									if($key=="cancel" && $order->get_meta('_paiement_differe') === 'yes'){
+										continue;
+									}
+									if ( empty( $action['aria-label'] ) ) {
 											// Generate the aria-label based on the action name.
 											/* translators: %1$s Action name, %2$s Order number. */
 											$action_aria_label = sprintf( __( '%1$s order number %2$s', 'woocommerce' ), $action['name'], $order->get_order_number() );

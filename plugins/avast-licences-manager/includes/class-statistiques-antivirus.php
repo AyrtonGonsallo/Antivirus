@@ -11,9 +11,35 @@ class ALM_Statistiques_antivirus {
         add_action('woocommerce_admin_order_data_after_order_details', [$this, 'add_margin_fields']);
         add_action('woocommerce_process_shop_order_meta', [$this, 'save_margin_fields']);
 
-         add_action('woocommerce_admin_order_data_after_order_details', [$this, 'add_delete_subscription_fields']);//un champ pour avoir id de la commande de reference sur une commande de renouvellment
+        add_action('woocommerce_admin_order_data_after_order_details', [$this, 'add_delete_subscription_fields']);//un champ pour avoir id de la commande de reference sur une commande de renouvellment
         add_action('wp_ajax_delete_subscriptions_from_order', [$this, 'delete_subscriptions_from_order']);
 
+        add_action('admin_head', function () {
+
+            $screen = get_current_screen();
+
+            if (!$screen) {
+                return;
+            }
+
+            $allowed_screens = [
+                'shop_order',
+                'woocommerce_page_wc-orders'
+            ];
+
+            if (!in_array($screen->id, $allowed_screens)) {
+                return;
+            }
+
+            ?>
+            <style>
+                .order_data_column {
+                    display: flex;
+                    flex-direction: column;
+                }
+            </style>
+            <?php
+        });
         
     }
 

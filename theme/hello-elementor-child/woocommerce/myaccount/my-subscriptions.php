@@ -51,7 +51,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<?php endif; ?>
 			</td>
 			<td class="subscription-status order-status woocommerce-orders-table__cell woocommerce-orders-table__cell-subscription-status woocommerce-orders-table__cell-order-status" data-title="<?php esc_attr_e( 'Status', 'woocommerce-subscriptions' ); ?>">
-				<?php echo esc_attr( wcs_get_subscription_status_name( $subscription->get_status() ) ); ?>
+				<?php 
+					echo esc_attr( wcs_get_subscription_status_name( $subscription->get_status() ) ); 
+					$paiement_differe = $order->get_meta('_paiement_differe');
+					if ($order->get_meta('_paiement_differe') === 'yes') {
+						echo(' ( paiement en fin de mois )');
+					}
+				?>
 			</td>
 			<td class="subscription-next-payment order-date woocommerce-orders-table__cell woocommerce-orders-table__cell-subscription-next-payment woocommerce-orders-table__cell-order-date" data-title="<?php echo esc_attr_x( 'Next Payment', 'table heading', 'woocommerce-subscriptions' ); ?>">
 				<?php echo esc_attr( $subscription->get_date_to_display( 'next_payment' ) ); ?>
