@@ -134,7 +134,7 @@ class ALM_Gestion_De_Comptes {
                     $revendeur_info = get_userdata($revendeur_id);
                     $prenom = $revendeur_info->first_name;
                     $nom = $revendeur_info->last_name;
-                    $role = 'Client du revendeur '.$prenom . ' ' . $nom;
+                    $role = 'Client du revendeur '.$prenom . ' ' . $nom.' ('.$billing_type_client_value.')';
                 }else{
                     $role = 'Client Direct '.$billing_type_client_value;
                 }

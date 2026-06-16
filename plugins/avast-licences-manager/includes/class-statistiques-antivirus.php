@@ -87,12 +87,41 @@ class ALM_Statistiques_antivirus {
 
         echo '<h1>Statistiques Antivirus</h1>';
 
+        echo '<div id="status-filters">
+            <label>
+                <input type="checkbox" value="Attente paiement - Commande simple" checked>
+                Attente paiement - Commande simple
+            </label><br>
+
+            <label>
+                <input type="checkbox" value="Terminée - Commande simple" checked>
+                Terminée - Commande simple
+            </label><br>
+
+            <label>
+                <input type="checkbox" value="Attente paiement - BdC automatique">
+                Attente paiement - BdC automatique
+            </label><br>
+
+            <label>
+                <input type="checkbox" value="En cours - Commande simple" checked>
+                En cours - Commande simple
+            </label><br>
+
+            <label>
+                <input type="checkbox" value="Terminée - BdC automatique">
+                Terminée - BdC automatique
+            </label>
+        </div>
+        ';
+
         echo '<table  id="myTable" class="display">';
         echo '<thead>
                 <tr>
                     <th><input type="checkbox" id="checkAll"></th>
                     <th>Commande</th>
                     <th>Status</th>
+                    <th>Type de paiement</th>
                     <th>Date de création</th>
                     <th>Date prochain renouvellement</th>
                     <th>Total TTC</th>
@@ -108,6 +137,12 @@ class ALM_Statistiques_antivirus {
 
                 $user_id = $order->get_user_id();
                 $order_id = $order->get_id();
+                $type_commande = '';
+                if ( function_exists( 'wcs_order_contains_renewal' ) && wcs_order_contains_renewal( $order ) ) {
+                    $type_commande = 'BdC automatique';
+                } else {
+                    $type_commande = 'Commande simple';
+                }
                 $user = $user_id ? get_user_by('id', $user_id) : null;
                 $order_link = admin_url('post.php?post=' . $order_id . '&action=edit');
                 $user_roles = $user ? $user->roles : ['Invité'];
@@ -119,9 +154,7 @@ class ALM_Statistiques_antivirus {
                 }
                 $status = wc_get_order_status_name($order->get_status());
                 $methode = $order->get_payment_method_title();
-                if($methode =="Paiement en fin de mois"){
-                    $status.=" (en fin de mois)";
-                }
+                
                 $pdf_url = wp_nonce_url( add_query_arg( array(
                     'action'        => 'generate_wpo_wcpdf',
                     'document_type' => 'invoice',
@@ -167,7 +200,8 @@ class ALM_Statistiques_antivirus {
                 echo '<tr>';
                 echo '<td><input type="checkbox" class="rowCheck"></td>';
                 echo '<td><span style="display:none" class="order_id">'.$order_id.'</span> <a href="' . esc_url($order_link) . '" target="_blank">#'. esc_html($order_id) . '</a><br>'.$text.'</td>';
-                echo '<td>' . ($status) . '</td>';
+                echo '<td>' . ($status) .' - '.$type_commande. '</td>';
+                echo '<td>' . ($methode) . '</td>';
                 echo '<td  data-order="'.esc_attr($order_date).'">' . esc_html($order->get_date_created()->date('d/m/Y H:i')) . '</td>';
                 echo '<td data-order="'.esc_attr($order_closest_date).'">'. esc_html(date('d/m/Y H:i', $closest_date)). '</td>';
                 echo '<td>' . wc_price($order->get_total()) . '</td>';
@@ -229,7 +263,7 @@ class ALM_Statistiques_antivirus {
         .dt-paging-button{background: #ff77006e !important;color: #fff !important}
         </style>";
         echo "<script>
-            new DataTable('#myTable', {
+            const table = new DataTable('#myTable', {
                 pageLength: 50,
                 info: false,
                 language: {
@@ -239,6 +273,7 @@ class ALM_Statistiques_antivirus {
                 columns: [
                     { orderable: false },
                     { orderable: true },
+                     { orderable: true },
                     { orderable: true },
                      { orderable: true },
                      { orderable: true },
@@ -250,6 +285,29 @@ class ALM_Statistiques_antivirus {
             });
 
             jQuery(document).ready(function($){
+
+                function applyStatusFilter() {
+                    let selected = [];
+
+                    $('#status-filters input[type=checkbox]:checked').each(function() {
+                        selected.push($(this).val());
+                    });
+
+                    if (selected.length === 0) {
+                        table.column(2).search('').draw();
+                        return;
+                    }
+
+                    let regex = '^(' + selected.join('|') + ')$';
+
+                    table.column(2).search(regex, true, false).draw();
+                }
+
+                $('#status-filters input[type=checkbox]').on('change', applyStatusFilter);
+
+                // Appliquer les filtres cochés par défaut
+                applyStatusFilter();
+               
                 $('#checkAll').on('click', function() {
                     $('.rowCheck').prop('checked', this.checked);
                 });
