@@ -58,10 +58,94 @@ class ALM_Statistiques_antivirus {
 
     }
 
-    function format_role($role) {
-        // Exemple : majuscule et remplacement de "_" par " "
-        $res = ucwords(str_replace('customer_', '', $role));
-        return $res;
+    function get_custom_statut($statut, $methode, $is_renewal)
+    {
+        // Statuts figés
+        if ($statut === 'Terminée') {
+            return 'Terminée';
+        }
+
+        if ($statut === 'Annulée') {
+            return 'Annulée';
+        }
+
+        // Configuration centralisée
+        $mapping = [
+
+            'Attente paiement' => [
+
+                false => [ // commande normale
+
+                    'Carte de crédit/débit' => 'Attente de paiement - Carte',
+                    'Paiement en fin de mois' => 'Attente de paiement - fin de mois - pas livré',
+                    'Virement bancaire' => 'Attente de paiement - Virement',
+                    'Paiement par mandat administratif' => 'Attente de paiement - mandat adm - pas livré',
+                    'Paiements par chèque' => 'Attente de paiement - chèque',
+                ],
+
+                true => [ // renewal
+
+                    'Carte de crédit/débit' => 'Attente de paiement - BdC automatique',
+                    'Paiement en fin de mois' => 'Attente de paiement - BdC automatique',
+                    'Virement bancaire' => 'Attente de paiement - BdC automatique',
+                    'Paiement par mandat administratif' => 'Attente de paiement - BdC automatique',
+                    'Paiements par chèque' => 'Attente de paiement - BdC automatique',
+                ]
+            ],
+
+            'En attente' => [
+
+                false => [ // commande normale
+
+                    'Carte de crédit/débit' => 'Attente de paiement - Carte',
+                    'Paiement en fin de mois' => 'Attente de paiement - fin de mois - pas livré',
+                    'Virement bancaire' => 'Attente de paiement - Virement',
+                    'Paiement par mandat administratif' => 'Attente de paiement - mandat adm - pas livré',
+                    'Paiements par chèque' => 'Attente de paiement - chèque',
+                ],
+
+                true => [ // renewal
+
+                    'Carte de crédit/débit' => 'Attente de paiement - BdC automatique',
+                    'Paiement en fin de mois' => 'Attente de paiement - BdC automatique',
+                    'Virement bancaire' => 'Attente de paiement - BdC automatique',
+                    'Paiement par mandat administratif' => 'Attente de paiement - BdC automatique',
+                    'Paiements par chèque' => 'Attente de paiement - BdC automatique',
+                ]
+            ],
+
+            'En cours' => [
+
+                false => [
+                    'default' => 'En cours',
+                    'Paiement en fin de mois' => 'Attente de paiement - fin de mois - livré',
+                    'Paiement par mandat administratif' => 'Attente de paiement - mandat adm - livré',
+                ],
+
+                true => [
+                    'default' => 'En cours - BdC automatique'
+                ]
+            ]
+
+        ];
+
+        if (
+            isset($mapping[$statut]) &&
+            isset($mapping[$statut][$is_renewal])
+        ) {
+
+            $config = $mapping[$statut][$is_renewal];
+
+            if (isset($config[$methode])) {
+                return $config[$methode];
+            }
+
+            if (isset($config['default'])) {
+                return $config['default'];
+            }
+        }
+
+        return $statut;
     }
 
     /**
@@ -88,30 +172,55 @@ class ALM_Statistiques_antivirus {
         echo '<h1>Statistiques Antivirus</h1>';
 
         echo '<div id="status-filters">
-            <label>
-                <input type="checkbox" value="Attente paiement - Commande simple" checked>
-                Attente paiement - Commande simple
-            </label><br>
+            <div class="colonnes">
+                <div class="colonne">
+                    <label>
+                        <input type="checkbox" value="Terminée" >
+                        Terminée
+                    </label>
 
-            <label>
-                <input type="checkbox" value="Terminée - Commande simple" checked>
-                Terminée - Commande simple
-            </label><br>
+                    <label>
+                        <input type="checkbox" value="Attente paiement - BdC automatique">
+                        Attente paiement - BdC automatique
+                    </label>
 
-            <label>
-                <input type="checkbox" value="Attente paiement - BdC automatique">
-                Attente paiement - BdC automatique
-            </label><br>
+                    <label>
+                        <input type="checkbox" value="Attente de paiement - chèque">
+                        Attente de paiement - chèque
+                    </label>
 
-            <label>
-                <input type="checkbox" value="En cours - Commande simple" checked>
-                En cours - Commande simple
-            </label><br>
+                    <label>
+                        <input type="checkbox" value="Attente de paiement - virement">
+                        Attente de paiement - virement
+                    </label>
 
-            <label>
-                <input type="checkbox" value="Terminée - BdC automatique">
-                Terminée - BdC automatique
-            </label>
+             
+
+                </div>
+
+                <div class="colonne">
+
+                    <label>
+                        <input type="checkbox" value="Attente de paiement - mandat adm - pas livré">
+                        Attente de paiement - mandat adm - pas livré
+                    </label>
+
+                    <label>
+                        <input type="checkbox" value="Attente de paiement - mandat adm - livré">
+                        Attente de paiement - mandat adm - livré
+                    </label>
+
+                    <label>
+                        <input type="checkbox" value="Attente de paiement - fin de mois - pas livré">
+                        Attente de paiement - fin de mois - pas livré
+                    </label>
+
+                    <label>
+                        <input type="checkbox" value="Attente de paiement - fin de mois - livré">
+                        Attente de paiement - fin de mois - livré
+                    </label>
+                </div>
+            </div>
         </div>
         ';
 
@@ -138,9 +247,13 @@ class ALM_Statistiques_antivirus {
                 $user_id = $order->get_user_id();
                 $order_id = $order->get_id();
                 $type_commande = '';
+                $is_renewal = false;
+    
                 if ( function_exists( 'wcs_order_contains_renewal' ) && wcs_order_contains_renewal( $order ) ) {
                     $type_commande = 'BdC automatique';
+                    $is_renewal = true;
                 } else {
+                    $is_renewal = false;
                     $type_commande = 'Commande simple';
                 }
                 $user = $user_id ? get_user_by('id', $user_id) : null;
@@ -154,6 +267,7 @@ class ALM_Statistiques_antivirus {
                 }
                 $status = wc_get_order_status_name($order->get_status());
                 $methode = $order->get_payment_method_title();
+                $custom_statut = $this->get_custom_statut($status,$methode,$is_renewal);
                 
                 $pdf_url = wp_nonce_url( add_query_arg( array(
                     'action'        => 'generate_wpo_wcpdf',
@@ -200,7 +314,7 @@ class ALM_Statistiques_antivirus {
                 echo '<tr>';
                 echo '<td><input type="checkbox" class="rowCheck"></td>';
                 echo '<td><span style="display:none" class="order_id">'.$order_id.'</span> <a href="' . esc_url($order_link) . '" target="_blank">#'. esc_html($order_id) . '</a><br>'.$text.'</td>';
-                echo '<td>' . ($status) .' - '.$type_commande. '</td>';
+                echo '<td>' . ($custom_statut) .'</td>';
                 echo '<td>' . ($methode) . '</td>';
                 echo '<td  data-order="'.esc_attr($order_date).'">' . esc_html($order->get_date_created()->date('d/m/Y H:i')) . '</td>';
                 echo '<td data-order="'.esc_attr($order_closest_date).'">'. esc_html(date('d/m/Y H:i', $closest_date)). '</td>';
@@ -261,6 +375,7 @@ class ALM_Statistiques_antivirus {
          table.dataTable thead>tr>th.dt-orderable-desc .dt-column-order:after{ opacity: .425 !important; color:black !important}
         .dt-paging-button.current{background: #ff7800 !important;}
         .dt-paging-button{background: #ff77006e !important;color: #fff !important}
+        .colonnes{display:flex;gap:30px}.colonne{display: flex;flex-direction: column;}
         </style>";
         echo "<script>
             const table = new DataTable('#myTable', {
@@ -299,6 +414,7 @@ class ALM_Statistiques_antivirus {
                     }
 
                     let regex = '^(' + selected.join('|') + ')$';
+                    console.log(regex)
 
                     table.column(2).search(regex, true, false).draw();
                 }

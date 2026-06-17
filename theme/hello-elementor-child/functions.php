@@ -72,7 +72,10 @@ function create_faq_post_type() {
         'show_ui'            => true,
         'show_in_menu'       => true,
         'query_var'          => true,
-        'rewrite'            => array('slug' => 'faq'),
+        'rewrite' => [
+            'slug' => 'faq',
+            'with_front' => false
+        ],
         'capability_type'    => 'post',
         'has_archive'        => true,
         'hierarchical'       => false,
