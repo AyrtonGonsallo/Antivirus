@@ -167,6 +167,11 @@ function init_paiement_differe_gateway() {
             if ($is_subscription) {
                 $order->update_meta_data('_is_subscription_order', 'yes');
             }
+
+            $order_id = $order->get_id();
+            $user_id = $order->get_user_id();
+            $client_email = $order->get_billing_email();
+            $this->send_email_to_client($order_id, $user_id, $client_email);
             
             $order->save();
 
@@ -220,6 +225,131 @@ function init_paiement_differe_gateway() {
         public function delete_renewal_meta($renewal_order) {
             delete_post_meta($renewal_order->get_id(), '_paiement_differe_date');
         }
+
+
+        function send_email_to_client($order_id, $user_id,$client_email,) {
+
+            $invoice = wcpdf_get_document('invoice', [$order_id], true);
+
+            $pdf_path = null;
+
+            if ($invoice) {
+                // Get raw PDF binary data
+                $pdf_data = $invoice->get_pdf();
+
+                if (!$pdf_data) {
+                    return false;
+                }
+
+                // Save to a temp file in the uploads directory
+                $upload_dir  = wp_upload_dir();
+                $filename    = 'invoice-order-' . $order_id . '.pdf';
+                $pdf_path    = $upload_dir['path'] . '/' . $filename;
+                $pdf_url     = $upload_dir['url']  . '/' . $filename;
+
+                // Write the binary data to disk
+                file_put_contents($pdf_path, $pdf_data);
+            }
+
+
+            $headers = array(
+                'Content-Type: text/html; charset=UTF-8',
+                'Cc: ayrtongonsallo444@gmail.com'
+            );
+
+
+            
+            $prenom = get_user_meta($user_id, 'first_name', true);
+            $nom = get_user_meta($user_id, 'last_name', true);
+            $civilite = get_user_meta($user_id, 'civilite', true); 
+
+            error_log('email paiement fin de mois envoyé à '.$civilite.' '.$nom.' '.$prenom);
+            if ($invoice) {
+                error_log('avec facture '.$pdf_path);
+            }else{
+                error_log('sans facture ');
+            }
+            
+            
+
+
+        
+            $message = '
+            <div style="
+                width:100%;
+                font-family:Arial, sans-serif;
+            ">
+
+                <div class="content1" style="
+                    max-width:600px;
+                    margin:0 auto;
+                    background:white;
+                    padding:30px;
+                    border-radius:8px;
+                    text-align:start;
+                    box-shadow:0 0 10px rgba(0,0,0,0.08);
+                ">
+
+                <h4 style="margin:20px 0;
+                            color:#FF7800;
+                            font-weight:bolder;
+                            text-align:center;
+                            font-size:18px;
+                        ">Vous avez choisi de régler votre commande en fin de mois</h4>
+                
+                    
+                        Bonjour '.$civilite.' '.$nom.' '.$prenom.',
+                        <br>
+                    Merci pour votre commande Avast ! Vous avez choisi de régler votre commande en fin de mois.
+
+                    Banque: CIC PLOERMEL<br>
+                    Titulaire du compte: EU4CMS<br>
+                    Banque: 30047<br>
+                    Guichet: 14030<br>
+                    N° de compte: 00020452801<br>
+                    Clé: 64<br>
+
+                    <br>
+                    <br>
+
+                    IBAN: FR76 30047 14030 00020452801 64<br>
+                    BIC: CMCIFRPP<br>
+                    Intitulé de l’opération: '.$order_id.'
+                    <br>
+
+
+                    <br>
+                    Votre commande sera traitée et vos codes d’activations Avast vous seront livrés dès réception de votre paiement. Vous serez averti par Email lorsque vos codes d’activations seront à votre disposition dans votre espace client, généralement dans les 48 à 72h suivant la réception de votre paiement.
+                    Si vous rencontrez une quelconque difficulté pour commander votre logiciel Avast, n’hésitez pas à nous en faire part, en répondant à cet Email. Nous vous répondrons dans les plus brefs délais.
+                    Merci pour votre confiance et à très bientôt,<br>
+
+
+                    L’Equipe AVAST<br>
+                    contact@avastedition.com<br>
+                    02 55 99 31 37<br>
+
+                    <br>
+                    <br>
+                    P.S. Le paiement en fin de mois est réservé exclusivement aux revendeurs.
+
+
+                </div>
+
+            </div>
+            ';
+
+
+
+            $sent = wp_mail(
+                $client_email,
+                'Commande : Vous avez choisi de régler votre commande en fin de mois',
+                $message,
+                $headers,
+                array($pdf_path) // pièce jointe
+            );
+        }
+
+
     }
 
     /**

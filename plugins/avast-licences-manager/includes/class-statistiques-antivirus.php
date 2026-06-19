@@ -159,7 +159,7 @@ class ALM_Statistiques_antivirus {
         }
 
         $orders = wc_get_orders([
-            'limit' => 50,
+            'limit' => -1,
             'orderby' => 'date',
             'order' => 'DESC'
         ]);

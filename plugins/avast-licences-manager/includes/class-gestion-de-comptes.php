@@ -19,8 +19,8 @@ class ALM_Gestion_De_Comptes {
         
             
         // Hooks WooCommerce
-        add_action('woocommerce_save_account_details', [$this, 'save_account_fields']);
-        add_action('profile_update', [$this, 'save_account_fields']);
+        add_action('woocommerce_save_account_details', [$this, 'save_account_fields'], 10, 1 );//quand on met a jour detail du compte
+        add_action('profile_update', [$this, 'save_account_fields'], 10, 1 );//quand on met a jour dans l'admin
         add_action( 'user_register', [$this, 'wc_save_custom_registration_field'], 10, 1 );
 
         // Back Office WordPress
@@ -100,7 +100,11 @@ class ALM_Gestion_De_Comptes {
     public function auto_connexion_colomns($columns) {
 
         unset( $columns['posts'] );
-        unset( $columns['role'] ); // Remove the "user_tag" column
+        unset( $columns['role'] ); 
+        unset( $columns['is_active_subscriber'] ); // Example key for subscriptions
+        unset( $columns['jetpack_tags'] );         // Example key for Jetpack tags
+        unset( $columns['user_tag'] );
+
         $columns['auto_login'] = 'Auto connexion';
         $columns['type_client'] = 'Type de client';
         return $columns;
@@ -536,6 +540,8 @@ class ALM_Gestion_De_Comptes {
 
     public function save_account_fields($user_id) {
 
+        
+
         // helper safe POST
         $post = $_POST;
 
@@ -543,12 +549,17 @@ class ALM_Gestion_De_Comptes {
             return isset($post[$key]) ? sanitize_text_field($post[$key]) : '';
         };
 
+        error_log(sprintf(' savegarde %s %s',$user_id, $post['type_client']));
+
         update_user_meta($user_id, 'denomination', $get('denomination'));
         update_user_meta($user_id, 'ville', $get('ville'));
         update_user_meta($user_id, 'code_postal', $get('code_postal'));
 
         update_user_meta($user_id, 'billing_postcode', $get('code_postal'));
         update_user_meta($user_id, 'shipping_postcode', $get('code_postal'));
+
+        update_user_meta($user_id, 'billing_type_client', $get('billing_type_client'));
+        update_user_meta($user_id, 'type_client', $get('type_client'));
 
         update_user_meta($user_id, 'pays', $get('pays'));
         update_user_meta($user_id, 'billing_country', $get('pays'));
@@ -664,18 +675,39 @@ class ALM_Gestion_De_Comptes {
                 <td><input type="checkbox" name="optin_promos" id="optin_promos" value="yes" <?php checked($optin_promos, 'yes'); ?> /></td>
             </tr>
 
+            <tr>
+                <th><label for="type_client">Type de client </label></th>
+                <td>
+                    <select name="type_client" id="type_client">
+                        <option value="">-- Sélectionner --</option>
+                        <option value="particulier" <?php selected($type_client, 'particulier'); ?>>Particulier</option>
+                        <option value="professionnel" <?php selected($type_client, 'professionnel'); ?>>Professionnel</option>
+                        <option value="revendeur" <?php selected($type_client, 'revendeur'); ?>>Revendeur</option>
+                        <option value="association_ou_institution" <?php selected($type_client, 'association_ou_institution'); ?>>Association ou Institution</option>
+                    </select>
+                </td>
+            </tr>
+
+             <tr>
+                <th><label for="billing_type_client">Type de client (facturation)</label></th>
+                <td>
+                    <select name="billing_type_client" id="billing_type_client">
+                        <option value="">-- Sélectionner --</option>
+                        <option value="particulier" <?php selected($type_client, 'particulier'); ?>>Particulier</option>
+                        <option value="professionnel" <?php selected($type_client, 'professionnel'); ?>>Professionnel</option>
+                        <option value="revendeur" <?php selected($type_client, 'revendeur'); ?>>Revendeur</option>
+                        <option value="association_ou_institution" <?php selected($type_client, 'association_ou_institution'); ?>>Association ou Institution</option>
+                    </select>
+                </td>
+            </tr>
+
             <?php if (in_array('customer_direct', $user->roles)) : ?>
                 <tr>
                     <th><label for="optin_expiration">Informer de l’expiration des licences</label></th>
                     <td><input type="checkbox" name="optin_expiration" id="optin_expiration" value="yes" <?php checked($optin_expiration, 'yes'); ?> /></td>
                 </tr>
 
-                <tr>
-                <th><label for="type_client">Type de client</label></th>
-                <td>
-                    <input type="text" name="type_client" id="type_client" value="<?php echo esc_attr($type_client); ?>" class="regular-text" />
-                </td>
-            </tr>
+              
 
             <tr>
                 <th><label for="denomination">Dénomination sociale</label></th>
