@@ -1118,3 +1118,23 @@ add_shortcode('prix_promo_auto', function() {
 
     return '';
 });
+
+
+
+
+function no_results_shortcode() {
+
+    $search = get_search_query();
+
+    ob_start();
+    ?>
+    
+    
+            Nous n'avons pas trouvé de résultats pour votre recherche
+            "<?php echo esc_html($search); ?>"
+       
+    <?php
+    return ob_get_clean();
+}
+
+add_shortcode('no_results', 'no_results_shortcode');

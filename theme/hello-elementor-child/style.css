@@ -303,6 +303,17 @@ button.cr-all-reviews-add-review{font-family: 'Raleway';font-weight: 600; margin
 .woocommerce-product-rating, .cr-all-reviews-shortcode .commentlist{display: none !important;}
 a.cr-review-form-continue{font-family: 'Raleway';font-weight: 600; margin-bottom: 10px !important; border-radius: 7px 7px 7px 7px !important;}
 a.cr-review-form-continue:hover{background-color: #00bbff !important;}
+
+.cr-all-reviews-shortcode .cr-summaryBox-wrap .cr-add-review-wrap .cr-all-reviews-add-review, .cr-reviews-grid .cr-summaryBox-wrap .cr-add-review-wrap .cr-all-reviews-add-review {
+    background-color: #FF7800 !important;
+}
+.cr-all-reviews-shortcode .cr-review-form-wrap .cr-review-form-buttons .cr-review-form-submit, .cr-ajax-reviews-review-form .cr-review-form-wrap .cr-review-form-buttons .cr-review-form-submit, .cr-reviews-grid .cr-review-form-wrap .cr-review-form-buttons .cr-review-form-submit, .cr-qna-block .cr-review-form-buttons .cr-review-form-submit{
+    background-color: #FF7800 !important;
+}
+.cr-all-reviews-shortcode .cr-review-form-res .cr-review-form-result .cr-review-form-continue, .cr-ajax-reviews-review-form .cr-review-form-res .cr-review-form-result .cr-review-form-continue, .cr-all-reviews-shortcode .cr-review-form-not-logged-in .cr-review-form-continue, .cr-ajax-reviews-review-form .cr-review-form-not-logged-in .cr-review-form-continue, .cr-reviews-grid .cr-review-form-res .cr-review-form-result .cr-review-form-continue, .cr-reviews-grid .cr-review-form-not-logged-in .cr-review-form-continue, .cr-qna-block .cr-review-form-res .cr-review-form-result .cr-review-form-continue, .cr-qna-block .cr-review-form-not-logged-in .cr-review-form-continue{
+     background-color: #FF7800 !important;
+}
+
 /******************************* page single product ************************************/
 .variables-prodct ins { text-decoration: none !important;}
 .variables-prodct .woocommerce-Price-amount.amount.remisable{display: flex;}
@@ -787,8 +798,9 @@ a.woocommerce-button.button.view.afrfq-view-quote:hover, body .afrfq-quote-actio
 .prod-shop span.price { display: flex !important; flex-direction: column !important; align-items: flex-start !important; width: fit-content;margin: auto;gap:3px !important;}
 .prod-shop del bdi, .prod-shop ins bdi {text-decoration: none !important; display: flex !important;  gap: 10px !important;  align-items: flex-end;}
 .prod-shop ins bdi{font-size: 48px;}
-.prod-shop ul.products li.product span.onsale {right: 18px !important;top: -87px !important;}
 
+.elementor-location-archive ul.products li.product span.onsale {right: -5px !important;top: -14px !important;}
+.cross-sells  ul.products li.product span.onsale {right: -5px !important;top: -120px !important;}
 
 .prod-shop ul.products li.product a img { width: revert-layer; margin-inline: auto!important; margin-top: -100px !important;}
 

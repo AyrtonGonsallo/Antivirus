@@ -539,102 +539,96 @@ class ALM_Gestion_De_Comptes {
 
 
     public function save_account_fields($user_id) {
-
-        
-
-        // helper safe POST
+    
         $post = $_POST;
-
-        $get = function($key) use ($post) {
-            return isset($post[$key]) ? sanitize_text_field($post[$key]) : '';
+        
+        // Helper : met à jour UNIQUEMENT si le champ est présent dans POST
+        $maybe_update = function($meta_key, $post_key = null) use ($user_id, $post) {
+            $post_key = $post_key ?? $meta_key;
+            if (!array_key_exists($post_key, $post)) {
+                return; // champ absent → on ne touche pas la valeur existante
+            }
+            update_user_meta($user_id, $meta_key, sanitize_text_field($post[$post_key]));
         };
 
-        error_log(sprintf(' savegarde %s %s',$user_id, $post['type_client']));
+        error_log(sprintf('savegarde %s %s', $user_id, $post['type_client'] ?? ''));
 
-        update_user_meta($user_id, 'denomination', $get('denomination'));
-        update_user_meta($user_id, 'ville', $get('ville'));
-        update_user_meta($user_id, 'code_postal', $get('code_postal'));
+        // Champs simples : mis à jour seulement si présents dans POST
+        $maybe_update('denomination');
+        $maybe_update('ville');
+        $maybe_update('civilite');
+        $maybe_update('pays');
+        $maybe_update('billing_type_client');
+        $maybe_update('type_client');
+        $maybe_update('billing_address_1');
+        $maybe_update('billing_phone');
 
-        update_user_meta($user_id, 'billing_postcode', $get('code_postal'));
-        update_user_meta($user_id, 'shipping_postcode', $get('code_postal'));
+        // Code postal → sync 3 clés depuis 1 champ POST
+        if (array_key_exists('code_postal', $post)) {
+            $val = sanitize_text_field($post['code_postal']);
+            update_user_meta($user_id, 'code_postal',       $val);
+            update_user_meta($user_id, 'billing_postcode',  $val);
+            update_user_meta($user_id, 'shipping_postcode', $val);
+        }
 
-        update_user_meta($user_id, 'billing_type_client', $get('billing_type_client'));
-        update_user_meta($user_id, 'type_client', $get('type_client'));
+        // Pays → sync 3 clés
+        if (array_key_exists('pays', $post)) {
+            $val = sanitize_text_field($post['pays']);
+            update_user_meta($user_id, 'pays',             $val);
+            update_user_meta($user_id, 'billing_country',  $val);
+            update_user_meta($user_id, 'shipping_country', $val);
+        }
 
-        update_user_meta($user_id, 'pays', $get('pays'));
-        update_user_meta($user_id, 'billing_country', $get('pays'));
-        update_user_meta($user_id, 'shipping_country', $get('pays'));
+        // Checkboxes : seulement si la page "détails compte" est concernée
+        // (elles sont absentes du POST quand décochées, mais aussi absentes sur d'autres pages)
+        if (array_key_exists('optin_promos', $post) || $this->is_account_details_page()) {
+            update_user_meta($user_id, 'optin_promos', isset($post['optin_promos']) ? 'yes' : 'no');
+        }
+        if (array_key_exists('optin_expiration', $post) || $this->is_account_details_page()) {
+            update_user_meta($user_id, 'optin_expiration', isset($post['optin_expiration']) ? 'yes' : 'no');
+        }
 
-        update_user_meta($user_id, 'civilite', $get('civilite'));
-        update_user_meta($user_id, 'billing_address_1', $get('billing_address_1'));
-        update_user_meta($user_id, 'billing_phone', $get('billing_phone'));
-
-        update_user_meta(
-            $user_id,
-            'optin_promos',
-            isset($post['optin_promos']) ? 'yes' : 'no'
-        );
-
-        update_user_meta(
-            $user_id,
-            'optin_expiration',
-            isset($post['optin_expiration']) ? 'yes' : 'no'
-        );
-
-        $user_info = get_userdata($user_id);
+        // Rôles
+        $user_info  = get_userdata($user_id);
         $user_roles = $user_info ? $user_info->roles : [];
 
-        // ⚠️ FIX NOM CHAMP (important)
+        // Paiement fin de mois (revendeur)
         if (in_array('customer_revendeur', $user_roles, true)) {
-
-            if (isset($post['paiement_en_fin_de_mois'])) {
-                update_user_meta(
-                    $user_id,
-                    'paiement_en_fin_de_mois', // corrigé
+            if (array_key_exists('paiement_en_fin_de_mois', $post)) {
+                update_user_meta($user_id, 'paiement_en_fin_de_mois',
                     sanitize_text_field($post['paiement_en_fin_de_mois'])
                 );
             }
         }
 
-        if (isset($post['new_revendeur_account_regime_tva'])) {
-
-            $regime = (int) $post['new_revendeur_account_regime_tva'];
-
+        // Régime TVA
+        if (array_key_exists('new_revendeur_account_regime_tva', $post)) {
+            $regime      = (int) $post['new_revendeur_account_regime_tva'];
             $is_revendeur = in_array('customer_revendeur', $user_roles, true);
-
-            $prefix_key = $is_revendeur
-                ? 'new_revendeur_account_prefixe_tva'
-                : 'new_account_prefixe_tva';
-
-            $tva_key = $is_revendeur
-                ? 'new_revendeur_account_tva_intra'
-                : 'new_account_tva_intra';
+            $regime_key  = $is_revendeur ? 'new_revendeur_account_regime_tva' : 'new_account_regime_tva';
+            $prefix_key  = $is_revendeur ? 'new_revendeur_account_prefixe_tva' : 'new_account_prefixe_tva';
+            $tva_key     = $is_revendeur ? 'new_revendeur_account_tva_intra'   : 'new_account_tva_intra';
 
             if ($regime === 1) {
-
-                update_user_meta($user_id,
-                    $is_revendeur ? 'new_revendeur_account_regime_tva' : 'new_account_regime_tva',
-                    'HT_UE'
-                );
-
-                update_user_meta($user_id, $prefix_key, $get('new_revendeur_account_prefixe_tva'));
-                update_user_meta($user_id, $tva_key, $get('new_revendeur_account_tva_intra'));
-
+                update_user_meta($user_id, $regime_key, 'HT_UE');
+                if (array_key_exists('new_revendeur_account_prefixe_tva', $post)) {
+                    update_user_meta($user_id, $prefix_key, sanitize_text_field($post['new_revendeur_account_prefixe_tva']));
+                }
+                if (array_key_exists('new_revendeur_account_tva_intra', $post)) {
+                    update_user_meta($user_id, $tva_key, sanitize_text_field($post['new_revendeur_account_tva_intra']));
+                }
             } elseif ($regime === 3) {
-
-                update_user_meta($user_id,
-                    $is_revendeur ? 'new_revendeur_account_regime_tva' : 'new_account_regime_tva',
-                    'HT'
-                );
-
+                update_user_meta($user_id, $regime_key, 'HT');
             } elseif ($regime === 2) {
-
-                update_user_meta($user_id,
-                    $is_revendeur ? 'new_revendeur_account_regime_tva' : 'new_account_regime_tva',
-                    'TVA'
-                );
+                update_user_meta($user_id, $regime_key, 'TVA');
             }
         }
+    }
+
+    // Helper pour détecter la page "détails du compte" (checkboxes)
+    private function is_account_details_page(): bool {
+        return isset($_POST['action']) && $_POST['action'] === 'save_account_details'
+            || (is_account_page() && isset($_POST['save_account_details']));
     }
 
      public function show_admin_user_fields($user) {

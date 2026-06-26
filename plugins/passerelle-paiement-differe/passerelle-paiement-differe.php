@@ -302,24 +302,11 @@ function init_paiement_differe_gateway() {
                         <br>
                     Merci pour votre commande Avast ! Vous avez choisi de régler votre commande en fin de mois.
 
-                    Banque: CIC PLOERMEL<br>
-                    Titulaire du compte: EU4CMS<br>
-                    Banque: 30047<br>
-                    Guichet: 14030<br>
-                    N° de compte: 00020452801<br>
-                    Clé: 64<br>
-
-                    <br>
-                    <br>
-
-                    IBAN: FR76 30047 14030 00020452801 64<br>
-                    BIC: CMCIFRPP<br>
-                    Intitulé de l’opération: '.$order_id.'
-                    <br>
+                    
 
 
                     <br>
-                    Votre commande sera traitée et vos codes d’activations Avast vous seront livrés dès réception de votre paiement. Vous serez averti par Email lorsque vos codes d’activations seront à votre disposition dans votre espace client, généralement dans les 48 à 72h suivant la réception de votre paiement.
+                    Votre commande sera traitée et vos codes d’activations Avast vous seront livrés. Vous serez averti par Email lorsque vos codes d’activations seront à votre disposition dans votre espace client, généralement dans les 48 à 72h suivant la réception de votre commande.
                     Si vous rencontrez une quelconque difficulté pour commander votre logiciel Avast, n’hésitez pas à nous en faire part, en répondant à cet Email. Nous vous répondrons dans les plus brefs délais.
                     Merci pour votre confiance et à très bientôt,<br>
 

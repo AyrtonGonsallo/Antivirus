@@ -6,7 +6,7 @@ class ALM_Statistiques_antivirus {
     public function __construct() {
         add_action('admin_menu', [$this, 'add_admin_menu']);
 
-        add_action('wp_ajax_export_orders_csv',  [$this, 'export_orders_csv']); 
+        add_action('wp_ajax_export_orders_xlsx',  [$this, 'export_orders_xlsx']); 
 
         add_action('woocommerce_admin_order_data_after_order_details', [$this, 'add_margin_fields']);
         add_action('woocommerce_process_shop_order_meta', [$this, 'save_margin_fields']);
@@ -232,7 +232,7 @@ class ALM_Statistiques_antivirus {
                     <th>Status</th>
                     <th>Type de paiement</th>
                     <th>Date de création</th>
-                    <th>Date prochain renouvellement</th>
+                    <th>Clés de licence</th>
                     <th>Total TTC</th>
                     <th>Utilisateur</th>
                     <th>Rôle</th>
@@ -268,6 +268,23 @@ class ALM_Statistiques_antivirus {
                 $status = wc_get_order_status_name($order->get_status());
                 $methode = $order->get_payment_method_title();
                 $custom_statut = $this->get_custom_statut($status,$methode,$is_renewal);
+                $cles = '';
+
+
+                // Retrieve license keys associated with the order ID using the LMFWC Controller
+                $license_keys = \LicenseManagerForWooCommerce\Repositories\Resources\License::instance()->findAllBy(['order_id' => $order_id]);
+
+                
+                // Loop through the results to print or use the keys
+                if (!empty($license_keys)) {
+                    foreach ($license_keys as $licenseKey) {
+                        // Get the actual decrypted license key string
+                        $key_string =  esc_html($licenseKey->getDecryptedLicenseKey());
+                        $cles .=  esc_html($key_string) . '<br>--------------<br>';
+                    }
+                } else {
+                    $cles .= 'Aucune licence';
+                }
                 
                 $pdf_url = wp_nonce_url( add_query_arg( array(
                     'action'        => 'generate_wpo_wcpdf',
@@ -275,8 +292,14 @@ class ALM_Statistiques_antivirus {
                     'order_ids'     => $order->get_id(),
                     'my-account'    => true,
                 ), admin_url( 'admin-ajax.php' ) ), 'generate_wpo_wcpdf' );
-                $link_text = 'Facture';
-                $text = sprintf( '<p><a href="%s" target="_blank">%s</a></p>', esc_attr( $pdf_url ), esc_html( $link_text ) );
+
+                $invoice        = wcpdf_get_document('invoice', (array) $order->get_id(), true);
+                if ($invoice) {
+                    $invoice_number = "Facture #{$invoice->get_number()}";
+                } else {
+                    $invoice_number = "";
+                }
+                $text = sprintf( '<p><a href="%s" target="_blank">%s</a></p>', esc_attr( $pdf_url ), esc_html( $invoice_number ) );
     
                 $billing_type_client_value = get_user_meta($user_id, 'billing_type_client', true);
            
@@ -317,7 +340,7 @@ class ALM_Statistiques_antivirus {
                 echo '<td>' . ($custom_statut) .'</td>';
                 echo '<td>' . ($methode) . '</td>';
                 echo '<td  data-order="'.esc_attr($order_date).'">' . esc_html($order->get_date_created()->date('d/m/Y H:i')) . '</td>';
-                echo '<td data-order="'.esc_attr($order_closest_date).'">'. esc_html(date('d/m/Y H:i', $closest_date)). '</td>';
+                echo '<td class="cles-col">'. $cles. '</td>';
                 echo '<td>' . wc_price($order->get_total()) . '</td>';
                 echo '<td>' . ($user ? esc_html($user->display_name) : 'Invité') . '<br>';
                 echo  ($user ? esc_html($user->user_email) : '')  . '<br>';
@@ -350,7 +373,10 @@ class ALM_Statistiques_antivirus {
                             echo '<br>--------------<br>';
                         }
                     }else{
-                        echo 'pas d\'abonnements';
+                        echo 'pas d\'abonnements<br>';
+                        if($is_renewal){
+                            echo $type_commande;
+                        }
                     }
                 echo '</td>';
 
@@ -376,6 +402,7 @@ class ALM_Statistiques_antivirus {
         .dt-paging-button.current{background: #ff7800 !important;}
         .dt-paging-button{background: #ff77006e !important;color: #fff !important}
         .colonnes{display:flex;gap:30px}.colonne{display: flex;flex-direction: column;}
+        .cles-col{width: 100px; max-width:100px; min-width:100px; overflow:hidden; word-break:break-all;overflow-wrap:anywhere;}
         </style>";
         echo "<script>
             const table = new DataTable('#myTable', {
@@ -385,17 +412,18 @@ class ALM_Statistiques_antivirus {
                     search:         'Rechercher',
                     lengthMenu: 'Afficher _MENU_ commandes',
                 },
+                autoWidth: false,
                 columns: [
                     { orderable: false },
                     { orderable: true },
                      { orderable: true },
                     { orderable: true },
-                     { orderable: true },
-                     { orderable: true },
+                     { orderable: true},
+                     { orderable: true, width: '150px'  },
                     { orderable: true },
-                    { orderable: true },
-                    { orderable: false },
-                    { orderable: false }
+                    { orderable: true, width: '150px' },
+                    { orderable: false, width: '100px' },
+                    { orderable: false,width: '200px' }
                 ]
             });
 
@@ -456,7 +484,7 @@ class ALM_Statistiques_antivirus {
                     form.append($('<input>', {
                         'type': 'hidden',
                         'name': 'action',
-                        'value': 'export_orders_csv'
+                        'value': 'export_orders_xlsx'
                     }));
 
                     form.append($('<input>', {
@@ -611,6 +639,170 @@ class ALM_Statistiques_antivirus {
         fclose($output);
         exit;
     }
+
+
+
+
+    public function export_orders_xlsx() {
+        if (!current_user_can('manage_woocommerce')) {
+            wp_send_json_error('Pas la permission');
+            wp_die();
+        }
+
+        if (empty($_POST['orders'])) {
+            wp_send_json_error('Aucune commande sélectionnée');
+            wp_die();
+        }
+
+        $order_ids = array_map('intval', explode(',', $_POST['orders']));
+
+        require_once  __DIR__ . '/../libs/SimpleXLSXGen.php';
+        $rows = [];
+
+        $rows[] = [
+            'Commande', 'N° Facture','type de commande', 'Mode paiement', 'Statut', 'Societe',
+            'Nom', 'Prenom', 'Email', 'Client final', 'Rôle', 'Date Commande',
+            'Date paiement', 'Date prochain paiement', 'Pays',
+            'Total HT', 'TVA %', 'Total TVA', 'Total TTC',
+            'Prix réel', 'Marge HT', 'Abonnements / Renouvellements','Clés de licence'
+        ];
+
+        foreach ($order_ids as $order_id) {
+            $order = wc_get_order($order_id);
+            if (!$order) continue;
+
+            $user_id = $order->get_user_id();
+            $user    = $user_id ? get_user_by('id', $user_id) : null;
+            if (!$user) continue;
+
+             $is_renewal = false;
+    
+            if ( function_exists( 'wcs_order_contains_renewal' ) && wcs_order_contains_renewal( $order ) ) {
+                $type_commande = 'BdC automatique';
+                $is_renewal = true;
+            } else {
+                $is_renewal = false;
+                $type_commande = 'Commande simple';
+            }
+
+            $user_roles = $user->roles;
+            $societe    = get_user_meta($user->ID, 'denomination', true);
+            $nom        = get_user_meta($user->ID, 'last_name', true);
+            $prenom     = get_user_meta($user->ID, 'first_name', true);
+            $email      = $user->user_email;
+            $pays       = get_user_meta($user->ID, 'pays', true);
+
+            $selected_client_id = $order->get_meta('client_final');
+            $client_final_name  = $user->display_name;
+            if ($selected_client_id) {
+                $client_final      = get_user_by('id', $selected_client_id);
+                $client_final_name = $client_final ? $client_final->display_name : $client_final_name;
+            }
+
+            $billing_type_client_value = get_user_meta($user->ID, 'billing_type_client', true);
+            if (in_array('customer_direct', $user_roles)) {
+                $roles_string = 'Client Direct ' . $billing_type_client_value;
+            } elseif (in_array('customer_revendeur', $user_roles)) {
+                $roles_string = 'Revendeur';
+            } else {
+                $roles_string = '';
+            }
+
+            $status    = wc_get_order_status_name($order->get_status());
+            $total_ht  = $order->get_total() - $order->get_total_tax();
+            $total_ttc = $order->get_total();
+            $total_tva = $order->get_total_tax();
+            $margin    = get_post_meta($order_id, '_order_margin', true);
+            $real_cost = get_post_meta($order_id, '_real_cost', true);
+
+            $invoice        = wcpdf_get_document('invoice', (array) $order->get_id(), true);
+            if ($invoice) {
+                $invoice_number = "#{$invoice->get_number()}";
+            } else {
+                $invoice_number = "";
+            }
+
+            $cles = '';
+            // Retrieve license keys associated with the order ID using the LMFWC Controller
+            $license_keys = \LicenseManagerForWooCommerce\Repositories\Resources\License::instance()->findAllBy(['order_id' => $order_id]);
+
+            // Loop through the results to print or use the keys
+            if (!empty($license_keys)) {
+                foreach ($license_keys as $licenseKey) {
+                    // Get the actual decrypted license key string
+                    $key_string =  esc_html($licenseKey->getDecryptedLicenseKey());
+                    $cles .=  esc_html($key_string) . '  ';
+                }
+            } else {
+                $cles .= 'Aucune licence';
+            }
+
+            $tva_percent = ($total_ht > 0) ? round(($total_tva / $total_ht) * 100) : 0;
+
+            $subscriptions_text = '';
+            $closest_date       = null;
+
+            if (function_exists('wcs_get_subscriptions_for_order')) {
+                $subscriptions = wcs_get_subscriptions_for_order($order_id, ['order_type' => 'parent']);
+                foreach ((array) $subscriptions as $subscription) {
+                    $subs_id      = $subscription->get_id();
+                    $subs_total   = $subscription->get_total();
+                    $next_payment = $subscription->get_date('next_payment');
+                    $manual       = $subscription->get_requires_manual_renewal() ? 'manuel' : 'automatique';
+                    $subscriptions_text .= "#$subs_id | total: $subs_total | prochain paiement: "
+                        . ($next_payment ? date_i18n('d/m/Y H:i', strtotime($next_payment)) : '—')
+                        . " | renouvellement: $manual\n";
+
+                    if ($next_payment) {
+                        $ts = strtotime($next_payment);
+                        if (!$closest_date || $ts < $closest_date) {
+                            $closest_date = $ts;
+                        }
+                    }
+                }
+            }
+
+            $order_closest_date = $closest_date ? date('d/m/Y H:i', $closest_date) : '';
+
+            $rows[] = [
+                '#' . $order_id,
+                $invoice_number,
+                $type_commande,
+                $order->get_payment_method_title(),
+                $status,
+                $societe,
+                $nom,
+                $prenom,
+                $email,
+                $client_final_name,
+                $roles_string,
+                $order->get_date_created()->date('d/m/Y H:i'),
+                $order->get_date_paid() ? $order->get_date_paid()->date('d/m/Y H:i') : '',
+                $order_closest_date,
+                $pays,
+                (float) $total_ht,
+                (int) $tva_percent,
+                (float) $total_tva,
+                (float) $total_ttc,
+                (float) $real_cost,
+                (float) $margin,
+                rtrim($subscriptions_text),
+                $cles
+            ];
+        }
+
+        ob_end_clean();
+        $xlsx = \Shuchkin\SimpleXLSXGen::fromArray($rows);
+        $content = (string) $xlsx;
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="export_commandes.xlsx"');
+        header('Content-Length: ' . strlen($content));
+        header('Cache-Control: max-age=0');
+        echo $content;
+        exit;
+    }
+
+    
 
 
     public function add_margin_fields($order) {
