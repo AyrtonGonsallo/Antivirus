@@ -180,8 +180,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
         //wp_safe_redirect('/mon-compte/mes-devis/');
         exit;
     }
-$devis_id=get_the_ID();
-$status = get_field('status', $devis_id);
+    
+    $devis_id=get_the_ID();
+    $status = get_field('status', $devis_id);
 
 
 

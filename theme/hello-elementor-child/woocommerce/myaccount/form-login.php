@@ -89,7 +89,7 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 
 			<p class="form-row" id="denomination-field">
 				<label for="denomination">Dénomination sociale <span class="required">*</span></label>
-				<input type="text" maxlength="100" name="denomination" id="denomination" class="woocommerce-Input woocommerce-Input--text input-text" required value="<?php echo esc_attr($denomination); ?>"/>
+				<input type="text" maxlength="100" name="denomination" id="denomination" class="woocommerce-Input woocommerce-Input--text input-text"  value="<?php echo esc_attr($denomination); ?>"/>
 			</p>
 
 			<p class="form-row ">

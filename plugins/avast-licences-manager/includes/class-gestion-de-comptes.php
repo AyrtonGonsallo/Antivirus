@@ -5,17 +5,17 @@ class ALM_Gestion_De_Comptes {
 
     public function __construct() {
         
-            add_action('init', [$this, 'register_clients_endpoint']);
-            //→ Déclare un nouvel endpoint URL pour le compte client (ex: /mon-compte/clients)
+        add_action('init', [$this, 'register_clients_endpoint']);
+        //→ Déclare un nouvel endpoint URL pour le compte client (ex: /mon-compte/clients)
 
-            add_filter('query_vars', [$this, 'add_clients_query_var'], 0);
-            //→ Ajoute la variable clients à WordPress pour qu’elle soit reconnue dans l’URL.
+        add_filter('query_vars', [$this, 'add_clients_query_var'], 0);
+        //→ Ajoute la variable clients à WordPress pour qu’elle soit reconnue dans l’URL.
 
-            add_filter('woocommerce_account_menu_items', [$this, 'add_clients_menu_link']);
-            //→ Ajoute un nouveau lien dans le menu du compte WooCommerce (ex: “Mes clients”).
+        add_filter('woocommerce_account_menu_items', [$this, 'add_clients_menu_link']);
+        //→ Ajoute un nouveau lien dans le menu du compte WooCommerce (ex: “Mes clients”).
 
-           // add_action('woocommerce_account_clients_endpoint', [$this, 'render_clients_page']);
-            //→ Affiche la page correspondante quand l’URL /mon-compte/clients est visitée.
+        // add_action('woocommerce_account_clients_endpoint', [$this, 'render_clients_page']);
+        //→ Affiche la page correspondante quand l’URL /mon-compte/clients est visitée.
         
             
         // Hooks WooCommerce
@@ -57,6 +57,10 @@ class ALM_Gestion_De_Comptes {
 
 
         add_filter('manage_users_custom_column', [$this, 'auto_connexion_datas'], 10, 3);
+
+        add_filter('manage_users_sortable_columns', [$this, 'custom_user_sortable_columns']);
+
+        add_action('pre_get_users',[$this, 'pre_get_users_sortable_columns']); 
 
         add_action('admin_init',[$this, 'creer_auto_connexion_link_admin'] );
 
@@ -107,6 +111,7 @@ class ALM_Gestion_De_Comptes {
 
         $columns['auto_login'] = 'Auto connexion';
         $columns['type_client'] = 'Type de client';
+         $columns['date_de_creation'] = 'Date de création';
         return $columns;
     }
 
@@ -125,10 +130,24 @@ class ALM_Gestion_De_Comptes {
             return '<a class="button button-primary" href="'.$url.'">Auto connexion</a>';
         }
 
+        
+        if ($column_name === 'date_de_creation') {
+
+            $user = get_userdata($user_id);
+            if ($user) {
+                $date = $user->user_registered;
+                return date_i18n('d/m/Y H:i', strtotime($date));
+            }
+            return '-';
+        }
+
+
+
         if ($column_name === 'type_client') {
 
             $user_info = get_userdata($user_id);
-             $billing_type_client_value = get_user_meta($user_id, 'billing_type_client', true);
+            $billing_type_client_value = get_user_meta($user_id, 'billing_type_client', true);
+            $presta_id          = get_user_meta($user_id, 'presta_id', true);
              
             $user_roles = $user_info->roles; // array de tous les rôles
             if (in_array('customer_direct', $user_roles)) {
@@ -142,7 +161,6 @@ class ALM_Gestion_De_Comptes {
                 }else{
                     $role = 'Client Direct '.$billing_type_client_value;
                 }
-
                 
             } elseif (in_array('customer_revendeur', $user_roles)) {
                 $role = 'Revendeur';
@@ -150,6 +168,9 @@ class ALM_Gestion_De_Comptes {
                 $role = ''; // fallback
             }
 
+            if($presta_id){
+                $role .= '<br>Reférence sur prestashop : '.$presta_id;
+            }
            
 
             return $role;
@@ -157,6 +178,28 @@ class ALM_Gestion_De_Comptes {
 
         return $value;
 
+    }
+
+    
+
+   public function custom_user_sortable_columns($columns) {
+        // La clé doit être 'date_de_creation' et la valeur 'user_registered'
+        // pour que WordPress sache quelle colonne utiliser pour le tri
+        $columns['date_de_creation'] = 'user_registered';
+        return $columns;
+    }
+
+    public function pre_get_users_sortable_columns($query) {
+        if (!is_admin() || !$query->is_main_query()) {
+            return;
+        }
+        
+        $orderby = $query->get('orderby');
+        
+        // Vérifier si on trie par notre colonne personnalisée
+        if ($orderby === 'date_de_creation') {
+            $query->set('orderby', 'user_registered');
+        }
     }
 
     public function creer_auto_connexion_link_admin() {
@@ -648,13 +691,14 @@ class ALM_Gestion_De_Comptes {
         $fax            = get_user_meta($user->ID, 'fax', true);
         $civilite            = get_user_meta($user->ID, 'civilite', true);
         $ville          = get_user_meta($user->ID, 'ville', true);
+        $presta_id          = get_user_meta($user->ID, 'presta_id', true);
         $code_postal    = get_user_meta($user->ID, 'code_postal', true);
         $pays           = get_user_meta($user->ID, 'pays', true);
         $revendeur_id   = get_user_meta($user->ID, 'revendeur_id', true);
         $paiement_en_fin_de_mois = (get_user_meta($user->ID, 'paiement_en_fin_de_mois', true))?get_user_meta($user->ID, 'paiement_en_fin_de_mois', true):0;
 
         ?>
-        <h2>Préférences Avast</h2>
+        <h2>Préférences Avast </h2>
         <table class="form-table">
             <tr>
                 <th><label for="billing_address_1">Adresse</label></th>
@@ -692,6 +736,12 @@ class ALM_Gestion_De_Comptes {
                         <option value="revendeur" <?php selected($type_client, 'revendeur'); ?>>Revendeur</option>
                         <option value="association_ou_institution" <?php selected($type_client, 'association_ou_institution'); ?>>Association ou Institution</option>
                     </select>
+                </td>
+            </tr>
+             <tr>
+                <th><label for="presta_id">Id prestashop</label></th>
+                <td>
+                    <input type="text" name="presta_id" id="presta_id" value="<?php echo esc_attr($presta_id); ?>" class="regular-text" readonly />
                 </td>
             </tr>
 
@@ -760,6 +810,8 @@ class ALM_Gestion_De_Comptes {
                     <input type="text" name="revendeur_id" id="revendeur_id" value="<?php echo esc_attr($revendeur_id); ?>" class="regular-text" readonly />
                 </td>
             </tr>
+
+           
             <?php endif; ?>
 
             <?php if($new_revendeur_account_regime_tva){?>

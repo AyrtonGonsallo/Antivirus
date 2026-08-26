@@ -82,10 +82,14 @@ do_action( 'woocommerce_before_edit_account_form' );
 		<!--  valeur envoyée quand même -->
 		<input type="hidden" name="type_client" value="<?php echo esc_attr($type_client); ?>">
 	</p>
-	<p class="form-row ">
-        <label for="denomination">Dénomination sociale <span class="required">*</span></label>
-        <input type="text" maxlength="100" name="denomination" id="denomination" class="woocommerce-Input woocommerce-Input--text input-text" required value="<?php echo esc_attr($denomination); ?>"/>
-    </p>
+
+	<?php if ($type_client!= 'particulier'){?>
+		<p class="form-row ">
+			<label for="denomination">Dénomination sociale <span class="required">*</span></label>
+			<input type="text" maxlength="100" name="denomination" id="denomination" class="woocommerce-Input woocommerce-Input--text input-text" required value="<?php echo esc_attr($denomination); ?>"/>
+		</p>
+	<?php }?>
+	
 	
 	<div class="clear"></div>
 	<p class="woocommerce-form-row woocommerce-form-row--first form-row form-row-first">
