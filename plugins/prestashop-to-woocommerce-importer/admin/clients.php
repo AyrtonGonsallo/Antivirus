@@ -309,6 +309,28 @@ function presta_import_clients($line_start, $line_end) {
 
 
             update_user_meta($user_id, 'presta_id', $presta_id );
+
+            if( isset($new_account_regime_tva)){
+                $regime=$new_account_regime_tva;
+                if($regime=="HT_UE"){
+                   
+                    //ht ue taxe
+                    update_user_meta($user_id, 'tefw_exempt', 1);
+                    update_user_meta($user_id, 'tefw_exempt_name', $first_name.' '.$last_name);
+                    update_user_meta($user_id, 'tefw_exempt_reason', 'Exonération automatique compte "Professionnel, Association ou Institution" pour un pays dans l\'ue');
+                    update_user_meta($user_id, 'tefw_exempt_status', 'approved');
+
+                }else if ($regime=="HT"){
+                
+                    //ht taxe
+                    update_user_meta($user_id, 'tefw_exempt', 1);
+                    update_user_meta($user_id, 'tefw_exempt_name', $first_name.' '.$last_name);
+                    update_user_meta($user_id, 'tefw_exempt_reason', 'Exonération automatique compte "Professionnel, Association ou Institution" pour un pays hors UE');
+                    update_user_meta($user_id, 'tefw_exempt_status', 'approved');
+
+                }
+
+            }
            
            
             

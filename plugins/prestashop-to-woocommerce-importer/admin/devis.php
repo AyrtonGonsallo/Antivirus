@@ -169,10 +169,22 @@ function presta_import_devis($line_start, $line_end) {
             return;
         }
 
-        // Première ligne = colonnes
+         // Première ligne = colonnes
         $headers = fgetcsv($handle, 0, ';', '"', '\\');
 
+        foreach ($headers as &$header) {
+            $header = trim($header, " \t\n\r\0\x0B\xEF\xBB\xBF\"");
+        }
+        unset($header);
         
+
+        error_log('import devis ');
+        error_log('colone 0 '.$headers[0]);
+        error_log('colone 3 '.$headers[3]);
+        error_log('colone 5 '.$headers[5]);
+
+
+        $variations_devis_creees = [];
 
         $line = 1;
 
@@ -201,85 +213,340 @@ function presta_import_devis($line_start, $line_end) {
                 continue;
             }
 
-            $presta_id = intval($data['id_devis'] ?? 0);
+            $id_devis = intval($data['id_devis'] ?? 0);
 
             // =========================
-            // IMPORT DU CLIENT
+            // IMPORT DU DEVIS
             // =========================
 
 
-            /*
-            $email = sanitize_email($data['email'] ?? '');
+            $id_produit = intval($data['id_produit'] ?? 0);
+            $id_client = intval($data['id_client'] ?? 0);
+            $id_client_rvd = intval($data['id_client_rvd'] ?? 0);
+            $id_revendeur = intval($data['id_revendeur'] ?? 0);
+            $id_produit_id_woocommerce = intval($data['id_woocommerce'] ?? 0);
+            $dt_end = sanitize_text_field($data['dt_end'] ?? ''); //2034-02-06
+            $dt_devis = sanitize_text_field($data['dt_devis'] ?? ''); //2034-02-06
+            $statut_devis = sanitize_text_field($data['statut_devis'] ?? '');
+            
+            $qte = intval($data['qte'] ?? 0);
+            $duree = intval($data['duree'] ?? 0);
+            $nb_pcs = intval($data['nb_pcs'] ?? 0);
+            $produit_simple = intval($data['produit_simple'] ?? 0); 
+           
+            $is_produit_simple = $produit_simple === 1;
+            //si 1 prendre le produit
+            //$product = wc_get_product($id_produit_id_woocommerce);
+            //si 0 chercher le produit fils par duree nb_pcs les produits on des attribus number_of_computers et software_duration
+            //SELECT v.ID FROM antied_posts v INNER JOIN antied_postmeta m1 ON m1.post_id = v.ID AND m1.meta_key = 'attribute_pa_software_duration' INNER JOIN antied_postmeta m2 ON m2.post_id = v.ID AND m2.meta_key = 'attribute_pa_number_of_computers' WHERE v.post_parent = 29555 AND v.post_type = 'product_variation' AND m1.meta_value like '1%' AND m2.meta_value = 10 LIMIT 1;
+            $pu = floatval($data['pu'] ?? 0);
+            $total_lig_ht = floatval($data['total_lig_ht'] ?? 0);
+            
+            $remise_revendeur = floatval($data['remise_revendeur'] ?? 0);
+            $remise_renewal = floatval($data['remise_renewal'] ?? 0);
+            $remise_special_1 = floatval($data['remise_special_1'] ?? 0);
+            $remise_cumul = floatval($data['remise_cumul'] ?? 0);
+            $remise_statutaire = floatval($data['remise_statutaire'] ?? 0);
 
-            if (!$email || !is_email($email)) {
-                $errors++;
-                continue;
+
+            //algortithme
+            //chaque ligne a produit et commande et remises id_commande	id_produit remise_revendeur	remise_statutaire	remise_renewal	remise_special_1	remise_cumul mode_paiement	paiement_ok	id_client
+            //1) pour chaque ligne creer la commande avec id_commande, ajouter le client comme champ caché et ajouter le premier produit avec son prix custom puis ajouter les remises 
+            //2) la ligne suivante si id_commande est le meme juste ajouter le produit avec son prix custom mais ne plus ajouter les remises (elles sont les memes que sur le premier) sinon creer une autre commande et passer a 1)
+            
+
+            error_log('produit '.$id_produit);
+            error_log('is produit simple '.$is_produit_simple);
+            error_log('nb_pcs '.$nb_pcs);
+            error_log('duree '.$duree);
+
+
+            if ($id_client_rvd) {
+                // Client final WooCommerce
+                // À adapter selon ta logique de correspondance presta_id
+                $client_final_id = get_users([
+                    'meta_key'   => 'presta_id',
+                    'meta_value' => $id_client_rvd,
+                    'number'     => 1,
+                    'fields'     => 'ID',
+                ]);
+
+                if (!empty($client_final_id)) {
+                    $woo_id_client_final = $client_final_id[0];
+                }
+                
+            
             }
 
-            // Client déjà présent
-            if (email_exists($email)) {
-                $skipped++;
-                continue;
-            }
-
-            $user_id = wp_create_user(
-                $email,
-                wp_generate_password(32),
-                $email
-            );
-
-            if (is_wp_error($user_id)) {
-                $errors++;
-                continue;
-            }
-
-            wp_update_user([
-                'ID'         => $user_id,
-                'first_name' => sanitize_text_field(
-                    $data['prenom'] ?? ''
-                ),
-                'last_name'  => sanitize_text_field(
-                    $data['nom'] ?? ''
-                ),
+            $user_id = get_users([
+                'meta_key'   => 'presta_id',
+                'meta_value' => $id_client,
+                'number'     => 1,
+                'fields'     => 'ID',
             ]);
 
-            update_user_meta(
-                $user_id,
-                'billing_address_1',
-                sanitize_text_field($data['adresse'] ?? '')
-            );
+            $woo_id_client = $user_id[0];
 
-            update_user_meta(
-                $user_id,
-                'billing_city',
-                sanitize_text_field($data['ville'] ?? '')
-            );
 
-            update_user_meta(
-                $user_id,
-                'billing_postcode',
-                sanitize_text_field($data['cp'] ?? '')
-            );
+            if (!isset($variations_devis_creees[$id_devis])) {
+                 // ==========================================
+                // 1. CREATION DU DEVIS
+                // ==========================================
 
-            update_user_meta(
-                $user_id,
-                'billing_country',
-                sanitize_text_field($data['code_iso'] ?? '')
-            );
+                
 
-            update_user_meta(
-                $user_id,
-                'billing_phone',
-                sanitize_text_field($data['tel'] ?? '')
-            );
+                /* ------------------------------------------------------------------
+                Création du devis post_type=devis-en-ligne  (structure ACF)
+                ------------------------------------------------------------------*/
 
-            // Très important pour retrouver le devis Presta
-            update_user_meta(
-                $user_id,
-                'prestashop_id',
-                $presta_id
-            );
-            */
+                // 1) Créer le post "devis en ligne"
+                $post_id = wp_insert_post([
+                    'post_type'  => 'devis-en-ligne',
+                    'post_status'=> 'publish',
+                    'post_author'=> $woo_id_client,
+                    'post_title' => 'Devis du ' .$dt_devis,
+                ]);
+
+                if ( is_wp_error($post_id) ) {
+                    wp_die("Erreur lors de la création du devis : " . $post_id->get_error_message());
+                }
+
+                $date_creation = date('Y-m-d H:i:s', strtotime($dt_devis));
+                $date_expiration = date('Y-m-d H:i:s', strtotime($dt_end));
+                switch ($duree) {
+                    case 1:
+                        $software_duration = "1-year";
+                        break;
+                    case 2:
+                        $software_duration = "2-years";
+                        break;
+                    case 3:
+                        $software_duration = "3-years";
+                        break;
+                    
+                    default:
+                        $software_duration = "many-years";
+                        break;
+                }
+
+                switch ($statut_devis) {
+                    case 'Devis chiffré et envoyé':
+                        $statut_devis_key = '1';
+                        break;
+                    case 'Devis chiffré et envoyé (client import Avast)':
+                        $statut_devis_key = '2';
+                        break;
+                    case 'Nouveau devis chiffré et envoyé':
+                        $statut_devis_key = '3';
+                        break;
+                    case 'Création de la demande de devis':
+                        $statut_devis_key = '0';
+                        break;
+                    
+                    default:
+                        $statut_devis_key = '0';
+                        break;
+                }
+
+                update_field('date_de_creation', $date_creation, $post_id);
+                update_field('date_expiration', $date_expiration, $post_id);
+                update_field('option', 'ikn', $post_id);
+                update_field('software_duration', $software_duration, $post_id);
+                update_field('status', $statut_devis_key, $post_id);
+                update_field('field_692ec6324ed14', $statut_devis_key, $post_id);
+               // update_field('note_client', $comment, $post_id);
+               // update_field('field_692eaafe3985a', $comment, $post_id);
+                update_field('type_de_devis', 'client', $post_id);
+                update_field('utilisateur', $woo_id_client, $post_id);
+                update_field('field_692eab163985b', $woo_id_client, $post_id);
+                update_field('client_final', $woo_id_client_final, $post_id);
+                update_field('field_698c460ac6d81', $woo_id_client_final, $post_id);
+
+
+                $variation_devis_id = wp_insert_post([
+                    'post_type'  => 'variation-devis',
+                    'post_status'=> 'publish',
+                    'post_author'=> $woo_id_client,
+                    'post_title' => 'Variation '.$software_duration.' - Devis #'.$post_id,
+                ]);
+               
+
+
+
+                if ($is_produit_simple) {
+
+                    // Produit simple
+                    $product = wc_get_product($id_produit_id_woocommerce);
+
+                } else {
+
+                    // Produit variable : chercher la variation
+                    global $wpdb;
+
+                    $variation_id = $wpdb->get_var(
+                        $wpdb->prepare(
+                            "
+                            SELECT v.ID
+                            FROM {$wpdb->posts} v
+
+                            INNER JOIN {$wpdb->postmeta} m1
+                                ON m1.post_id = v.ID
+                                AND m1.meta_key = 'attribute_pa_software_duration'
+
+                            INNER JOIN {$wpdb->postmeta} m2
+                                ON m2.post_id = v.ID
+                                AND m2.meta_key = 'attribute_pa_number_of_computers'
+
+                            WHERE v.post_parent = %d
+                            AND v.post_type = 'product_variation'
+                            AND m1.meta_value LIKE %s
+                            AND m2.meta_value = %s
+
+                            LIMIT 1
+                            ",
+                            $id_produit_id_woocommerce,
+                            $duree . '%',
+                            (string) $nb_pcs
+                        )
+                    );
+
+                    if ($variation_id) {
+                        $product = wc_get_product($variation_id);
+                    } else {
+                        $product = false;
+                    }
+                }
+
+                add_row('produits_de_la_variation', [
+                    'produit'  => $product->get_id(),
+                    'quantite' => $qte,
+                     'prix_propose' => $total_lig_ht,
+                    'duree' => $duree,
+                ], $variation_devis_id);
+
+                // Remise revendeur
+                if ($remise_revendeur != 0) {
+
+                    update_field('remise_revendeur', $remise_revendeur, $variation_devis_id);
+                }
+
+                // Remise renouvellement
+                if ($remise_renewal != 0) {
+
+                    update_field('remise_renewal', $remise_renewal, $variation_devis_id);
+                }
+
+                // Remise spéciale
+                if ($remise_special_1 != 0) {
+
+                   update_field('remise_commerciale', $remise_special_1, $variation_devis_id);
+                }
+
+                // Remise cumulée
+                if ($remise_cumul != 0) {
+
+                    update_field('remise_cumulee', $remise_cumul, $variation_devis_id);
+                }
+
+                 // Remise remise_statutaire
+                if ($remise_statutaire != 0) {
+
+                   update_field('remise_statutaire', $remise_statutaire, $variation_devis_id);
+                }
+
+                $percent_tva = 0;
+                $title_tva = 'Pas de Tva';
+                /*
+                $revendeur_account_regime_tva = get_user_meta($user_id, 'new_revendeur_account_regime_tva', true);
+                $account_regime_tva = get_user_meta($user_id, 'new_account_regime_tva', true);
+                
+                if(($account_regime_tva=="HT") || ($account_regime_tva=="HT_UE") || ($revendeur_account_regime_tva=="HT") || ($revendeur_account_regime_tva=="HT_UE")){
+                    
+                    $percent_tva = 0;
+                    $title_tva = 'Pas de Tva';
+                }else{
+                    $customer = new WC_Customer( $user_id );
+                    $tax_rates = WC_Tax::get_rates("",$customer );
+                    $first_rate = reset($tax_rates);
+                    $percent_tva = $first_rate['rate'];
+                    $title_tva = $first_rate['label'];
+                }
+                    */
+
+                update_field('tva', $title_tva, $variation_devis_id);
+                update_field('taux_tva', $percent_tva, $variation_devis_id);
+
+
+                $variations_devis_creees[$id_devis] = $variation_devis_id;
+
+
+            } else {
+
+                // ==========================================
+                // 5. MÊME devis :
+                //    ON AJOUTE UNIQUEMENT LE PRODUIT
+                // ==========================================
+
+                if ($produit_simple === 1) {
+
+                    // Produit simple
+                    $product = wc_get_product($id_produit_id_woocommerce);
+
+                } else {
+
+                    $variation_devis_id = $variations_devis_creees[$id_devis];
+                    // Produit variable : chercher la variation
+                    global $wpdb;
+
+                    $variation_id = $wpdb->get_var(
+                        $wpdb->prepare(
+                            "
+                            SELECT v.ID
+                            FROM {$wpdb->posts} v
+
+                            INNER JOIN {$wpdb->postmeta} m1
+                                ON m1.post_id = v.ID
+                                AND m1.meta_key = 'attribute_pa_software_duration'
+
+                            INNER JOIN {$wpdb->postmeta} m2
+                                ON m2.post_id = v.ID
+                                AND m2.meta_key = 'attribute_pa_number_of_computers'
+
+                            WHERE v.post_parent = %d
+                            AND v.post_type = 'product_variation'
+                            AND m1.meta_value LIKE %s
+                            AND m2.meta_value = %s
+
+                            LIMIT 1
+                            ",
+                            $id_produit_id_woocommerce,
+                            $duree . '%',
+                            (string) $nb_pcs
+                        )
+                    );
+
+                    if ($variation_id) {
+                        $product = wc_get_product($variation_id);
+                    } else {
+                        $product = false;
+                    }
+
+                    add_row('produits_de_la_variation', [
+                        'produit'  => $product->get_id(),
+                        'quantite' => $qte,
+                         'prix_propose' => $total_lig_ht,
+                        'duree' => $duree,
+                    ], $variation_devis_id);
+
+                    
+                }
+
+
+
+            }
+
+                
+
 
             $imported++;
 
@@ -295,6 +562,8 @@ function presta_import_devis($line_start, $line_end) {
         echo 'Dernière ligne lue : ' . ($line - 1) . '<br>';
         echo 'Importés : ' . $imported . '<br>';
         echo 'Déjà présents : ' . $skipped . '<br>';
+        echo 'NB devis Importées : ' . sizeof($variations_devis_creees) . '<br>';
+        echo 'devis importées : ' . json_encode($variations_devis_creees) . '<br>';
         echo 'Erreurs : ' . $errors;
         echo '</p>';
         echo '</div>';

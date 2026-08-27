@@ -359,10 +359,41 @@ function presta_import_commandes($line_start, $line_end) {
 
                 $order->update_meta_data('_presta_id_commande', $id_commande);
                 $order->update_meta_data('_presta_id_client', $id_client);
-
                 if ($id_client_rvd) {
+                    // Client final WooCommerce
+                    // À adapter selon ta logique de correspondance presta_id
+                    $client_final_id = get_users([
+                        'meta_key'   => 'presta_id',
+                        'meta_value' => $id_client_rvd,
+                        'number'     => 1,
+                        'fields'     => 'ID',
+                    ]);
+
+                    if (!empty($client_final_id)) {
+                        $order->update_meta_data('client_final', $client_final_id[0]);
+                    }
+                    
+                
                     $order->update_meta_data('_presta_id_client_rvd', $id_client_rvd);
                 }
+
+                switch ($statut_commande) {
+                    case 'Annulée':
+                        $order->update_status('cancelled');
+                        break;
+                    case 'Terminée':
+                        $order->update_status('completed');
+                        break;
+                    case 'En attente':
+                        $order->update_status('pending');
+                        break;
+                    
+                    default:
+                        $order->update_status('pending');
+                        break;
+                }
+
+               
 
                 if ($id_revendeur) {
                     $order->update_meta_data('_presta_id_revendeur', $id_revendeur);
