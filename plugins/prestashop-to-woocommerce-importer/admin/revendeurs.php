@@ -314,6 +314,8 @@ function presta_import_revendeurs($line_start, $line_end) {
                     update_user_meta($user_id, 'tefw_exempt_name', $first_name.' '.$last_name);
                     update_user_meta($user_id, 'tefw_exempt_reason', 'Exonération automatique compte "Professionnel, Association ou Institution" pour un pays dans l\'ue');
                     update_user_meta($user_id, 'tefw_exempt_status', 'approved');
+                    update_user_meta($user_id, 'tax_rate_name', 'Pas de Tva');
+                    update_user_meta($user_id, 'tax_rate', 0);
 
                 }else if ($regime=="HT"){
                 
@@ -322,7 +324,36 @@ function presta_import_revendeurs($line_start, $line_end) {
                     update_user_meta($user_id, 'tefw_exempt_name', $first_name.' '.$last_name);
                     update_user_meta($user_id, 'tefw_exempt_reason', 'Exonération automatique compte "Professionnel, Association ou Institution" pour un pays hors UE');
                     update_user_meta($user_id, 'tefw_exempt_status', 'approved');
+                    update_user_meta($user_id, 'tax_rate_name', 'Pas de Tva');
+                    update_user_meta($user_id, 'tax_rate', 0);
 
+                }
+                else if ($regime=="TVA"){
+                
+                    //trouver taxe
+
+                    global $wpdb;
+
+                    $taxe = $wpdb->get_row(
+                        $wpdb->prepare(
+                            "
+                            SELECT tax_rate, tax_rate_name
+                            FROM antied_woocommerce_tax_rates
+                            WHERE tax_rate_country LIKE %s
+                            ORDER BY tax_rate_id DESC
+                            LIMIT 1
+                            ",
+                            $pays
+                        )
+                    );
+
+                    $tax_rate = $taxe->tax_rate ?? null;
+                    $tax_rate_name = $taxe->tax_rate_name ?? null;
+
+                 
+                    update_user_meta($user_id, 'tax_rate_name', $tax_rate_name);
+                    update_user_meta($user_id, 'tax_rate', $tax_rate);
+                   
                 }
 
             }

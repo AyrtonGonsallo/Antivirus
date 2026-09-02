@@ -4,7 +4,176 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+function alm_calcul_variation($post_id)
+    {
+        $formule = "";
+        $formule_html = '<table class="produits" style="border-spacing: 0px;">
+                    <thead>
+                        <tr>
+                            <th style="border:1px solid #ccc;padding:5px;;">Désignation</th>
+                            <th style="border:1px solid #ccc;padding:5px;;">Quantité</th>
+                            <th style="border:1px solid #ccc;padding:5px;;">Durée</th>
+                            <th style="border:1px solid #ccc;padding:5px;;">PU HT</th>
+                            <th style="border:1px solid #ccc;padding:5px;;">Total HT</th>
+                        </tr>
+                    </thead>
+                    <tbody>';
+        $sous_total_ht = 0;
+        $total_ht = 0;
 
+        $rows = get_field('produits_de_la_variation', $post_id);
+
+        if (!$rows) {
+            return [
+                'formule' => "Aucun produit\n",
+                'ht'      => 0,
+                'ttc'     => 0
+            ];
+        }
+
+        /**
+         * 1️⃣ Calcul total HT initial
+         */
+        foreach ($rows as $row) {
+
+            $product_id = $row['produit'];
+            if (is_array($product_id) && isset($product_id[0])) {
+                $produit_post = $product_id[0];
+                $product_id = $produit_post->ID;
+                $product_obj = wc_get_product($product_id);
+
+                if ($product_obj) {
+
+                    $product_name = $product_obj->get_name();
+                    $product_price = $product_obj->get_price();
+                    $product_img = wp_get_attachment_image_src( $product_obj->get_image_id(), 'thumbnail' );
+                    $product_img_url = $product_img ? $product_img[0] : '';
+                    $duree = $row['duree'];
+                     $nom = '
+                    <div class= style="white-space:nowrap;">
+                        <img src="'.esc_url($product_img_url).'" width="50" height="50" style="vertical-align:middle; border-radius:4px; margin-right:10px;">
+                        <a href="'.get_permalink($product_id).'" class="product-link"><span style="vertical-align:middle;">'.wp_kses_post($product_name).'</span></a>
+                    </div>';
+                }
+            }
+            $quantite   = (float) $row['quantite'];
+
+            
+            $prix = (float) ($row['prix_propose'])?$row['prix_propose']:0;
+
+            $ligne_total = $prix * $quantite;
+
+           // $formule .= "{$prix} x {$quantite} = {$ligne_total}\n";
+           $formule .= "Total HT : {$sous_total_ht}\n";
+           $formule_html .="
+            <tr>
+                <td style='display:flex;align-items:center;gap:10px;border:1px solid #ccc;padding:5px;;'>
+                $nom
+                </td>
+                <td style='border:1px solid #ccc;padding:5px;;'>$quantite</td>
+                <td style='border:1px solid #ccc;padding:5px;;'>$duree</td>
+                <td style='border:1px solid #ccc;padding:5px;;'>".$prix." €</td>
+                <td style='border:1px solid #ccc;padding:5px;;'>$ligne_total €</td>
+            </tr>";
+
+            $sous_total_ht += $ligne_total;
+        }
+        $total_ht =$sous_total_ht;
+
+        $formule .= "Total HT : {$sous_total_ht}\n";
+
+        $formule_html .= '<tr>';
+        $formule_html .= '<td colspan="4" style="text-align:right;border:1px solid #ccc;padding:5px;"> Total HT</td>';
+        $formule_html .= '<td style="border:1px solid #ccc;padding:5px;">'.number_format($sous_total_ht, 2, ',', ' ').' €</td>';
+        $formule_html .= '</tr>';
+        
+
+        /**
+         * 2️⃣ Application des remises successives
+         */
+        $remise_fields = [
+            'remise_renewal',
+            'remise_cumulee',
+            'remise_statutaire',
+            'remise_commerciale',
+            'remise_revendeur',
+            'remise_administration_mairie',
+            'remise_etalissements',
+            'remise_changer_avast'
+        ];
+
+        $remise_fields_map = [
+            "remise_changer_avast" => 'Remise changement',
+            "remise_renewal"        => 'Remise renouvellement de licences',
+            "remise_administration_mairie"       => 'Remise administrations et mairies',
+            "remise_etalissements" => 'Remise établissements scolaires et associations',
+            "remise_cumulee" => 'Autre remise',
+            "remise_statutaire" => 'Autre remise',
+            "remise_commerciale" => 'Autre remise',
+            "remise_revendeur" => 'Remise revendeur',
+        ];
+
+        foreach ($remise_fields as $field) {
+
+            $percent = (float) get_field($field, $post_id);
+
+            if ($percent > 0) {
+
+                $montant_remise = ($percent / 100) * $sous_total_ht;
+
+                $titre_remise = $remise_fields_map[$field];
+
+                $formule .= "{$titre_remise} {$percent}% = -{$montant_remise}\n";
+                $formule_html .= '<tr>';
+                $formule_html .= '<td colspan="4" style="text-align:right;border:1px solid #ccc;padding:5px;">'.$titre_remise.' '.$percent.'%</td>';
+                $formule_html .= '<td style="border:1px solid #ccc;padding:5px;">-'.number_format($montant_remise, 2, ',', ' ').' €</td>';
+                $formule_html .= '</tr>';
+
+                $sous_total_ht -= $montant_remise;
+
+                
+                $formule .= "Sous-total HT : {$sous_total_ht}\n";
+                $formule_html .= '<tr>';
+                $formule_html .= '<td colspan="4" style="text-align:right;border:1px solid #ccc;padding:5px;">Sous-total HT</td>';
+                $formule_html .= '<td style="border:1px solid #ccc;padding:5px;">'.number_format($sous_total_ht, 2, ',', ' ').' €</td>';
+                $formule_html .= '</tr>';
+            }
+        }
+
+        /**
+         * 3️⃣ TVA
+         */
+        $taux_tva = (float) get_field('taux_tva', $post_id);
+
+        $montant_tva = ($taux_tva / 100) * $sous_total_ht;
+
+        $total_ttc = $sous_total_ht + $montant_tva;
+
+        $formule .= "TVA {$taux_tva}% : {$montant_tva}\n";
+        $formule .= "Total TTC : {$total_ttc}\n";
+
+        $formule_html .= '<tr>';
+        $formule_html .= '<td colspan="4" style="text-align:right;border:1px solid #ccc;padding:5px;">TVA '.$taux_tva.'% </td>';
+        $formule_html .= '<td style="border:1px solid #ccc;padding:5px;">'.number_format($montant_tva, 2, ',', ' ').' €</td>';
+        $formule_html .= '</tr>';
+
+        $formule_html .= '<tr>';
+        $formule_html .= '<td colspan="4" style="text-align:right;border:1px solid #ccc;padding:5px;">Total TTC</td>';
+        $formule_html .= '<td style="border:1px solid #ccc;padding:5px;">'.number_format($total_ttc, 2, ',', ' ').' €</td>';
+        $formule_html .= '</tr></tbody></table>';
+
+        $prix_public_alwil = (float) get_field('prix_public_alwil', $post_id);
+        
+        $marge = $sous_total_ht - $prix_public_alwil;
+        update_field('marge', $marge, $post_id);
+
+        update_field('sous_total_ht', $sous_total_ht, $post_id);
+        update_field('total_ht', $total_ht, $post_id);
+        update_field('formule', $formule_html, $post_id);
+        update_field('total_ttc', $total_ttc, $post_id);
+
+        
+    }
 
 
 function presta_import_devis_page() {
@@ -228,7 +397,8 @@ function presta_import_devis($line_start, $line_end) {
             $dt_end = sanitize_text_field($data['dt_end'] ?? ''); //2034-02-06
             $dt_devis = sanitize_text_field($data['dt_devis'] ?? ''); //2034-02-06
             $statut_devis = sanitize_text_field($data['statut_devis'] ?? '');
-            
+            $commentaire_client = sanitize_text_field($data['commentaire_client'] ?? '');
+            $commentaire_admin = sanitize_text_field($data['commentaire'] ?? '');
             $qte = intval($data['qte'] ?? 0);
             $duree = intval($data['duree'] ?? 0);
             $nb_pcs = intval($data['nb_pcs'] ?? 0);
@@ -247,6 +417,11 @@ function presta_import_devis($line_start, $line_end) {
             $remise_special_1 = floatval($data['remise_special_1'] ?? 0);
             $remise_cumul = floatval($data['remise_cumul'] ?? 0);
             $remise_statutaire = floatval($data['remise_statutaire'] ?? 0);
+
+            $calculer_formule = filter_var(
+                $data['calculer_formule'] ?? false,
+                FILTER_VALIDATE_BOOLEAN
+            );
 
 
             //algortithme
@@ -299,13 +474,33 @@ function presta_import_devis($line_start, $line_end) {
                 Création du devis post_type=devis-en-ligne  (structure ACF)
                 ------------------------------------------------------------------*/
 
-                // 1) Créer le post "devis en ligne"
-                $post_id = wp_insert_post([
-                    'post_type'  => 'devis-en-ligne',
-                    'post_status'=> 'publish',
-                    'post_author'=> $woo_id_client,
-                    'post_title' => 'Devis du ' .$dt_devis,
+                // 1) Rechercher ou  Créer le post "devis en ligne"
+                $devis_existants = get_posts([
+                    'post_type'      => 'devis-en-ligne',
+                    'post_status'    => 'any',
+                    'posts_per_page' => 1,
+                    'meta_key'       => 'id_prestashop',
+                    'meta_value'     => $id_devis,
                 ]);
+
+                if (!empty($devis_existants)) {
+
+                    // Devis déjà existant
+                    $post_id = $devis_existants[0]->ID;
+
+                } else {
+
+                    // Créer le post "devis en ligne"
+                    $post_id = wp_insert_post([
+                        'post_type'   => 'devis-en-ligne',
+                        'post_status' => 'publish',
+                        'post_author' => $woo_id_client,
+                        'post_title'  => 'Devis du ' . $dt_devis,
+                    ]);
+
+                    // Enregistrer l'ID PrestaShop
+                    update_field('id_prestashop', $id_devis, $post_id);
+                }
 
                 if ( is_wp_error($post_id) ) {
                     wp_die("Erreur lors de la création du devis : " . $post_id->get_error_message());
@@ -354,21 +549,41 @@ function presta_import_devis($line_start, $line_end) {
                 update_field('software_duration', $software_duration, $post_id);
                 update_field('status', $statut_devis_key, $post_id);
                 update_field('field_692ec6324ed14', $statut_devis_key, $post_id);
-               // update_field('note_client', $comment, $post_id);
-               // update_field('field_692eaafe3985a', $comment, $post_id);
-                update_field('type_de_devis', 'client', $post_id);
+                update_field('note_client', $commentaire_client, $post_id);
+                update_field('field_692eaafe3985a', $commentaire_client, $post_id);
+                update_field('type_de_devis', 'corrige', $post_id);
                 update_field('utilisateur', $woo_id_client, $post_id);
                 update_field('field_692eab163985b', $woo_id_client, $post_id);
                 update_field('client_final', $woo_id_client_final, $post_id);
                 update_field('field_698c460ac6d81', $woo_id_client_final, $post_id);
 
 
-                $variation_devis_id = wp_insert_post([
-                    'post_type'  => 'variation-devis',
-                    'post_status'=> 'publish',
-                    'post_author'=> $woo_id_client,
-                    'post_title' => 'Variation '.$software_duration.' - Devis #'.$post_id,
+                $variations_existantes = get_posts([
+                    'post_type'      => 'variation-devis',
+                    'post_status'    => 'any',
+                    'posts_per_page' => 1,
+                    'meta_key'       => 'id_prestashop',
+                    'meta_value'     => $id_devis,
                 ]);
+
+                if (!empty($variations_existantes)) {
+
+                    // Variation déjà existante
+                    $variation_devis_id = $variations_existantes[0]->ID;
+
+                } else {
+
+                    // Créer la variation
+                    $variation_devis_id = wp_insert_post([
+                        'post_type'   => 'variation-devis',
+                        'post_status' => 'publish',
+                        'post_author' => $woo_id_client,
+                        'post_title'  => 'Variation ' . $software_duration . ' - Devis #' . $post_id,
+                    ]);
+
+                    // Enregistrer l'ID PrestaShop
+                    update_field('id_prestashop', $id_devis, $variation_devis_id);
+                }
                
 
 
@@ -454,27 +669,15 @@ function presta_import_devis($line_start, $line_end) {
                    update_field('remise_statutaire', $remise_statutaire, $variation_devis_id);
                 }
 
-                $percent_tva = 0;
-                $title_tva = 'Pas de Tva';
-                /*
-                $revendeur_account_regime_tva = get_user_meta($user_id, 'new_revendeur_account_regime_tva', true);
-                $account_regime_tva = get_user_meta($user_id, 'new_account_regime_tva', true);
-                
-                if(($account_regime_tva=="HT") || ($account_regime_tva=="HT_UE") || ($revendeur_account_regime_tva=="HT") || ($revendeur_account_regime_tva=="HT_UE")){
-                    
-                    $percent_tva = 0;
-                    $title_tva = 'Pas de Tva';
-                }else{
-                    $customer = new WC_Customer( $user_id );
-                    $tax_rates = WC_Tax::get_rates("",$customer );
-                    $first_rate = reset($tax_rates);
-                    $percent_tva = $first_rate['rate'];
-                    $title_tva = $first_rate['label'];
-                }
-                    */
+                $tax_rate = get_user_meta($woo_id_client, 'tax_rate', true);
+                $tax_rate_name = get_user_meta($woo_id_client, 'tax_rate_name', true);
 
-                update_field('tva', $title_tva, $variation_devis_id);
-                update_field('taux_tva', $percent_tva, $variation_devis_id);
+                
+                
+
+                update_field('tva', $tax_rate_name, $variation_devis_id);
+                update_field('taux_tva', $tax_rate, $variation_devis_id);
+                update_field('note_admin', $commentaire_admin, $variation_devis_id);
 
 
                 $variations_devis_creees[$id_devis] = $variation_devis_id;
@@ -545,6 +748,11 @@ function presta_import_devis($line_start, $line_end) {
 
             }
 
+
+            if ($calculer_formule) {
+
+                alm_calcul_variation($variation_devis_id);
+            }
                 
 
 

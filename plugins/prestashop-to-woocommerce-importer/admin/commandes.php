@@ -264,10 +264,26 @@ function presta_import_commandes($line_start, $line_end) {
             if (!isset($commandes_creees[$id_commande])) {
 
                 // ==========================================
-                // 1. CREATION DE LA COMMANDE
+                // 1. CREATION DE LA COMMANDE SI ELLE EXISTE PAS DEJA
                 // ==========================================
 
-                $order = wc_create_order();
+                $orders = wc_get_orders([
+                    'limit'      => 1,
+                    'meta_key'   => '_presta_id_commande',
+                    'meta_value' => $id_commande,
+                ]);
+
+                if (!empty($orders)) {
+                    $order = $orders[0];
+                } else {
+                    $order = wc_create_order();
+                }
+
+                if ($dt_commande) {
+                    $date = new WC_DateTime($dt_commande);
+                    error_log('date commande '.$date->format('Y-m-d H:i:s'));
+                    $order->set_date_created($date);
+                }
 
                 // Client WooCommerce
                 // À adapter selon ta logique de correspondance presta_id
@@ -503,7 +519,7 @@ function presta_import_commandes($line_start, $line_end) {
                 // ==========================================
 
                 $order->update_meta_data('_remise_revendeur', $remise_revendeur);
-                $order->update_meta_data('_remise_statutaire', $remise_statutaire);
+                
                 $order->update_meta_data('_remise_renewal', $remise_renewal);
                 $order->update_meta_data('_remise_special_1', $remise_special_1);
                 $order->update_meta_data('_remise_cumul', $remise_cumul);

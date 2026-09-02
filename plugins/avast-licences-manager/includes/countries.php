@@ -1,7 +1,7 @@
 <?php
 
 $pays_par_groupe = [
-    'Pays de l\'Europe' => [
+    'Pays de l\'Europe' => [//zone 3
         ['value' => 'DE', 'nom' => 'Allemagne'],
         ['value' => 'AT', 'nom' => 'Autriche'],
         ['value' => 'BE', 'nom' => 'Belgique'],
@@ -31,7 +31,7 @@ $pays_par_groupe = [
         ['value' => 'SI', 'nom' => 'Slovénie'],
         ['value' => 'SE', 'nom' => 'Suède'],
     ],
-    'Les DOM-TOM' => [
+    'Les DOM-TOM' => [//zone 2
         ['value' => 'TF', 'nom' => 'Antarctique'], // Terres Australes Françaises
         ['value' => 'GP', 'nom' => 'Guadeloupe'],
         ['value' => 'GF', 'nom' => 'Guyane francaise'],
@@ -43,7 +43,7 @@ $pays_par_groupe = [
         ['value' => 'PM', 'nom' => 'Saint Pierre et Miquelon'],
         ['value' => 'WF', 'nom' => 'Wallis et Futuna (Iles)'],
     ],
-    'Les pays Hors UE' => [
+    'Les pays Hors UE' => [//zone 4
         ['value' => 'AF', 'nom' => 'Afghanistan'],
         ['value' => 'ZA', 'nom' => 'Afrique du sud'],
         ['value' => 'AL', 'nom' => 'Albanie'],

@@ -109,9 +109,12 @@ class ALM_Gestion_De_Comptes {
         unset( $columns['jetpack_tags'] );         // Example key for Jetpack tags
         unset( $columns['user_tag'] );
 
-        $columns['auto_login'] = 'Auto connexion';
+        $columns['date_de_creation'] = 'Date de création';
         $columns['type_client'] = 'Type de client';
-         $columns['date_de_creation'] = 'Date de création';
+        $columns['pays'] = 'PAYS';
+        $columns['tva'] = 'Facturation - TVA';
+        $columns['auto_login'] = 'Auto connexion';
+
         return $columns;
     }
 
@@ -137,6 +140,27 @@ class ALM_Gestion_De_Comptes {
             if ($user) {
                 $date = $user->user_registered;
                 return date_i18n('d/m/Y H:i', strtotime($date));
+            }
+            return '-';
+        }
+
+        if ($column_name === 'tva') {
+
+            $tax_rate_name = get_user_meta($user_id, 'tax_rate_name', true);
+            $new_revendeur_account_regime_tva = get_user_meta($user_id, 'new_revendeur_account_regime_tva', true);
+            $new_account_regime_tva = get_user_meta($user_id, 'new_account_regime_tva', true);
+            $regime = ($new_account_regime_tva )?$new_account_regime_tva :$new_revendeur_account_regime_tva;
+            if ($tax_rate_name) {
+                return $regime.' - '.$tax_rate_name;
+            }
+            return '-';
+        }
+
+        if ($column_name === 'pays') {
+
+            $selected_pays = get_user_meta($user_id, 'pays', true);
+            if ($selected_pays) {
+                return $selected_pays;
             }
             return '-';
         }
@@ -696,6 +720,8 @@ class ALM_Gestion_De_Comptes {
         $pays           = get_user_meta($user->ID, 'pays', true);
         $revendeur_id   = get_user_meta($user->ID, 'revendeur_id', true);
         $paiement_en_fin_de_mois = (get_user_meta($user->ID, 'paiement_en_fin_de_mois', true))?get_user_meta($user->ID, 'paiement_en_fin_de_mois', true):0;
+        $tax_rate_name          = get_user_meta($user->ID, 'tax_rate_name', true);
+        $tax_rate          = get_user_meta($user->ID, 'tax_rate', true);
 
         ?>
         <h2>Préférences Avast </h2>
@@ -742,6 +768,18 @@ class ALM_Gestion_De_Comptes {
                 <th><label for="presta_id">Id prestashop</label></th>
                 <td>
                     <input type="text" name="presta_id" id="presta_id" value="<?php echo esc_attr($presta_id); ?>" class="regular-text" readonly />
+                </td>
+            </tr>
+            <tr>
+                <th><label for="tax_rate_name">Type de taxe</label></th>
+                <td>
+                    <input type="text" name="tax_rate_name" id="tax_rate_name" value="<?php echo esc_attr($tax_rate_name); ?>" class="regular-text" readonly />
+                </td>
+            </tr>
+            <tr>
+                <th><label for="tax_rate">taux de tva</label></th>
+                <td>
+                    <input type="text" name="tax_rate" id="tax_rate" value="<?php echo esc_attr($tax_rate); ?>" class="regular-text" readonly />
                 </td>
             </tr>
 
