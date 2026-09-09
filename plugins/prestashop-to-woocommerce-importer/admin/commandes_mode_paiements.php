@@ -264,38 +264,39 @@ function presta_import_commandes_mode_paiements($line_start, $line_end) {
                 $order->update_meta_data('_paiement_ok', $paiement_ok);
                                 
                 //Carte de crédit/débit - stripe,Virement bancaire - bacs,	Paiements par chèque - cheque,Paiement par mandat administratif - paiement_mandat_administratif,Paiement en fin de mois - paiement_differe
-
+                $payment_method = '';
+                $payment_method_title = '';
 
                 switch ($mode_paiement) {
                     case 'Carte Bancaire':
                         # code...
-                        $order->set_payment_method('stripe');
-                        $order->set_payment_method_title('Carte de crédit/débit');
+                        $payment_method = 'stripe';
+                        $payment_method_title = 'Carte de crédit/débit';
                         break;
                     case 'Paiement fin de mois':
                         # code...
-                        $order->set_payment_method('paiement_differe');
-                        $order->set_payment_method_title('Paiement en fin de mois');
+                        $payment_method = 'paiement_differe';
+                        $payment_method_title = 'Paiement en fin de mois';
                         break;
                     case 'PayPal':
                         # code...
-                        $order->set_payment_method('stripe');
-                        $order->set_payment_method_title('Carte de crédit/débit');
+                        $payment_method = 'stripe';
+                        $payment_method_title = 'Carte de crédit/débit';
                         break;
                     case 'Virement Bancaire':
                         # code...
-                        $order->set_payment_method('bacs');
-                        $order->set_payment_method_title('Virement bancaire');
+                        $payment_method = 'bacs';
+                        $payment_method_title = 'Virement bancaire';
                         break;
                     case 'Chèque Bancaire':
                         # code...
-                        $order->set_payment_method('cheque');
-                        $order->set_payment_method_title('Paiements par chèque');
+                        $payment_method = 'cheque';
+                        $payment_method_title = 'Paiements par chèque';
                         break;
                     case 'Mandat administratif':
                         # code...
-                        $order->set_payment_method('paiement_mandat_administratif');
-                        $order->set_payment_method_title('Paiement par mandat administratif');
+                        $payment_method = 'paiement_mandat_administratif';
+                        $payment_method_title = 'Paiement par mandat administratif';
                         break;
                     
                     
@@ -303,7 +304,21 @@ function presta_import_commandes_mode_paiements($line_start, $line_end) {
                         # code...
                         break;
                 }
+
+                $order->set_payment_method($payment_method);
+                $order->set_payment_method_title($payment_method_title);
                 $order->save();
+
+                $subscriptions = wcs_get_subscriptions_for_order($order->get_id(), array('order_type' => 'parent'));
+ 
+
+                if (!empty($subscriptions)) {
+                    foreach ($subscriptions as $subscription) {
+                        $subscription->set_payment_method($payment_method);
+                        $subscription->set_payment_method_title($payment_method_title);
+                        $subscription->save();
+                    }
+                }
 
 
                 $commandes_mises_a_jour[$id_commande] = $order->get_id();
