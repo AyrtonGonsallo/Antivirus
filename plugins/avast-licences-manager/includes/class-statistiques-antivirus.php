@@ -266,7 +266,10 @@ class ALM_Statistiques_antivirus {
                     $client_final = get_user_by('id', $selected_client_id);
                 }
                 $status = wc_get_order_status_name($order->get_status());
+                //$order->get_payment_method_title().' - '.$order->get_payment_method()
+                //Carte de crédit/débit - stripe,Virement bancaire - bacs,	Paiements par chèque - cheque,Paiement par mandat administratif - paiement_mandat_administratif,Paiement en fin de mois - paiement_differe
                 $methode = $order->get_payment_method_title();
+                
                 $custom_statut = $this->get_custom_statut($status,$methode,$is_renewal);
                 $cles = '';
 
@@ -406,7 +409,11 @@ class ALM_Statistiques_antivirus {
         </style>";
         echo "<script>
             const table = new DataTable('#myTable', {
-                pageLength: 50,
+                lengthMenu: [
+                    [50, 100, 200, 500],
+                    [50, 100, 200, 500]
+                ],
+                pageLength: 100,
                 info: false,
                 language: {
                     search:         'Rechercher',

@@ -13,8 +13,11 @@ if (!defined('ABSPATH')) {
 require_once plugin_dir_path(__FILE__) . 'admin/clients_revendeurs.php';
 require_once plugin_dir_path(__FILE__) . 'admin/clients.php';
 require_once plugin_dir_path(__FILE__) . 'admin/commandes.php';
+require_once plugin_dir_path(__FILE__) . 'admin/commandes_mode_paiements.php';
 require_once plugin_dir_path(__FILE__) . 'admin/devis.php';
 require_once plugin_dir_path(__FILE__) . 'admin/revendeurs.php';
+require_once plugin_dir_path(__FILE__) . 'admin/fonction_du_cron.php';
+
 
 add_action('admin_menu', function () {
 
@@ -61,6 +64,16 @@ add_action('admin_menu', function () {
         'presta_import_commandes_page'
     );
 
+     // Sous-menu Commandes
+    add_submenu_page(
+        'presta-importer',       // slug du parent
+        'Commandes mode paiement',               // titre de la page
+        'Commandes mode paiement',               // nom affiché
+        'manage_options',
+        'presta-import-commandes-mode-paiements', // slug
+        'presta_import_commandes_mode_paiements_page'
+    );
+
      // Sous-menu Devis
     add_submenu_page(
         'presta-importer',       // slug du parent
@@ -81,5 +94,13 @@ add_action('admin_menu', function () {
         'presta-import-revendeurs', // slug
         'presta_import_revendeurs_page'
     );
+
+
+
+
+
+  
+
+    
 
 });

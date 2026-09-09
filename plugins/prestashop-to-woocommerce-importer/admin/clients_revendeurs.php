@@ -249,6 +249,7 @@ function presta_import_clients_revendeurs($line_start, $line_end) {
             // Client déjà présent
             if (email_exists($email)) {
                 $skipped++;
+                error_log('Erreur email existant - id : '.$presta_id.' - email : ' . $email );
                 continue;
             }
 

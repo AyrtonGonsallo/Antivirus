@@ -148,6 +148,7 @@ function presta_import_commandes_page() {
 
 function presta_import_commandes($line_start, $line_end) {
 
+
      error_log('line_start : '  . $line_start.' - line_end : '.$line_end);
 
         $upload_dir = wp_upload_dir();
@@ -170,7 +171,7 @@ function presta_import_commandes($line_start, $line_end) {
         }
 
         // Première ligne = colonnes
-        $headers = fgetcsv($handle, 0, ';', '"', '\\');
+        $headers = fgetcsv($handle, 0, ';', '"', '');
 
         foreach ($headers as &$header) {
             $header = trim($header, " \t\n\r\0\x0B\xEF\xBB\xBF\"");
@@ -191,7 +192,7 @@ function presta_import_commandes($line_start, $line_end) {
         $skipped  = 0;
         $errors   = 0;
 
-        while (($row = fgetcsv($handle, 0, ';', '"', '\\')) !== false) {
+        while (($row = fgetcsv($handle, 0, ';', '"', '')) !== false) {
 
             // Avant la ligne de départ
             if ($line < $line_start) {
@@ -204,7 +205,21 @@ function presta_import_commandes($line_start, $line_end) {
                 break;
             }
 
-            $data = array_combine($headers, $row);
+            try {
+                $data = array_combine($headers, $row);
+            } catch (Throwable $e) {
+
+                restore_error_handler();
+
+                error_log('Erreur CSV ligne ' . $line . ' : ' . $e->getMessage());
+                error_log('Headers : ' . print_r($headers, true));
+                error_log('Row : ' . print_r($row, true));
+                
+
+                $errors++;
+                $line++;
+                continue;
+            }
 
             if ($data === false) {
                 $errors++;
@@ -218,6 +233,8 @@ function presta_import_commandes($line_start, $line_end) {
             // IMPORT DE LA COMMANDE
             // =========================
 
+            $renew_in = intval($data['renew_in'] ?? 0);
+            $renew_out = intval($data['renew_out'] ?? 0);
             $id_produit = intval($data['id_produit'] ?? 0);
             $id_client = intval($data['id_client'] ?? 0);
             $id_client_rvd = intval($data['id_client_rvd'] ?? 0);
@@ -225,6 +242,7 @@ function presta_import_commandes($line_start, $line_end) {
             $id_produit_id_woocommerce = intval($data['id_woocommerce'] ?? 0);
             $dt_end = sanitize_text_field($data['dt_end'] ?? ''); //2034-02-06
             $dt_commande = sanitize_text_field($data['dt_commande'] ?? ''); //2034-02-06
+            $dt_expire = sanitize_text_field($data['dt_expire'] ?? ''); //2026-09-30 00:00:00
             $statut_commande = sanitize_text_field($data['statut_commande'] ?? '');
             $mode_paiement = sanitize_text_field($data['mode_paiement'] ?? '');
             $paiement_ok = intval($data['paiement_ok'] ?? 0);
@@ -245,6 +263,7 @@ function presta_import_commandes($line_start, $line_end) {
             $total_lig_ht = floatval($data['total_lig_ht'] ?? 0);
             
             $remise_revendeur = floatval($data['remise_revendeur'] ?? 0);
+            $remise_statutaire = floatval($data['remise_statutaire'] ?? 0);
             $remise_renewal = floatval($data['remise_renewal'] ?? 0);
             $remise_special_1 = floatval($data['remise_special_1'] ?? 0);
             $remise_cumul = floatval($data['remise_cumul'] ?? 0);
@@ -260,6 +279,9 @@ function presta_import_commandes($line_start, $line_end) {
             error_log('produit '.$id_produit);
             error_log('is produit simple '.$is_produit_simple);
             error_log('appliquer_remise '.$appliquer_remise);
+            error_log('commande id '.$id_commande);
+            error_log('renew_in '.$renew_in);
+            error_log('renew_out '.$renew_out);
 
             if (!isset($commandes_creees[$id_commande])) {
 
@@ -296,6 +318,7 @@ function presta_import_commandes($line_start, $line_end) {
 
                 if (!empty($user_id)) {
                     $order->set_customer_id($user_id[0]);
+                    
                 }
 
                 // ==========================================
@@ -416,6 +439,7 @@ function presta_import_commandes($line_start, $line_end) {
                 }
 
                 if($paiement_ok){
+                    
                     $order->set_payment_method('stripe');
                     $order->set_payment_method_title('Carte de crédit/débit');
                     $order->update_meta_data('_mode_paiement', $mode_paiement);
@@ -519,7 +543,7 @@ function presta_import_commandes($line_start, $line_end) {
                 // ==========================================
 
                 $order->update_meta_data('_remise_revendeur', $remise_revendeur);
-                
+                $order->update_meta_data('_remise_statutaire', $remise_statutaire);
                 $order->update_meta_data('_remise_renewal', $remise_renewal);
                 $order->update_meta_data('_remise_special_1', $remise_special_1);
                 $order->update_meta_data('_remise_cumul', $remise_cumul);
@@ -566,6 +590,19 @@ function presta_import_commandes($line_start, $line_end) {
                     $order->add_item($fee);
                 }
 
+                // Remise statutaire
+                if ($remise_statutaire != 0) {
+
+                    $montant_remise = $montant * ($remise_statutaire / 100);
+                    $montant -= $montant_remise;
+
+                    $fee = new WC_Order_Item_Fee();
+                    $fee->set_name('Remise statutaire (' . $remise_statutaire . '%)');
+                    $fee->set_amount(-abs($montant_remise));
+                    $fee->set_total(-abs($montant_remise));
+                    $order->add_item($fee);
+                }
+
                 // Remise cumulée
                 if ($remise_cumul != 0) {
 
@@ -578,9 +615,264 @@ function presta_import_commandes($line_start, $line_end) {
                     $fee->set_total(-abs($montant_remise));
                     $order->add_item($fee);
                 }
-                 $order->calculate_totals();
+                $order->calculate_totals();
                 $order->save();
+            
+
+                $order_id = $commandes_creees[$id_commande];
+
+                //sequence abonements
+                //l'objet $order existe deja
+
+                $date_now = new WC_DateTime();
+                error_log('date du jour '.$date_now->format('Y-m-d H:i:s'));
+
+                if ($dt_commande) {
+                    //$duree est celle de l'abonnement 1,2,3 il faut l'ajouter en aneee a la date de la commande
+                    $date_debut = new WC_DateTime($dt_commande);
+                    error_log('date_debut commande '.$date_debut->format('Y-m-d H:i:s'));
+                }
+
+                if ($dt_expire) {
+                    //$duree est celle de l'abonnement 1,2,3 il faut l'ajouter en aneee a la date de la commande
+                    $date_expiration = new WC_DateTime($dt_expire);
+                    $date_prochain_paiement = clone $date_expiration;
+                    $date_prochain_paiement->modify('+' . $duree . ' years');
+                    error_log('date_prochain_paiement '.$date_prochain_paiement->format('Y-m-d H:i:s'));
+                }
+                
+
+                if (($date_prochain_paiement >= $date_now) && ($renew_out==0)) { 
+                    //on créé un abonement en comparant $date_prochain_paiement a la date du jour
+                    error_log('la date_prochain_paiement est supérieure a la date du jour donc on crée l\'abonnement');
+                   
+
+                    $subscription = wcs_create_subscription([
+                        'order_id' => $order_id,
+                        'status'   => 'active',
+                        'billing_period'    => 'year',   // Obligatoire : day, week, month, year
+                        'billing_interval'  => $duree, 
+                        'start_date'         => $date_debut->format('Y-m-d H:i:s'),
+                        // Optionnel : si vous voulez définir une date de fin
+                        'end_date'           => '', // Laisser vide pour pas de fin
+                    ]);
+
+                    if (is_wp_error($subscription)) {
+                        error_log(
+                            'Erreur création abonnement - commande : ' . $order_id .
+                            ' - ' . $subscription->get_error_message()
+                        );
+                    } else {
+
+                     
+
+                    error_log('AVANT update_dates');
+                    
+                        
+                        $dates_to_update = array(
+                            'last_payment' => $date_debut->format('Y-m-d H:i:s'),
+                            'next_payment' => $date_prochain_paiement->format('Y-m-d H:i:s'),
+                        );
+
+                        try {
+                            $subscription->update_dates( $dates_to_update, 'gmt' );
+                        } catch ( Exception $e ) {
+                            // Handle schedule error constraint exceptions here
+                            error_log(
+                                'Erreur update dates: ' . $order_id .
+                                ' - ' . $e->getMessage()
+                            );
+                        }
+                        
+                       // $subscription->set_date('last_payment', $date_debut->format('Y-m-d H:i:s'));
+                        error_log('APRES update_dates');
+
+                        // Lier la commande initiale à l'abonnement
+                        $subscription->add_order_note(
+                            'Commande initiale : ' . $order_id
+                        );
+                        $subscription->set_requires_manual_renewal(true);
+
+                        // ID de l'abonnement
+                        $subscription_id = $subscription->get_id();
+                        $subscription->save();
+
+                        // Sauvegarder la relation commande → abonnement
+                        
+                        $order->update_meta_data('_subscription_id', $subscription_id);
+                        $order->save();
+
+                        error_log(
+                            'Abonnement créé - commande : ' . $order_id .
+                            ' - abonnement : ' . $subscription_id
+                        );
+                    }
+
+
+                    // Copier les produits de la commande dans l'abonnement
+                    foreach ($order->get_items('line_item') as $item) {
+
+                        $product = $item->get_product();
+
+                        if (!$product) {
+                            continue;
+                        }
+
+                        $subscription->add_product(
+                            $product,
+                            $item->get_quantity(),
+                            [
+                                'subtotal' => $item->get_subtotal(),
+                                'total'    => $item->get_total(),
+                            ]
+                        );
+                    }
+
+                     // Copier les frais de la commande
+                     // Montant initial de la commande
+                    $montant = $order->get_subtotal();
+
+                    // Remise revendeur
+                    if ($remise_revendeur != 0) {
+
+                        $montant_remise = $montant * ($remise_revendeur / 100);
+                        $montant -= $montant_remise;
+
+                        $fee = new WC_Order_Item_Fee();
+                        $fee->set_name('Remise revendeur (' . $remise_revendeur . '%)');
+                        $fee->set_amount(-abs($montant_remise));
+                        $fee->set_total(-abs($montant_remise));
+                        $subscription->add_item($fee);
+                    }
+
+                    // Remise renouvellement
+                    if ($remise_renewal != 0) {
+
+                        $montant_remise = $montant * ($remise_renewal / 100);
+                        $montant -= $montant_remise;
+
+                        $fee = new WC_Order_Item_Fee();
+                        $fee->set_name('Remise renouvellement de licences (' . $remise_renewal . '%)');
+                        $fee->set_amount(-abs($montant_remise));
+                        $fee->set_total(-abs($montant_remise));
+                        $subscription->add_item($fee);
+                    }
+
+                    // Remise renouvellement
+                    if ($remise_statutaire != 0) {
+
+                        $montant_remise = $montant * ($remise_statutaire / 100);
+                        $montant -= $montant_remise;
+
+                        $fee = new WC_Order_Item_Fee();
+                        $fee->set_name('Remise statutaire (' . $remise_statutaire . '%)');
+                        $fee->set_amount(-abs($montant_remise));
+                        $fee->set_total(-abs($montant_remise));
+                        $subscription->add_item($fee);
+                    }
+
+                    // Remise spéciale
+                    if ($remise_special_1 != 0) {
+
+                        $montant_remise = $montant * ($remise_special_1 / 100);
+                        $montant -= $montant_remise;
+
+                        $fee = new WC_Order_Item_Fee();
+                        $fee->set_name('Autre remise (' . $remise_special_1 . '%)');
+                        $fee->set_amount(-abs($montant_remise));
+                        $fee->set_total(-abs($montant_remise));
+                        $subscription->add_item($fee);
+                    }
+
+                    // Remise cumulée
+                    if ($remise_cumul != 0) {
+
+                        $montant_remise = $montant * ($remise_cumul / 100);
+                        $montant -= $montant_remise;
+
+                        $fee = new WC_Order_Item_Fee();
+                        $fee->set_name('Remise cumulée (' . $remise_cumul . '%)');
+                        $fee->set_amount(-abs($montant_remise));
+                        $fee->set_total(-abs($montant_remise));
+                        $subscription->add_item($fee);
+                    }
+
+                    
+                    
+                    
+
+                    // Copier les frais/taxes si nécessaire
+                    $subscription->calculate_totals();
+                    $subscription->save();
+
+
+                }
+
+                //dans une autre iteration $id_commande = 40174  $renew_out=44340  $renew_in=35348
+                if($renew_in>0 && $renew_out>0){
+                    //rechercher la commande d'id $renew_in 35348
+                    //marquer celle ci $id_commande 40174 comme renewal
+                    // rechercher l'abonnement marqué avec l'id de celle ci $id_commande 40174 et ajouter  $id_commande ( 40174) si possible avec sequence d'id asc sachant que cet abonnement pourra etre lié a plusieurs commandes deja
+
+
+                    //$renew_in id sur prestashop il faut plyutot chercher par $order->update_meta_data('_presta_id_commande', $id_commande);
+
+                    $orders = wc_get_orders([
+                        'limit' => 1,
+                        'meta_key' => '_presta_id_commande',
+                        'meta_value' => $renew_in,
+                        'return' => 'objects',
+                    ]);
+
+                    if (!empty($orders)) {
+                        $previous_order = $orders[0];
+                        error_log('Commande WooCommerce trouvée : ' . $previous_order->get_id());
+                    } else {
+                        error_log('Aucune commande WooCommerce trouvée pour l\'ID PrestaShop : ' . $renew_in);
+                    }
+
+
+                    if (!$previous_order) {
+
+                        error_log(
+                            'Commande précédente introuvable - renew_in : ' . $renew_in .
+                            ' - commande actuelle : ' . $order_id
+                        );
+
+                    } else {
+
+                        
+                        // -------------------------------------------------
+                        // Marquer la commande actuelle comme renewal
+                        // -------------------------------------------------
+
+                        update_post_meta($order_id, '_reference_order_id', $previous_order->get_id());
+
+
+                        // -------------------------------------------------
+                        // Ajouter la commande à l'abonnement
+                        // -------------------------------------------------
+
+       
+                        $order->set_parent_id($previous_order->get_id());
+                        $order->add_order_note(sprintf(__('Cette commande est le renouvellement de la commande #%d.', 'woocommerce'), $previous_order->get_id()));
+                        $order->save();
+
+
+                        error_log(
+                            'Commande woo : ' . $order_id .
+                            ' - Commande preta : ' . $id_commande .
+                            ' - Commande parente presta : ' . $renew_in .
+                            ' - Commande parente woo : ' .$previous_order->get_id() 
+                        );
+                          
+                    }
+
+                }
+
             }
+
+           
             
 
 

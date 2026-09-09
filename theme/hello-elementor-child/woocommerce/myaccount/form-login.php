@@ -17,6 +17,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
+	
 }
 
 do_action( 'woocommerce_before_customer_login_form' ); ?>

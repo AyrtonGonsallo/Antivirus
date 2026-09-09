@@ -27,11 +27,14 @@ $email_improvements_enabled = FeaturesUtil::feature_is_enabled( 'email_improveme
  * @hooked WC_Emails::email_header() Output the email header
  */
 do_action( 'woocommerce_email_header', $email_heading, $email ); 
-$user = get_user_by('login', $user_login);
-$user_id = $user->ID;
-$civilite    = strtolower(get_user_meta($user_id, 'civilite', true));
-$prenom     = $user->first_name;
-$nom        = $user->last_name;
+$user_id = $order->get_customer_id();
+
+$civilite = $user_id
+    ? strtolower(get_user_meta($user_id, 'civilite', true))
+    : '';
+
+$prenom = $order->get_billing_first_name();
+$nom    = $order->get_billing_last_name();
 ?>
 
 <?php echo $email_improvements_enabled ? '<div class="email-introduction">' : ''; ?>

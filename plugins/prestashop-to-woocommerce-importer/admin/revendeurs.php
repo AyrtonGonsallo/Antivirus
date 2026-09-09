@@ -170,7 +170,7 @@ function presta_import_revendeurs($line_start, $line_end) {
         }
 
         // Première ligne = colonnes
-        $headers = fgetcsv($handle, 0, ';', '"', '\\');
+        $headers = fgetcsv($handle, 0, ';', '"', '');
 
          foreach ($headers as &$header) {
             $header = trim($header, " \t\n\r\0\x0B\xEF\xBB\xBF\"");
@@ -190,7 +190,7 @@ function presta_import_revendeurs($line_start, $line_end) {
 
         $lignes = [];
 
-        while (($row = fgetcsv($handle, 0, ';', '"', '\\')) !== false) {
+        while (($row = fgetcsv($handle, 0, ';', '"', '')) !== false) {
 
             // Avant la ligne de départ
             if ($line < $line_start) {
@@ -203,10 +203,24 @@ function presta_import_revendeurs($line_start, $line_end) {
                 break;
             }
 
-            $data = array_combine($headers, $row);
+            try {
+                $data = array_combine($headers, $row);
+            } catch (Throwable $e) {
+
+                restore_error_handler();
+
+                error_log('Erreur CSV ligne ' . $line . ' : ' . $e->getMessage());
+                error_log('Headers : ' . print_r($headers, true));
+                error_log('Row : ' . print_r($row, true));
+
+                $errors++;
+                $line++;
+                continue;
+            }
 
             if ($data === false) {
                 $errors++;
+                error_log('Erreur CSV presta_id ' . $presta_id );
                 $line++;
                 continue;
             }
@@ -250,12 +264,14 @@ function presta_import_revendeurs($line_start, $line_end) {
 
             if (!$email || !is_email($email)) {
                 $errors++;
+                error_log('Erreur CSV presta_id ' . $presta_id );
                 continue;
             }
 
             // Client déjà présent
             if (email_exists($email)) {
                 $skipped++;
+                error_log('Erreur email existant - id : '.$presta_id.' - email : ' . $email );
                 continue;
             }
 
@@ -274,6 +290,7 @@ function presta_import_revendeurs($line_start, $line_end) {
 
             if (is_wp_error($user_id)) {
                 $errors++;
+                error_log('Erreur CSV presta_id ' . $presta_id );
                 continue;
             }
 
@@ -395,9 +412,10 @@ function presta_import_revendeurs($line_start, $line_end) {
         echo '<strong>Import terminé</strong><br>';
         echo 'Lignes demandées : ' . $line_start . ' → ' . $line_end . '<br>';
         echo 'Dernière ligne lue : ' . ($line - 1) . '<br>';
+         echo 'Dernier id : ' . $presta_id. '<br>';
         echo 'Importés : ' . $imported . '<br>';
         echo 'nb clients importées : ' . sizeof($lignes) . '<br>';
-        echo 'clients importées : ' . json_encode($lignes) . '<br>';
+      //  echo 'clients importées : ' . json_encode($lignes) . '<br>';
         echo 'Déjà présents : ' . $skipped . '<br>';
         echo 'Erreurs : ' . $errors;
         echo '</p>';
