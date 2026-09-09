@@ -635,7 +635,7 @@ function presta_import_devis($line_start, $line_end) {
                 add_row('produits_de_la_variation', [
                     'produit'  => $product->get_id(),
                     'quantite' => $qte,
-                     'prix_propose' => $total_lig_ht,
+                     'prix_propose' => $pu,
                     'duree' => $duree,
                 ], $variation_devis_id);
 
@@ -737,7 +737,7 @@ function presta_import_devis($line_start, $line_end) {
                     add_row('produits_de_la_variation', [
                         'produit'  => $product->get_id(),
                         'quantite' => $qte,
-                         'prix_propose' => $total_lig_ht,
+                         'prix_propose' => $pu,
                         'duree' => $duree,
                     ], $variation_devis_id);
 

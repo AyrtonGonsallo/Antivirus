@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-require_once plugin_dir_path(__FILE__) . '/commandes_mode_paiements.php';
+require_once plugin_dir_path(__FILE__) . '/devis.php';
 
 function job_du_cron() {
 
@@ -51,7 +51,7 @@ function job_du_cron() {
 
     echo 'Traitement ID ' . $id_courant . ' -> ' . $id_fin;
 
-    presta_import_commandes_mode_paiements($id_courant, $id_fin);
+    presta_import_devis($id_courant, $id_fin);
 
     // ===============================
     // PASSER AU LOT SUIVANT

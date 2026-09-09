@@ -158,11 +158,25 @@ class ALM_Statistiques_antivirus {
             return;
         }
 
-        $orders = wc_get_orders([
-            'limit' => -1,
-            'orderby' => 'date',
-            'order' => 'DESC'
+        $per_page = 200;
+        $paged = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
+
+        
+         $results = wc_get_orders([
+            'limit'    => $per_page,
+            'page'     => $paged,
+            'paginate' => true,
+            'orderby'  => 'date',
+            'order'    => 'DESC',
         ]);
+
+        $orders = $results->orders;
+        
+
+        /*
+        $orders = wc_get_orders([ 'limit' => -1, 'orderby' => 'date', 'order' => 'DESC' ]);
+        */
+        $total_pages = $results->max_num_pages;
 
         echo '<div class="wrap">';
         echo '<link rel="stylesheet" href="https://cdn.datatables.net/2.3.7/css/dataTables.dataTables.min.css"/>';
@@ -246,6 +260,12 @@ class ALM_Statistiques_antivirus {
 
                 $user_id = $order->get_user_id();
                 $order_id = $order->get_id();
+                $order_presta_id_commande = $order->get_meta('_presta_id_commande');
+                if($order_presta_id_commande){
+                    $text_presta = '<br>Id prestashop : '.$order_presta_id_commande;
+                }else{
+                    $text_presta = '';
+                }
                 $type_commande = '';
                 $is_renewal = false;
     
@@ -313,6 +333,7 @@ class ALM_Statistiques_antivirus {
                 } else {
                     $roles_string = ''; // fallback
                 }
+                
 
                 
                 
@@ -335,16 +356,18 @@ class ALM_Statistiques_antivirus {
                 }
                 $order_closest_date = $closest_date ? date('Y-m-d H:i:s', $closest_date) : '';
 
+                $count_fees = $order->get_item_count('fee');
 
 
                 echo '<tr>';
                 echo '<td><input type="checkbox" class="rowCheck"></td>';
-                echo '<td><span style="display:none" class="order_id">'.$order_id.'</span> <a href="' . esc_url($order_link) . '" target="_blank">#'. esc_html($order_id) . '</a><br>'.$text.'</td>';
+                echo '<td><span style="display:none" class="order_id">'.$order_id.'</span> <a href="' . esc_url($order_link) . '" target="_blank">#'. esc_html($order_id) . '</a><br>'.$text.' '.$text_presta.'</td>';
                 echo '<td>' . ($custom_statut) .'</td>';
                 echo '<td>' . ($methode) . '</td>';
                 echo '<td  data-order="'.esc_attr($order_date).'">' . esc_html($order->get_date_created()->date('d/m/Y H:i')) . '</td>';
                 echo '<td class="cles-col">'. $cles. '</td>';
                 echo '<td>' . wc_price($order->get_total()) . '</td>';
+                //echo '<td>' . $count_fees . '</td>';
                 echo '<td>' . ($user ? esc_html($user->display_name) : 'Invité') . '<br>';
                 echo  ($user ? esc_html($user->user_email) : '')  . '<br>';
                 echo  ($selected_client_id ? esc_html('Client final : '.$client_final->display_name) : '') . '</td>';
@@ -393,6 +416,25 @@ class ALM_Statistiques_antivirus {
         echo '</table>';
         echo '</div>';
 
+        
+        if ($total_pages > 1) {
+            echo '<div class="tablenav bottom">';
+            echo '<div class="tablenav-pages">';
+
+            echo paginate_links([
+                'base'      => add_query_arg('paged', '%#%'),
+                'format'    => '',
+                'current'   => $paged,
+                'total'     => $total_pages,
+                'prev_text' => '‹ Précédent',
+                'next_text' => 'Suivant ›',
+            ]);
+
+            echo '</div>';
+            echo '</div>';
+        }
+        
+
         echo '<input type="hidden" id="ordersToExport" value="">';
         
         echo '<button type="button" id="exportCsv" class="woocommerce-Button button custom-admin-action">📥 Exporter la sélection</button>';
@@ -402,18 +444,20 @@ class ALM_Statistiques_antivirus {
          table.dataTable>tbody>tr>td{ border: 1px solid rgba(255, 255, 255, 0.3) !important; background-color:#fff}
          .custom-admin-action { color: #ffffff !important; border-color: #ff7800 !important; background: #ff7800 !important; border-radius: 13px !important; padding: 6px 23px !important;}
          table.dataTable thead>tr>th.dt-orderable-desc .dt-column-order:after{ opacity: .425 !important; color:black !important}
-        .dt-paging-button.current{background: #ff7800 !important;}
-        .dt-paging-button{background: #ff77006e !important;color: #fff !important}
+        .page-numbers.current, .dt-paging-button.current{background: #ff7800 !important;}
+        .page-numbers, .dt-paging-button{text-decoration:none; background: #ff77006e !important;color: #000 !important;padding: .5em 1em; border-radius: 2px; font-size:16px;}
         .colonnes{display:flex;gap:30px}.colonne{display: flex;flex-direction: column;}
         .cles-col{width: 100px; max-width:100px; min-width:100px; overflow:hidden; word-break:break-all;overflow-wrap:anywhere;}
+        .tablenav .tablenav-pages {float: left !important; }
         </style>";
         echo "<script>
             const table = new DataTable('#myTable', {
+                paging: false,
                 lengthMenu: [
                     [50, 100, 200, 500],
                     [50, 100, 200, 500]
                 ],
-                pageLength: 100,
+                pageLength: 200,
                 info: false,
                 language: {
                     search:         'Rechercher',
