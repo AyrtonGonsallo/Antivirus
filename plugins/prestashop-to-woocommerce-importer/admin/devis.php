@@ -394,6 +394,7 @@ function presta_import_devis($line_start, $line_end) {
             $id_client_rvd = intval($data['id_client_rvd'] ?? 0);
             $id_revendeur = intval($data['id_revendeur'] ?? 0);
             $id_produit_id_woocommerce = intval($data['id_woocommerce'] ?? 0);
+            $dt_expire = sanitize_text_field($data['dt_expire'] ?? ''); //2034-02-06
             $dt_end = sanitize_text_field($data['dt_end'] ?? ''); //2034-02-06
             $dt_devis = sanitize_text_field($data['dt_devis'] ?? ''); //2034-02-06
             $statut_devis = sanitize_text_field($data['statut_devis'] ?? '');
@@ -460,7 +461,7 @@ function presta_import_devis($line_start, $line_end) {
                 'fields'     => 'ID',
             ]);
 
-            $woo_id_client = $user_id[0];
+            $woo_id_client = ($user_id)?$user_id[0]:null;
 
 
             if (!isset($variations_devis_creees[$id_devis])) {
@@ -507,7 +508,7 @@ function presta_import_devis($line_start, $line_end) {
                 }
 
                 $date_creation = date('Y-m-d H:i:s', strtotime($dt_devis));
-                $date_expiration = date('Y-m-d H:i:s', strtotime($dt_end));
+                $date_expiration = date('Y-m-d H:i:s', strtotime($dt_expire));
                 switch ($duree) {
                     case 1:
                         $software_duration = "1-year";
@@ -554,8 +555,11 @@ function presta_import_devis($line_start, $line_end) {
                 update_field('type_de_devis', 'corrige', $post_id);
                 update_field('utilisateur', $woo_id_client, $post_id);
                 update_field('field_692eab163985b', $woo_id_client, $post_id);
-                update_field('client_final', $woo_id_client_final, $post_id);
-                update_field('field_698c460ac6d81', $woo_id_client_final, $post_id);
+                if (!empty($client_final_id)) {
+                    update_field('client_final', $woo_id_client_final, $post_id);
+                    update_field('field_698c460ac6d81', $woo_id_client_final, $post_id);
+                }
+                
 
 
                 $variations_existantes = get_posts([
@@ -682,11 +686,16 @@ function presta_import_devis($line_start, $line_end) {
 
                 $variations_devis_creees[$id_devis] = $variation_devis_id;
 
+                $variations_devis_ids = [];
+                $variations_devis_ids[] = $variation_devis_id;
+
+                update_field('variations', $variations_devis_ids, $post_id);
+
 
             } else {
 
                 // ==========================================
-                // 5. MÊME devis :
+                // 5. MÊME variation :
                 //    ON AJOUTE UNIQUEMENT LE PRODUIT
                 // ==========================================
 
