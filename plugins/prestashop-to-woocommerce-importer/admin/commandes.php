@@ -245,6 +245,7 @@ function presta_import_commandes($line_start, $line_end) {
             $dt_expire = sanitize_text_field($data['dt_expire'] ?? ''); //2026-09-30 00:00:00
             $statut_commande = sanitize_text_field($data['statut_commande'] ?? '');
             $mode_paiement = sanitize_text_field($data['mode_paiement'] ?? '');
+            $type_compte = sanitize_text_field($data['type_compte'] ?? '');
             $paiement_ok = intval($data['paiement_ok'] ?? 0);
             $qte = intval($data['qte'] ?? 0);
             $duree = intval($data['duree'] ?? 0);
@@ -265,6 +266,7 @@ function presta_import_commandes($line_start, $line_end) {
             $remise_revendeur = floatval($data['remise_revendeur'] ?? 0);
             $remise_statutaire = floatval($data['remise_statutaire'] ?? 0);
             $remise_renewal = floatval($data['remise_renewal'] ?? 0);
+            $remise_commercial = floatval($data['remise_commercial'] ?? 0);
             $remise_special_1 = floatval($data['remise_special_1'] ?? 0);
             $remise_cumul = floatval($data['remise_cumul'] ?? 0);
             $duree = intval($data['duree'] ?? 0);
@@ -317,7 +319,48 @@ function presta_import_commandes($line_start, $line_end) {
                 ]);
 
                 if (!empty($user_id)) {
-                    $order->set_customer_id($user_id[0]);
+                    $customer_id = (int) $user_id[0];
+
+                    $order->set_customer_id($customer_id);
+
+                    $order->set_billing_company(
+                        get_user_meta($customer_id, 'billing_societe', true)
+                    );
+
+                    $order->set_billing_phone(
+                        get_user_meta($customer_id, 'billing_phone', true)
+                    );
+
+                    $order->set_billing_address_1(
+                        get_user_meta($customer_id, 'billing_address_1', true)
+                    );
+
+                    $order->set_billing_city(
+                        get_user_meta($customer_id, 'billing_city', true)
+                    );
+
+                    $order->set_billing_postcode(
+                        get_user_meta($customer_id, 'billing_postcode', true)
+                    );
+
+                    $order->set_billing_country(
+                        get_user_meta($customer_id, 'billing_country', true)
+                    );
+
+                    $order->set_billing_first_name(
+                        get_user_meta($customer_id, 'billing_first_name', true)
+                    );
+
+                    $order->set_billing_last_name(
+                        get_user_meta($customer_id, 'billing_last_name', true)
+                    );
+
+                    // Si tu as également l'email du client
+                    $user = get_userdata($customer_id);
+
+                    if ($user) {
+                        $order->set_billing_email($user->user_email);
+                    }
                     
                 }
 
@@ -398,12 +441,31 @@ function presta_import_commandes($line_start, $line_end) {
 
                 $order->update_meta_data('_presta_id_commande', $id_commande);
                 $order->update_meta_data('_presta_id_client', $id_client);
+
+                $user_revendeur_id = get_users([
+                     'role'       => 'customer_revendeur',
+                    'meta_key'   => 'presta_id',
+                    'meta_value' => $id_revendeur, //leur id
+                    'number'     => 1,
+                    'fields'     => 'ids',
+                ])[0] ?? 0;
+                
                 if ($id_client_rvd) {
                     // Client final WooCommerce
                     // À adapter selon ta logique de correspondance presta_id
                     $client_final_id = get_users([
-                        'meta_key'   => 'presta_id',
-                        'meta_value' => $id_client_rvd,
+                        'meta_query' => [
+                            [
+                                'key'     => 'presta_id',
+                                'value'   => $id_client_rvd,
+                                'compare' => '=',
+                            ],
+                            [
+                                'key'     => 'revendeur_id',
+                                'value'   => $user_revendeur_id,
+                                'compare' => '=',
+                            ],
+                        ],
                         'number'     => 1,
                         'fields'     => 'ID',
                     ]);
@@ -438,14 +500,59 @@ function presta_import_commandes($line_start, $line_end) {
                     $order->update_meta_data('_presta_id_revendeur', $id_revendeur);
                 }
 
-                if($paiement_ok){
-                    
-                    $order->set_payment_method('stripe');
-                    $order->set_payment_method_title('Carte de crédit/débit');
-                    $order->update_meta_data('_mode_paiement', $mode_paiement);
-                    $order->update_meta_data('_paiement_ok', $paiement_ok);
+               
+                   
+                $order->update_meta_data('_mode_paiement', $mode_paiement);
+                $order->update_meta_data('_paiement_ok', $paiement_ok);
 
+                
+
+                //Carte de crédit/débit - stripe,Virement bancaire - bacs,	Paiements par chèque - cheque,Paiement par mandat administratif - paiement_mandat_administratif,Paiement en fin de mois - paiement_differe
+                $payment_method = '';
+                $payment_method_title = '';
+
+                switch ($mode_paiement) {
+                    case 'Carte Bancaire':
+                        # code...
+                        $payment_method = 'stripe';
+                        $payment_method_title = 'Carte de crédit/débit';
+                        break;
+                    case 'Paiement fin de mois':
+                        # code...
+                        $payment_method = 'paiement_differe';
+                        $payment_method_title = 'Paiement en fin de mois';
+                        $order->update_meta_data('_paiement_differe', 'yes');
+                        $order->update_meta_data('_paiement_differe_date', date('Y-m-d H:i:s'));
+                        break;
+                    case 'PayPal':
+                        # code...
+                        $payment_method = 'stripe';
+                        $payment_method_title = 'Carte de crédit/débit';
+                        break;
+                    case 'Virement Bancaire':
+                        # code...
+                        $payment_method = 'bacs';
+                        $payment_method_title = 'Virement bancaire';
+                        break;
+                    case 'Chèque Bancaire':
+                        # code...
+                        $payment_method = 'cheque';
+                        $payment_method_title = 'Paiements par chèque';
+                        break;
+                    case 'Mandat administratif':
+                        # code...
+                        $payment_method = 'paiement_mandat_administratif';
+                        $payment_method_title = 'Paiement par mandat administratif';
+                        break;
+                    
+                    
+                    default:
+                        # code...
+                        break;
                 }
+
+                $order->set_payment_method($payment_method);
+                $order->set_payment_method_title($payment_method_title);
                 
 
                 
@@ -545,6 +652,7 @@ function presta_import_commandes($line_start, $line_end) {
                 $order->update_meta_data('_remise_revendeur', $remise_revendeur);
                 $order->update_meta_data('_remise_statutaire', $remise_statutaire);
                 $order->update_meta_data('_remise_renewal', $remise_renewal);
+                $order->update_meta_data('_remise_commercial', $remise_commercial);
                 $order->update_meta_data('_remise_special_1', $remise_special_1);
                 $order->update_meta_data('_remise_cumul', $remise_cumul);
 
@@ -577,6 +685,18 @@ function presta_import_commandes($line_start, $line_end) {
                     $order->add_item($fee);
                 }
 
+                if ($remise_commercial != 0) {
+
+                    $montant_remise = $montant * ($remise_commercial / 100);
+                    $montant -= $montant_remise;
+
+                    $fee = new WC_Order_Item_Fee();
+                    $fee->set_name('Remise commerciale (' . $remise_commercial . '%)');
+                    $fee->set_amount(-abs($montant_remise));
+                    $fee->set_total(-abs($montant_remise));
+                    $order->add_item($fee);
+                }
+
                 // Remise spéciale
                 if ($remise_special_1 != 0) {
 
@@ -590,18 +710,27 @@ function presta_import_commandes($line_start, $line_end) {
                     $order->add_item($fee);
                 }
 
-                // Remise statutaire
                 if ($remise_statutaire != 0) {
 
                     $montant_remise = $montant * ($remise_statutaire / 100);
                     $montant -= $montant_remise;
 
+                    // Détermination du libellé de la remise statutaire
+                    if ((float) $remise_statutaire === 50.0 && $type_compte === 'PRO') {
+                        $nom_remise = 'Remise Établissements scolaires et associations -50%';
+                    } elseif ((float) $remise_statutaire === 30.0 && $type_compte === 'PRO') {
+                        $nom_remise = 'Remise Administrations et mairies -30%';
+                    } else {
+                        $nom_remise = 'Remise liée au statut -' . $remise_statutaire . '%';
+                    }
+
                     $fee = new WC_Order_Item_Fee();
-                    $fee->set_name('Remise statutaire (' . $remise_statutaire . '%)');
+                    $fee->set_name($nom_remise);
                     $fee->set_amount(-abs($montant_remise));
                     $fee->set_total(-abs($montant_remise));
                     $order->add_item($fee);
                 }
+
 
                 // Remise cumulée
                 if ($remise_cumul != 0) {
@@ -609,12 +738,22 @@ function presta_import_commandes($line_start, $line_end) {
                     $montant_remise = $montant * ($remise_cumul / 100);
                     $montant -= $montant_remise;
 
+                    // Détermination du libellé de la remise cumulée
+                    if ((float) $remise_cumul === 50.0) {
+                        $nom_remise = 'Remise Renouvellement de licences GOUV -50%';
+                    } elseif ((float) $remise_cumul === 60.0) {
+                        $nom_remise = 'Remise Renouvellement de licences EDU -60%';
+                    } else {
+                        $nom_remise = 'Remise cumulée -' . $remise_cumul . '%';
+                    }
+
                     $fee = new WC_Order_Item_Fee();
-                    $fee->set_name('Remise cumulée (' . $remise_cumul . '%)');
+                    $fee->set_name($nom_remise);
                     $fee->set_amount(-abs($montant_remise));
                     $fee->set_total(-abs($montant_remise));
                     $order->add_item($fee);
                 }
+
                 $order->calculate_totals();
                 $order->save();
             
@@ -633,18 +772,31 @@ function presta_import_commandes($line_start, $line_end) {
                     error_log('date_debut commande '.$date_debut->format('Y-m-d H:i:s'));
                 }
 
-                if ($dt_expire) {
+                if ($dt_expire) {//celle de la licence
                     //$duree est celle de l'abonnement 1,2,3 il faut l'ajouter en aneee a la date de la commande
                     $date_expiration = new WC_DateTime($dt_expire);
                     $date_prochain_paiement = clone $date_expiration;
+                   // $date_prochain_paiement->modify('+' . $duree . ' years');
+                    error_log('date_prochain_paiement_licence '.$date_prochain_paiement->format('Y-m-d H:i:s'));
+                    $dateLimite = clone $date_expiration;
+                    $dateLimite->modify('+3 months');
+                }else{///prendre la date de commande plus la duree
+                    $date_expiration = new WC_DateTime($dt_commande);
+                    $date_prochain_paiement = clone $date_expiration;
                     $date_prochain_paiement->modify('+' . $duree . ' years');
-                    error_log('date_prochain_paiement '.$date_prochain_paiement->format('Y-m-d H:i:s'));
+                    error_log('date_prochain_paiement_commande '.$date_prochain_paiement->format('Y-m-d H:i:s'));
+                    $dateLimite = clone $date_prochain_paiement;
                 }
                 
+             
+                
 
-                if (($date_prochain_paiement >= $date_now) && ($renew_out==0)) { 
+                error_log('dateLimite '.$dateLimite->format('Y-m-d H:i:s'));
+                error_log('date_now '.$date_now->format('Y-m-d H:i:s'));
+
+                if (($date_now <= $dateLimite) && ($renew_out==0)) { 
                     //on créé un abonement en comparant $date_prochain_paiement a la date du jour
-                    error_log('la date_prochain_paiement est supérieure a la date du jour donc on crée l\'abonnement');
+                    error_log('la dateLimite est supérieure a la date du jour donc on crée l\'abonnement');
                    
 
                     $subscription = wcs_create_subscription([
@@ -656,6 +808,52 @@ function presta_import_commandes($line_start, $line_end) {
                         // Optionnel : si vous voulez définir une date de fin
                         'end_date'           => '', // Laisser vide pour pas de fin
                     ]);
+
+                    if (!empty($user_id)) {
+                        $customer_id = (int) $user_id[0];
+
+                        $subscription->set_customer_id($customer_id);
+
+                        $subscription->set_billing_company(
+                            get_user_meta($customer_id, 'billing_societe', true)
+                        );
+
+                        $subscription->set_billing_phone(
+                            get_user_meta($customer_id, 'billing_phone', true)
+                        );
+
+                        $subscription->set_billing_address_1(
+                            get_user_meta($customer_id, 'billing_address_1', true)
+                        );
+
+                        $subscription->set_billing_city(
+                            get_user_meta($customer_id, 'billing_city', true)
+                        );
+
+                        $subscription->set_billing_postcode(
+                            get_user_meta($customer_id, 'billing_postcode', true)
+                        );
+
+                        $subscription->set_billing_country(
+                            get_user_meta($customer_id, 'billing_country', true)
+                        );
+
+                        $subscription->set_billing_first_name(
+                            get_user_meta($customer_id, 'billing_first_name', true)
+                        );
+
+                        $subscription->set_billing_last_name(
+                            get_user_meta($customer_id, 'billing_last_name', true)
+                        );
+
+                        // Si tu as également l'email du client
+                        $user = get_userdata($customer_id);
+
+                        if ($user) {
+                            $subscription->set_billing_email($user->user_email);
+                        }
+                        
+                    }
 
                     if (is_wp_error($subscription)) {
                         error_log(
@@ -745,6 +943,19 @@ function presta_import_commandes($line_start, $line_end) {
                         $subscription->add_item($fee);
                     }
 
+                    if ($remise_commercial != 0) {
+
+                        $montant_remise = $montant * ($remise_commercial / 100);
+                        $montant -= $montant_remise;
+
+                        $fee = new WC_Order_Item_Fee();
+                        $fee->set_name('Remise commerciale (' . $remise_commercial . '%)');
+                        $fee->set_amount(-abs($montant_remise));
+                        $fee->set_total(-abs($montant_remise));
+                        $subscription->add_item($fee);
+                    }
+
+
                     // Remise renouvellement
                     if ($remise_renewal != 0) {
 
@@ -758,19 +969,7 @@ function presta_import_commandes($line_start, $line_end) {
                         $subscription->add_item($fee);
                     }
 
-                    // Remise renouvellement
-                    if ($remise_statutaire != 0) {
-
-                        $montant_remise = $montant * ($remise_statutaire / 100);
-                        $montant -= $montant_remise;
-
-                        $fee = new WC_Order_Item_Fee();
-                        $fee->set_name('Remise statutaire (' . $remise_statutaire . '%)');
-                        $fee->set_amount(-abs($montant_remise));
-                        $fee->set_total(-abs($montant_remise));
-                        $subscription->add_item($fee);
-                    }
-
+               
                     // Remise spéciale
                     if ($remise_special_1 != 0) {
 
@@ -784,14 +983,45 @@ function presta_import_commandes($line_start, $line_end) {
                         $subscription->add_item($fee);
                     }
 
+                    if ($remise_statutaire != 0) {
+
+                        $montant_remise = $montant * ($remise_statutaire / 100);
+                        $montant -= $montant_remise;
+
+                        // Détermination du libellé de la remise statutaire
+                        if ((float) $remise_statutaire === 50.0 && $type_compte === 'PRO') {
+                            $nom_remise = 'Remise Établissements scolaires et associations -50%';
+                        } elseif ((float) $remise_statutaire === 30.0 && $type_compte === 'PRO') {
+                            $nom_remise = 'Remise Administrations et mairies -30%';
+                        } else {
+                            $nom_remise = 'Remise liée au statut -' . $remise_statutaire . '%';
+                        }
+
+                        $fee = new WC_Order_Item_Fee();
+                        $fee->set_name($nom_remise);
+                        $fee->set_amount(-abs($montant_remise));
+                        $fee->set_total(-abs($montant_remise));
+                        $subscription->add_item($fee);
+                    }
+
+
                     // Remise cumulée
                     if ($remise_cumul != 0) {
 
                         $montant_remise = $montant * ($remise_cumul / 100);
                         $montant -= $montant_remise;
 
+                        // Détermination du libellé de la remise cumulée
+                        if ((float) $remise_cumul === 50.0) {
+                            $nom_remise = 'Remise Renouvellement de licences GOUV -50%';
+                        } elseif ((float) $remise_cumul === 60.0) {
+                            $nom_remise = 'Remise Renouvellement de licences EDU -60%';
+                        } else {
+                            $nom_remise = 'Remise cumulée -' . $remise_cumul . '%';
+                        }
+
                         $fee = new WC_Order_Item_Fee();
-                        $fee->set_name('Remise cumulée (' . $remise_cumul . '%)');
+                        $fee->set_name($nom_remise);
                         $fee->set_amount(-abs($montant_remise));
                         $fee->set_total(-abs($montant_remise));
                         $subscription->add_item($fee);

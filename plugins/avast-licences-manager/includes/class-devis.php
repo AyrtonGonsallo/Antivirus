@@ -452,7 +452,15 @@ class ALM_Devis {
                 if ($user) {
                     $prenom = get_user_meta($user->ID, 'first_name', true);
                     $nom = get_user_meta($user->ID, 'last_name', true);
+                    
                     echo $user ? esc_html($nom." ".$prenom) : '—';
+                    $client_final      = get_field('client_final', $post_id);
+                    if($client_final){
+                        $client_final_id = $client_final->ID;
+                        $client_final_prenom = get_user_meta($client_final_id, 'first_name', true);
+                        $client_final_nom = get_user_meta($client_final_id, 'last_name', true);
+                       echo '<br> Client final : '.esc_html($client_final_nom." ".$client_final_prenom);
+                    }
                 } else {
                     echo '—';
                 }

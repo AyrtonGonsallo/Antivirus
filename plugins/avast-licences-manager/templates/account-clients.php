@@ -31,7 +31,58 @@ $pays_par_groupe = include __DIR__ . '/../includes/countries.php';
 ?>
 
 <!-- DataTables CSS -->
+
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+
+<style>
+	
+.dataTables_wrapper .dataTables_filter input,.dataTables_wrapper .dataTables_length select {
+    border: 1px solid var(--tables-title-color, #000) !important;
+    border-radius: 3px;
+    padding: 5px;
+}
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+    box-shadow: none !important;
+    outline: none !important;
+    outline-offset: 0px !important;
+}
+
+ .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    color:  #ffffff !important;
+    border: 1px solid var(--tables-buttons-border-color, #5bc0de)!important;
+    background-color: var(--tables-buttons-border-color, #5bc0de)!important;
+ 
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button.current{
+    color:  #ffffff !important;
+    border: 1px solid var(--tables-buttons-border-color, #5bc0de)!important;
+    background-color: var(--tables-buttons-border-color, #5bc0de)!important;
+ 
+}
+ .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    color: var(--tables-title-color, #000) !important;
+    border: 1px solid var(--tables-title-color, #000) !important;
+    background-color: rgba(0, 0, 0, 0.05);
+ 
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button{
+    color: var(--tables-title-color, #000) !important;
+    border: 1px solid var(--tables-title-color, #000) !important;
+    background-color: rgba(0, 0, 0, 0.05);
+ 
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled, .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover, .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:active {
+    color: var(--tables-title-color, #000) !important;
+}
+.dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing, .dataTables_wrapper .dataTables_paginate {
+    color: var(--tables-title-color, #000) !important;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    color: white !important;
+    border: 1px solid var(--tables-buttons-border-color, #5bc0de)!important;
+    background-color: var(--tables-buttons-border-color, #5bc0de)!important;
+}
+</style>
 
 <!-- Tableau -->
 <table id="myTable" class="display">
@@ -43,10 +94,7 @@ $pays_par_groupe = include __DIR__ . '/../includes/countries.php';
             <th>Prénom</th>
             <th>Email</th>
             <th>Téléphone</th>
-            <th>Fax</th>
-            <th>Adresse</th>
-            <th>Ville</th>
-            <th>Code Postal</th>
+    
             <th>Pays</th>
             <th>Actions</th>
         </tr>
@@ -75,10 +123,7 @@ $pays_par_groupe = include __DIR__ . '/../includes/countries.php';
             <td><?php echo esc_html($prenom); ?></td>
             <td><?php echo esc_html($email); ?></td>
             <td><?php echo esc_html($billing_phone); ?></td>
-            <td><?php echo esc_html($fax); ?></td>
-            <td><?php echo esc_html($billing_address_1); ?></td>
-            <td><?php echo esc_html($ville); ?></td>
-            <td><?php echo esc_html($code_postal); ?></td>
+           
             <td><?php echo esc_html($pays); ?></td>
             <td><?php echo '<a href="'.$url.'">Voir</a>';?></td>
         </tr>
@@ -122,7 +167,19 @@ jQuery(document).ready(function($) {
             },
             "paging": true,
             info: false,
-            order: [[1, 'desc'],[2, 'desc'],[3, 'desc'],[4, 'desc']]
+            order: [[1, 'desc'],[2, 'desc'],[3, 'desc'],[4, 'desc']],
+            scrollX: true,
+            autoWidth: false,
+            columnDefs: [
+                { width: '100px', targets: 0 },  // Type Client
+                { width: '180px', targets: 1 },  // Dénomination
+                { width: '120px', targets: 2 },  // Nom
+                { width: '120px', targets: 3 },  // Prénom
+                { width: '100px', targets: 4 },  // Email
+                { width: '130px', targets: 5 },  // Téléphone
+                { width: '100px', targets: 6 }, // Pays
+                { width: '100px', targets: 7 }  // Actions
+            ]
         } );
 });
 </script>

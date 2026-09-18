@@ -416,6 +416,7 @@ function presta_import_devis($line_start, $line_end) {
             $remise_revendeur = floatval($data['remise_revendeur'] ?? 0);
             $remise_renewal = floatval($data['remise_renewal'] ?? 0);
             $remise_special_1 = floatval($data['remise_special_1'] ?? 0);
+            $remise_commercial = floatval($data['remise_commercial'] ?? 0);
             $remise_cumul = floatval($data['remise_cumul'] ?? 0);
             $remise_statutaire = floatval($data['remise_statutaire'] ?? 0);
 
@@ -436,15 +437,36 @@ function presta_import_devis($line_start, $line_end) {
             error_log('nb_pcs '.$nb_pcs);
             error_log('duree '.$duree);
 
+            $client_final_id = [];
+            $woo_id_client_final = 0;
 
             if ($id_client_rvd) {
                 // Client final WooCommerce
                 // À adapter selon ta logique de correspondance presta_id
-                $client_final_id = get_users([
+          
+                 $user_revendeur_id = get_users([
+                    'role'       => 'customer_revendeur',
                     'meta_key'   => 'presta_id',
-                    'meta_value' => $id_client_rvd,
+                    'meta_value' => $id_revendeur, //leur id
                     'number'     => 1,
-                    'fields'     => 'ID',
+                    'fields'     => 'ids',
+                ])[0] ?? 0;
+
+                $client_final_id = get_users([
+                    'meta_query' => [
+                        [
+                            'key'     => 'presta_id',
+                            'value'   => $id_client_rvd,
+                            'compare' => '=',
+                        ],
+                        [
+                            'key'     => 'revendeur_id',
+                            'value'   => $user_revendeur_id ,
+                            'compare' => '=',
+                        ],
+                    ],
+                    'number' => 1,
+                    'fields' => 'ID',
                 ]);
 
                 if (!empty($client_final_id)) {
@@ -454,11 +476,20 @@ function presta_import_devis($line_start, $line_end) {
             
             }
 
-            $user_id = get_users([
-                'meta_key'   => 'presta_id',
-                'meta_value' => $id_client,
-                'number'     => 1,
-                'fields'     => 'ID',
+           $user_id = get_users([
+                'number'  => 1,
+                'fields'  => 'ID',
+                'meta_query' => [
+                    [
+                        'key'     => 'presta_id',
+                        'value'   => $id_client,
+                        'compare' => '=',
+                    ],
+                    [
+                        'key'     => 'revendeur_id',
+                        'compare' => 'NOT EXISTS',
+                    ],
+                ],
             ]);
 
             $woo_id_client = ($user_id)?$user_id[0]:null;
@@ -661,14 +692,37 @@ function presta_import_devis($line_start, $line_end) {
                    update_field('remise_commerciale', $remise_special_1, $variation_devis_id);
                 }
 
-                // Remise cumulée
-                if ($remise_cumul != 0) {
+                // remise_commerciale
+                if ($remise_commercial != 0) {
+
+                   update_field('remise_commerciale', $remise_commercial, $variation_devis_id);
+                }
+        
+
+                // Remise cumulée 
+                if ($remise_cumul == 50) {//Remise Renouvellement de licences GOUV -50%
+
+                    update_field('remise_renewal', $remise_cumul, $variation_devis_id);
+                }
+                if ($remise_cumul == 60) {//Remise Renouvellement de licences EDU -60%
+
+                    update_field('remise_renewal', $remise_cumul, $variation_devis_id);
+                }
+                if ($remise_cumul != 0 && $remise_cumul != 50 && $remise_cumul != 60 ) {
 
                     update_field('remise_cumulee', $remise_cumul, $variation_devis_id);
                 }
 
                  // Remise remise_statutaire
-                if ($remise_statutaire != 0) {
+                if ($remise_statutaire == 30) {//"Remise Administrations et mairies -30%"
+
+                   update_field('remise_administration_mairie', $remise_statutaire, $variation_devis_id);
+                }
+                if ($remise_statutaire == 50) {//"Remise Établissements scolaires et associations -50%"
+
+                   update_field('remise_etalissements', $remise_statutaire, $variation_devis_id);
+                }
+                if ($remise_statutaire != 0 && $remise_statutaire != 30 && $remise_statutaire != 50) {
 
                    update_field('remise_statutaire', $remise_statutaire, $variation_devis_id);
                 }

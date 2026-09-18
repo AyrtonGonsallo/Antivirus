@@ -298,6 +298,7 @@ function presta_import_clients_revendeurs($line_start, $line_end) {
             error_log('recherche revendeur presta '.$id_revendeur);
            // update_user_meta($user_id, 'revendeur_id', $id_revendeur); cherche l'id de l'user woocomerce par ce champ  update_user_meta($user_id, 'presta_id', $presta_id );
             $user_revendeur_id = get_users([
+                 'role'       => 'customer_revendeur',
                 'meta_key'   => 'presta_id',
                 'meta_value' => $id_revendeur, //leur id
                 'number'     => 1,

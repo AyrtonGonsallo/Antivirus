@@ -277,6 +277,8 @@ function presta_import_commandes_mode_paiements($line_start, $line_end) {
                         # code...
                         $payment_method = 'paiement_differe';
                         $payment_method_title = 'Paiement en fin de mois';
+                        $order->update_meta_data('_paiement_differe', 'yes');
+                        $order->update_meta_data('_paiement_differe_date', date('Y-m-d H:i:s'));
                         break;
                     case 'PayPal':
                         # code...
