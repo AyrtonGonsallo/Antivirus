@@ -33,7 +33,22 @@ class ALM_Wcs {
 
     public static function endpoint_subscriptions() {
 
-        $subscriptions = wcs_get_subscriptions(['subscriptions_per_page' => -1]);
+        //$subscriptions = wcs_get_subscriptions(['subscriptions_per_page' => -1]);
+        $subscriptions = wcs_get_subscriptions([
+            'subscriptions_per_page' => -1,
+            'meta_query' => [
+                'relation' => 'OR',
+                [
+                    'key'     => '_cron_execute',
+                    'compare' => 'NOT EXISTS',
+                ],
+                [
+                    'key'     => '_cron_execute',
+                    'value'   => '2',
+                    'compare' => '!=',
+                ],
+            ],
+        ]);
         $test = isset($_GET['test'])?true:false;
         $subs_id = isset($_GET['subs_id'])?intval($_GET['subs_id']):30772;
 
@@ -301,6 +316,54 @@ class ALM_Wcs {
                         $subscription->save();
                         
                     }
+                }else {
+
+                    echo "Remises / Fees:\n";
+                    $has_renewal = false;
+
+                    
+                    echo "A renouvellement ? : " . $has_renewal . "\n";
+
+                    // =====================================================
+                    // DETERMINER LE TAUX FINAL (PRIORITÉ)
+                    // =====================================================
+                    
+                    $rate = 0.30;
+                    $label_suffix = "-30%";
+
+                   
+                    echo "Taux retenu : " . $rate . "\n";
+
+                    $discount_amount = round($base_total * $rate, 2);
+
+                    echo "base total apres: " . $base_total . "\n";
+                    echo "discount_amount : " . $discount_amount . "\n";
+
+                    // =====================================================
+                    // CAS 1 : PAS DE RENOUVELLEMENT
+                    // =====================================================
+                    if (!$has_renewal) {
+
+                        $renewal_fee = new WC_Order_Item_Fee();
+                        $renewal_fee->set_name("Remise Renouvellement de licences " . $label_suffix);
+                        $renewal_fee->set_amount(-$discount_amount);
+                        $renewal_fee->set_total(-$discount_amount);
+                        $renewal_fee->set_tax_status('none');
+
+                        $subscription->add_item($renewal_fee);
+
+                    }
+                    
+
+                    // =====================================================
+                    // RECALCUL
+                    // =====================================================
+                    if(!$test){
+                        $subscription->update_meta_data('_cron_execute', 1);
+                        $subscription->calculate_totals(true);
+                        $subscription->save();
+                        
+                    }
                 }
 
             }
@@ -337,7 +400,11 @@ class ALM_Wcs {
 
     public static function endpoint_cron_subscriptions() {
 
-        $subscriptions = wcs_get_subscriptions(['subscriptions_per_page' => -1]);
+        //$subscriptions = wcs_get_subscriptions(['subscriptions_per_page' => -1]);
+        $subscriptions = wcs_get_subscriptions([
+            'subscriptions_per_page' => -1,
+            
+        ]);
         $sans_sauvegarder = isset($_GET['sauvegarder'])?false:true;
 
         // Buffer pour capturer tout l'affichage
@@ -517,6 +584,59 @@ class ALM_Wcs {
                         $rate = 0.50;
                         $label_suffix = "GOUV -50%";
                     }
+
+                    echo "Taux retenu : " . $rate . "\n";
+
+                    $discount_amount = round($base_total * $rate, 2);
+
+                    echo "base total apres: " . $base_total . "\n";
+                    echo "discount_amount : " . $discount_amount . "\n";
+
+                    // =====================================================
+                    // CAS 1 : PAS DE RENOUVELLEMENT
+                    // =====================================================
+                    if (!$has_renewal) {
+                        $renewal_fee = new WC_Order_Item_Fee();
+                        $renewal_fee->set_name("Remise Renouvellement de licences " . $label_suffix);
+                        $renewal_fee->set_amount(-$discount_amount);
+                        $renewal_fee->set_total(-$discount_amount);
+                        $renewal_fee->set_tax_status('none');
+                        $subscription->add_item($renewal_fee);
+                    }
+                    // =====================================================
+                    // CAS 2 : EXISTE DEJA → ON MET À JOUR
+                    // =====================================================
+                    elseif ($existing_renewal &&  ($has_edu || $has_gouv) ) {
+                        echo "mise à jour de la remise existante\n";
+                        $existing_renewal->set_name("Remise Renouvellement de licences " . $label_suffix);
+                        $existing_renewal->set_amount(-$discount_amount);
+                        $existing_renewal->set_total(-$discount_amount);
+                        $existing_renewal->set_tax_status('none');
+                    }
+
+                    // =====================================================
+                    // RECALCUL
+                    // =====================================================
+                    if(!$sans_sauvegarder){
+                        $subscription->set_requires_manual_renewal(true);
+                        $subscription->save();
+                        $subscription->update_meta_data('_cron_execute', 1);
+                        $subscription->calculate_totals(true);
+                        $subscription->save();
+                    }
+                }else {
+                    echo "Remises / Fees:\n";
+                    
+                    echo "A renouvellement ? : " . $has_renewal . "\n";
+
+                    // =====================================================
+                    // DETERMINER LE TAUX FINAL (PRIORITÉ)
+                    // =====================================================
+                    
+                    $rate = 0.30;
+                    $label_suffix = "-30%";
+
+                 
 
                     echo "Taux retenu : " . $rate . "\n";
 
