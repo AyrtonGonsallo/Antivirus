@@ -311,12 +311,30 @@ function presta_import_commandes($line_start, $line_end) {
 
                 // Client WooCommerce
                 // À adapter selon ta logique de correspondance presta_id
-                $user_id = get_users([
-                    'meta_key'   => 'presta_id',
-                    'meta_value' => $id_client,
-                    'number'     => 1,
-                    'fields'     => 'ID',
-                ]);
+                if(!$id_revendeur){//chercher client direct
+                    $user_id = get_users([
+                        'meta_key'   => 'presta_id',
+                        'role'       => 'customer_direct',
+                        'meta_value' => $id_client,
+                        'number'     => 1,
+                        'fields'     => 'ID',
+                        'meta_query' => [
+                            [
+                                'key'     => 'revendeur_id',//eviter les clients de revendeurs car on a des ids communs au cdr et client/rev
+                                'compare' => 'NOT EXISTS',
+                            ],
+                        ],
+                    ]);
+                }else{//chercher revendeur
+                    $user_id = get_users([
+                        'role'       => 'customer_revendeur', //evite cdr car on a des ids communs au cdr et client/rev
+                        'meta_key'   => 'presta_id',
+                        'meta_value' => $id_revendeur, //leur id
+                        'number'     => 1,
+                        'fields'     => 'ids',
+                    ]);
+                }
+                
 
                 if (!empty($user_id)) {
                     $customer_id = (int) $user_id[0];
@@ -443,7 +461,7 @@ function presta_import_commandes($line_start, $line_end) {
                 $order->update_meta_data('_presta_id_client', $id_client);
 
                 $user_revendeur_id = get_users([
-                     'role'       => 'customer_revendeur',
+                     'role'       => 'customer_revendeur',//evite cdr car on a des ids communs au cdr et client/rev
                     'meta_key'   => 'presta_id',
                     'meta_value' => $id_revendeur, //leur id
                     'number'     => 1,
@@ -461,7 +479,7 @@ function presta_import_commandes($line_start, $line_end) {
                                 'compare' => '=',
                             ],
                             [
-                                'key'     => 'revendeur_id',
+                                'key'     => 'revendeur_id', //evite cd/rev car on a des ids communs au cdr et client/rev
                                 'value'   => $user_revendeur_id,
                                 'compare' => '=',
                             ],

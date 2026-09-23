@@ -445,7 +445,7 @@ function presta_import_devis($line_start, $line_end) {
                 // À adapter selon ta logique de correspondance presta_id
           
                  $user_revendeur_id = get_users([
-                    'role'       => 'customer_revendeur',
+                    'role'       => 'customer_revendeur',//evite un client de revendeur car on a des ids communs au cdr et client/rev
                     'meta_key'   => 'presta_id',
                     'meta_value' => $id_revendeur, //leur id
                     'number'     => 1,
@@ -460,7 +460,7 @@ function presta_import_devis($line_start, $line_end) {
                             'compare' => '=',
                         ],
                         [
-                            'key'     => 'revendeur_id',
+                            'key'     => 'revendeur_id',//evite un client direct car on a des ids communs au cdr et client/rev
                             'value'   => $user_revendeur_id ,
                             'compare' => '=',
                         ],
@@ -486,7 +486,7 @@ function presta_import_devis($line_start, $line_end) {
                         'compare' => '=',
                     ],
                     [
-                        'key'     => 'revendeur_id',
+                        'key'     => 'revendeur_id',//eviter les clients de revendeurs car on a des ids communs au cdr et client/rev
                         'compare' => 'NOT EXISTS',
                     ],
                 ],

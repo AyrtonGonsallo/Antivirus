@@ -90,6 +90,7 @@ class ALM_Statistiques_antivirus {
                     'Virement bancaire' => 'Attente de paiement - BdC automatique',
                     'Paiement par mandat administratif' => 'Attente de paiement - BdC automatique',
                     'Paiements par chèque' => 'Attente de paiement - BdC automatique',
+                    '' => 'Attente de paiement - BdC automatique',
                 ]
             ],
 
@@ -194,8 +195,8 @@ class ALM_Statistiques_antivirus {
                     </label>
 
                     <label>
-                        <input type="checkbox" value="Attente paiement - BdC automatique">
-                        Attente paiement - BdC automatique
+                        <input type="checkbox" value="Attente de paiement - BdC automatique">
+                        Attente de paiement - BdC automatique
                     </label>
 
                     <label>
