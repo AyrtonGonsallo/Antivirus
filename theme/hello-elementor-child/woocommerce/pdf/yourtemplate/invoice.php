@@ -97,6 +97,11 @@
 					$billing_societe    = (get_user_meta($user_id, 'billing_societe', true));
 					$selected_client_id  = $this->order->get_meta('client_final');
 					$client = get_user_by('id', $selected_client_id);
+					$new_revendeur_account_regime_tva = get_user_meta($user_id, 'new_revendeur_account_regime_tva', true);
+					$new_account_regime_tva = get_user_meta($user_id, 'new_account_regime_tva', true);
+					$regime = ($new_account_regime_tva )?$new_account_regime_tva :$new_revendeur_account_regime_tva;
+					$new_account_tva_intra = get_user_meta($user_id, 'new_account_tva_intra', true);
+					$new_account_prefixe_tva = get_user_meta($user_id, 'new_account_prefixe_tva', true);
 					
 				?>
 				<?php if ( !empty( $client ) ) : ?>
@@ -161,6 +166,8 @@
 	</tbody>
 </table>
 
+
+
 <table class="notes-totals">
 	<tbody>
 		<tr class="no-borders">
@@ -198,6 +205,21 @@
 	</tbody>
 </table>
 
+<?php if($regime=="HT_UE"){?>
+
+	
+		<div style="margin-top:30px; width:40%; text-align:end; left: 60%; border-bottom:solid 1px; position:relative">
+			
+				
+				<b>Numéro de TVA : </b> <?php echo $new_account_prefixe_tva;?> <?php echo $new_account_tva_intra;?><br>
+				Exonération de TVA selon l’article 262 ter I du CGI ou l’article 138 de la directive 2006/112/CE
+							
+			
+		</div>
+		
+	
+
+<?php }?>
 <?php do_action( 'wpo_wcpdf_after_order_details', $this->get_type(), $this->order ); ?>
 
 <div class="bottom-spacer"></div>
@@ -206,7 +228,7 @@
 	<htmlpagefooter name="docFooter"><!-- required for mPDF engine -->
 		<div id="footer">
 			<!-- hook available: wpo_wcpdf_before_footer -->
-			<?php $this->footer(); ?>ss
+			<?php $this->footer(); ?>
 			<!-- hook available: wpo_wcpdf_after_footer -->
 		</div>
 	</htmlpagefooter><!-- required for mPDF engine -->
