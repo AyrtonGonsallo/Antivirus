@@ -445,9 +445,9 @@ function presta_import_commandes($line_start, $line_end) {
                     if ($item_id) {
                         $item = $order->get_item($item_id);
 
-                        $item->add_meta_data('presta_id_produit', $id_produit, true);
+                        //$item->add_meta_data('presta_id_produit', $id_produit, true);
                         $item->add_meta_data('duree', $duree, true);
-                        $item->add_meta_data('dt_end', $dt_end, true);
+                       // $item->add_meta_data('dt_end', $dt_end, true);
 
                         $item->save();
                     }

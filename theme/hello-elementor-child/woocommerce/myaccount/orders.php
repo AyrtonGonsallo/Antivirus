@@ -99,8 +99,13 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 
 		<tbody>
 			<?php
-			foreach ( $customer_orders->orders as $customer_order ) {
-				$order      = wc_get_order( $customer_order ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+			$customer_orders = wc_get_orders([
+				'customer_id' => get_current_user_id(),
+				'limit'       => -1,
+				'orderby'     => 'date',
+				'order'       => 'DESC',
+			]);
+			foreach ( $customer_orders as $order ) {
 				$item_count = $order->get_item_count() - $order->get_item_count_refunded();
 				?>
 				<tr class="woocommerce-orders-table__row woocommerce-orders-table__row--status-<?php echo esc_attr( $order->get_status() ); ?> order">

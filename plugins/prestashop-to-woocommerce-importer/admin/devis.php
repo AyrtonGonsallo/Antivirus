@@ -432,6 +432,7 @@ function presta_import_devis($line_start, $line_end) {
             //2) la ligne suivante si id_commande est le meme juste ajouter le produit avec son prix custom mais ne plus ajouter les remises (elles sont les memes que sur le premier) sinon creer une autre commande et passer a 1)
             
 
+            error_log('id devis presta '.$id_devis);
             error_log('produit '.$id_produit);
             error_log('is produit simple '.$is_produit_simple);
             error_log('nb_pcs '.$nb_pcs);

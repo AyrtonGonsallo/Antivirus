@@ -40,6 +40,8 @@ class DevisPDFGenerator {
 		$ville = get_user_meta($user_id, 'ville', true);
 		$code_postal = get_user_meta($user_id, 'code_postal', true);
 		$selected_pays = get_user_meta($user_id, 'pays', true);
+        $user = get_userdata($user_id);
+        $email = $user ? $user->user_email : '';
         if($client_final){
             $client_final_id = $client_final->ID;
             $client_final_prenom = get_user_meta($client_final_id, 'first_name', true);
@@ -237,7 +239,7 @@ class DevisPDFGenerator {
                 <div class="message-box">
                     Pour valider ce devis et passer votre commande, connectez-vous à votre espace client sur notre site à cette adresse:
                     '.$my_account_url.'
-                    Utilisez votre adresse email travelerchek@gmail.com ainsi que votre mot de passe pour vous y connecter.
+                    Utilisez votre adresse email '.$email.' ainsi que votre mot de passe pour vous y connecter.
                 </div>
             </div>
 

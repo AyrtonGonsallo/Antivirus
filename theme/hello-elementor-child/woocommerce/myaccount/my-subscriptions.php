@@ -68,7 +68,9 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 
 <div class="woocommerce_account_subscriptions">
 
-	<?php if ( ! empty( $subscriptions ) ) : ?>
+	<?php 
+	$subscriptions = wcs_get_users_subscriptions( get_current_user_id() );
+	if ( ! empty( $subscriptions ) ) : ?>
 	
 		<table id="tableMesAbonnements" class="my_account_subscriptions my_account_orders woocommerce-orders-table woocommerce-MyAccount-subscriptions shop_table shop_table_responsive woocommerce-orders-table--subscriptions">
 
