@@ -103,9 +103,17 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 						$selected_client_id  = $order->get_meta('client_final');
 						$client = get_user_by('id', $selected_client_id);
 						$denomination_cf  = get_user_meta($selected_client_id, 'denomination', true);
+						$type_client    = get_user_meta($selected_client_id, 'type_client', true);
 					?>
 					<?php if ( $est_revendeur ) : ?>
-						<?php echo $client->display_name.' - '.$denomination_cf; ?> 
+						<?php 
+							$full_name = $client->display_name; 
+							if ($type_client === 'association_ou_institution' ||  $type_client === 'professionnel') {
+								$full_name.= ' - '.$denomination_cf; 
+							}
+							echo $full_name;
+															
+						?>
 					<?php endif; ?>
 				</td>
 				<td class="subscription-status order-status woocommerce-orders-table__cell woocommerce-orders-table__cell-subscription-status woocommerce-orders-table__cell-order-status" data-title="<?php esc_attr_e( 'Status', 'woocommerce-subscriptions' ); ?>">

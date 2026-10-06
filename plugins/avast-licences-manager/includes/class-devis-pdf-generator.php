@@ -239,7 +239,7 @@ class DevisPDFGenerator {
                 <div class="message-box">
                     Pour valider ce devis et passer votre commande, connectez-vous à votre espace client sur notre site à cette adresse:
                     '.$my_account_url.'
-                    Utilisez votre adresse email '.$email.' ainsi que votre mot de passe pour vous y connecter.
+                    Utilisez l\'adresse email de votre compte client ainsi que votre mot de passe pour vous y connecter.
                 </div>
             </div>
 

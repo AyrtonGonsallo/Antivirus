@@ -270,21 +270,52 @@ class ALM_Statistiques_antivirus {
                 $type_commande = '';
                 $is_renewal = false;
     
-                if ( function_exists( 'wcs_order_contains_renewal' ) && wcs_order_contains_renewal( $order ) ) {
-                    $type_commande = 'BdC automatique';
-                    $is_renewal = true;
-                } else {
-                    $is_renewal = false;
-                    $type_commande = 'Commande simple';
-                }
+               
                 $user = $user_id ? get_user_by('id', $user_id) : null;
                 $order_link = admin_url('post.php?post=' . $order_id . '&action=edit');
                 $user_roles = $user ? $user->roles : ['Invité'];
                 $order_date = $order->get_date_created()->date('Y-m-d H:i:s'); 
                 $selected_client_id  = $order->get_meta('client_final');
 
+
+                 if ( function_exists( 'wcs_order_contains_renewal' ) && wcs_order_contains_renewal( $order ) ) {
+                    $type_commande = 'BdC automatique';
+                    $is_renewal = true;
+                    $subscriptions = wcs_get_subscriptions_for_renewal_order( $order );
+
+                    if ( ! empty( $subscriptions ) &&  in_array('customer_revendeur', $user_roles)) {
+
+                        if( empty( $order->get_meta('client_final'))){
+
+                            // Normalement une seule souscription
+                            $subscription = reset( $subscriptions );
+                            // ID de la commande parente
+                            $parent_order_id = $subscription->get_parent_id();
+                            // Récupérer l'objet WC_Order
+                            $parent_order = wc_get_order( $parent_order_id );
+                            $client_final  = $parent_order->get_meta('client_final');
+                            $order->update_meta_data('client_final', $client_final);
+                            $order->save();
+
+                        }
+                        
+                    }
+
+                } else {
+                    $is_renewal = false;
+                    $type_commande = 'Commande simple';
+                }
+
+
                 if($selected_client_id){
                     $client_final = get_user_by('id', $selected_client_id);
+                    $denomination_cf  = get_user_meta($selected_client_id, 'denomination', true);
+                    $type_client    = get_user_meta($selected_client_id, 'type_client', true);
+                    $full_client_final_name = $client_final->display_name; 
+                    if ($type_client === 'association_ou_institution' ||  $type_client === 'professionnel') {
+                        $full_client_final_name.= ' - '.$denomination_cf; 
+                    }
+                    
                 }
                 $status = wc_get_order_status_name($order->get_status());
                 //$order->get_payment_method_title().' - '.$order->get_payment_method()
@@ -371,7 +402,7 @@ class ALM_Statistiques_antivirus {
                 //echo '<td>' . $count_fees . '</td>';
                 echo '<td>' . ($user ? esc_html($user->display_name) : 'Invité') . '<br>';
                 echo  ($user ? esc_html($user->user_email) : '')  . '<br>';
-                echo  ($selected_client_id ? esc_html('Client final : '.$client_final->display_name) : '') . '</td>';
+                echo  ($selected_client_id ? esc_html('Client final : '.$full_client_final_name) : '') . '</td>';
                 echo '<td>' . $roles_string . '</td>';
                 echo '<td>';
                     if (($subscriptions)) {
@@ -732,6 +763,7 @@ class ALM_Statistiques_antivirus {
             if ( function_exists( 'wcs_order_contains_renewal' ) && wcs_order_contains_renewal( $order ) ) {
                 $type_commande = 'BdC automatique';
                 $is_renewal = true;
+                
             } else {
                 $is_renewal = false;
                 $type_commande = 'Commande simple';

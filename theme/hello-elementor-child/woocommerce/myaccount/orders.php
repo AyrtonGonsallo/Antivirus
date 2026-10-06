@@ -155,10 +155,21 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 									$est_revendeur = current_user_can('customer_revendeur'); // adapte selon ton rôle
 									$selected_client_id  = $order->get_meta('client_final');
 									$client = get_user_by('id', $selected_client_id);
+									$denomination_cf  = get_user_meta($selected_client_id, 'denomination', true);
+									 $type_client    = get_user_meta($selected_client_id, 'type_client', true);
 								?>
 								<?php if ( $est_revendeur ) : ?>
 										<?php esc_html_e( 'Client final', 'woocommerce' ); ?>
-										: <strong><?php echo $client->display_name; ?></strong>
+										: <strong>
+											<?php 
+												$full_name = $client->display_name; 
+												if ($type_client === 'association_ou_institution' ||  $type_client === 'professionnel') {
+													$full_name.= ' - '.$denomination_cf; 
+        										}
+												echo $full_name;
+																				
+											?>
+										 </strong>
 								<?php endif; ?>
 
 								

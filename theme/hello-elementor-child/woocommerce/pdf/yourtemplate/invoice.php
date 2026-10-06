@@ -96,18 +96,25 @@
 					$billing_numero_siret    = (get_user_meta($user_id, 'billing_numero_siret', true));
 					$billing_societe    = (get_user_meta($user_id, 'billing_societe', true));
 					$selected_client_id  = $this->order->get_meta('client_final');
-					$client = get_user_by('id', $selected_client_id);
+					$client_final = get_user_by('id', $selected_client_id);
 					$new_revendeur_account_regime_tva = get_user_meta($user_id, 'new_revendeur_account_regime_tva', true);
 					$new_account_regime_tva = get_user_meta($user_id, 'new_account_regime_tva', true);
 					$regime = ($new_account_regime_tva )?$new_account_regime_tva :$new_revendeur_account_regime_tva;
 					$new_account_tva_intra = get_user_meta($user_id, 'new_account_tva_intra', true);
 					$new_account_prefixe_tva = get_user_meta($user_id, 'new_account_prefixe_tva', true);
+
+					$denomination_cf  = get_user_meta($selected_client_id, 'denomination', true);
+                    $type_client    = get_user_meta($selected_client_id, 'type_client', true);
+                    $full_client_final_name = $client_final->display_name; 
+                    if ($type_client === 'association_ou_institution' ||  $type_client === 'professionnel') {
+                        $full_client_final_name.= ' - '.$denomination_cf; 
+                    }
 					
 				?>
-				<?php if ( !empty( $client ) ) : ?>
+				<?php if ( !empty( $client_final ) ) : ?>
 					<tr class="payment-client-final-revendeur">
 						<th>Client final :</th>
-						<td><?php echo $client->display_name;  ?></td>
+						<td><?php echo $full_client_final_name;  ?></td>
 					</tr>
 				<?php endif; ?>
 				<?php if ( !empty( $billing_numero_siret ) ) : ?>
@@ -153,7 +160,7 @@
 						<?php endif; ?>
 						<!-- ul.wc-item-meta -->
 						<?php if ( ! empty( $item['meta'] ) ) : ?>
-							<?php echo wp_kses_post( $item['meta'] ); ?>
+							<?php // echo wp_kses_post( $item['meta'] ); ?>
 						<?php endif; ?>
 						<!-- / ul.wc-item-meta -->
 					</div>
