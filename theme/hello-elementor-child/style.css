@@ -874,7 +874,9 @@ a.woocommerce-product-gallery__trigger {
 .categories-row.col-mega-menu2{grid-template-columns: 2fr 1fr !important;}
 .categories-row.col-mega-menu2 .col-categorie.col1:nth-child(2) .row-marques{grid-template-columns: repeat(1, 1fr) !important;}
 .row-marques{margin-top:20px !important;}
+/*
 .elementor-widget-theme-site-logo img { width: auto !important;height: auto !important;}
+*/
 .col-categorie.col1:nth-child(2) .row-marques, .col-categorie.col1:nth-child(3) .row-marques{grid-template-columns: 1fr !important;}
 /****************************************** responsive menu ******************************************/
 @media only screen and (max-width:1380px){
@@ -895,6 +897,9 @@ a.woocommerce-product-gallery__trigger {
 }
 
 @media only screen and (max-width:800px){
+    #mega-menu-wrap-menu-1 .mega-menu-toggle .mega-toggle-blocks-left {
+    display: none !important;
+  }
 .mega-toggle-blocks-right { background-color: #fff !important;}
  .mega-menu-toggle .mega-toggle-animated-inner, .mega-menu-toggle .mega-toggle-animated-inner:before, .mega-menu-toggle .mega-toggle-animated-inner:after{ background-color: #000 !important;}
 	body ul.mega-sub-menu {

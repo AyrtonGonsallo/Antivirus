@@ -182,7 +182,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 								if ( ! empty( $actions ) ) {
 									foreach ( $actions as $key => $action ) { // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 									
-									if($key=="cancel" && $order->get_meta('_paiement_differe') === 'yes'){
+									if($key=="cancel" && ($order->get_meta('_paiement_differe') === 'yes' || $order->get_status() === 'pending')){
 										continue;
 									}
 									if ( empty( $action['aria-label'] ) ) {

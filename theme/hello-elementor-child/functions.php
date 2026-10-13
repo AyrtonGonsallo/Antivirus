@@ -691,74 +691,82 @@ function has_user_disabled_remises($user_id) {
 add_filter('woocommerce_available_variation', function ($variation_data, $product, $variation) {
 
     $user_id = get_current_user_id();
-    $bloquer_remise_revendeur = get_field('bloquer_remise_revendeur', $product->get_id());       // true / false
-    $bloquer_remise_commerciale = get_field('bloquer_remise_commerciale', $product->get_id());
-    $user_has_enabled_remises = has_user_enabled_remises($user_id);
+    
+    // ✅ Guard : si pas connecté, on force les valeurs par défaut
+    $is_logged_in = ($user_id > 0);
+    
+    $bloquer_remise_revendeur    = get_field('bloquer_remise_revendeur', $product->get_id());
+    $bloquer_remise_commerciale  = get_field('bloquer_remise_commerciale', $product->get_id());
+    
+    // ✅ Ne pas appeler si user_id = 0
+    $user_has_enabled_remises = $is_logged_in ? has_user_enabled_remises($user_id) : false;
+    
     $currency_symbol = get_woocommerce_currency_symbol();
     $variation_data['currency_symbol'] = $currency_symbol;
 
+    // Initialisation pour éviter les "undefined variable"
+    $prix_base = 0;
+    $regular   = (float) $variation->get_regular_price();
+    $sale      = (float) $variation->get_sale_price();
 
     if ($variation->is_on_sale()) {
 
-        $regular = (float) $variation->get_regular_price();
-        $sale    = (float) $variation->get_sale_price();
+        if ($user_has_enabled_remises) {
+            $prix_base = $regular;  // ✅ corrigé : $regular_price → $regular
+        } else {
+            $prix_base = $product->is_on_sale() ? $sale : $regular;
 
-        
-
-        if($user_has_enabled_remises){
-			$prix_base = $regular_price;
-		}else{
-			$prix_base = $product->is_on_sale() ? $sale : $regular;//remise sur prix promo si revendeur sans commerciale
             if ($regular > 0 && $sale > 0 && $sale < $regular) {
                 $percent = round((($regular - $sale) / $regular) * 100);
-                $variation_data['discount_percent'] =  "<span class='variation-reduction-percentage'>- ".$percent." %</span>"; 
+                $variation_data['discount_percent'] = "<span class='variation-reduction-percentage'>- ".$percent." %</span>";
             }
 
             $date = $variation->get_date_on_sale_to();
-
             if ($date) {
-
-                $res_string = '<p class="promo-end">';
-                $res_string .= 'Promotion valable jusqu’au <strong>' . wc_format_datetime($date) . '</strong>';
-                $res_string .= '</p>';
-
-                $variation_data['sale_end_date'] = $res_string;
+                $variation_data['sale_end_date'] =
+                    '<p class="promo-end">Promotion valable jusqu’au <strong>'
+                    . wc_format_datetime($date) . '</strong></p>';
             } else {
                 $variation_data['sale_end_date'] = '';
             }
-		}
+        }
         $variation_data['prix_remise_depart'] = $prix_base;
 
-    }else{
-        $regular = (float) $variation->get_regular_price();
+    } else {
         $variation_data['prix_remise_depart'] = $regular;
     }
-    $remise = get_revendeur_remise($user_id);
-    if (!empty($remise) && !$bloquer_remise_revendeur){
-        $percent = (float) get_field('pourcentage', $remise->ID);
-        
-        $variation_data['pourcentage_remise_revendeur'] = $percent;
-        $variation_data['remise_revendeur_txt'] = "Remise revendeur - ".$percent." %";
-        if($user_has_enabled_remises){
-            $prix_base =  $regular;  //si remise commerciale remise revendeur et comm toujours sur prix de base
-            $variation_data['class_remise_revendeur'] = "has-remise-revendeur";
-		}else{
-            $prix_base = $variation->is_on_sale() ? $sale : $regular;  //si pas remise commerciale remise revendeur toujours sur prix promo
-        }
-        $prix_remise_revendeur = $prix_base - ($prix_base * $percent / 100);
-        $variation_data['prix_remise_revendeur'] = round($prix_remise_revendeur, 2);
-        $variation_data['prix_remise_depart'] = $prix_remise_revendeur;
-        $variation_data['prix_base'] = $prix_base;
-        $variation_data['prix_base2'] = $regular;
-        
 
-    }else{
+    // ✅ Guard : ne pas chercher de remise si pas connecté
+    $remise = $is_logged_in ? get_revendeur_remise($user_id) : null;
+
+    if (!empty($remise) && !$bloquer_remise_revendeur) {
+
+        $percent = (float) get_field('pourcentage', $remise->ID);
+
+        $variation_data['pourcentage_remise_revendeur'] = $percent;
+        $variation_data['remise_revendeur_txt']         = "Remise revendeur - ".$percent." %";
+
+        if ($user_has_enabled_remises) {
+            $prix_base = $regular;
+            $variation_data['class_remise_revendeur'] = "has-remise-revendeur";
+        } else {
+            $prix_base = $variation->is_on_sale() ? $sale : $regular;
+        }
+
+        $prix_remise_revendeur = $prix_base - ($prix_base * $percent / 100);
+
+        $variation_data['prix_remise_revendeur'] = round($prix_remise_revendeur, 2);
+        $variation_data['prix_remise_depart']    = $prix_remise_revendeur;
+        $variation_data['prix_base']             = $prix_base;
+        $variation_data['prix_base2']            = $regular;
+
+    } else {
         $variation_data['class_hide_remise_revendeur'] = 'hide_remise_revendeur';
-        $variation_data['prix_base'] = $prix_base;
+        $variation_data['prix_base']  = $prix_base;
         $variation_data['prix_base2'] = $regular;
     }
 
-  return $variation_data;
+    return $variation_data;
 
 }, 10, 3);
 

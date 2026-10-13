@@ -159,7 +159,7 @@ class ALM_Statistiques_antivirus {
             return;
         }
 
-        $per_page = 200;
+        $per_page = 500;
         $paged = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
 
         

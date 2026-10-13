@@ -17,7 +17,22 @@ $product_url = get_permalink($product->get_id());
 $login_url = add_query_arg('redirect_to', urlencode($product_url), wc_get_page_permalink('myaccount'));
 
 
-if($user_id){
+$desactiver1 = null;
+$remise_r = null;
+$remise_a = null;
+$remise_e = null;
+$remise_c = null;
+
+$is_revendeur = false;
+$desactiver1 = false;
+$desactiver2 = false;
+$desactiver3 = false;
+$desactiver4 = false;
+$user_has_disabled_remises = false;
+$user_has_enabled_remises = false;
+
+
+if($user_id>0){
     $user_has_disabled_remises = has_user_disabled_remises($user_id);
 	$user_has_enabled_remises = has_user_enabled_remises($user_id);
 
@@ -117,7 +132,7 @@ if($user_id){
 			?>
 				<?php if($user_has_enabled_remises  || !($user_has_enabled_remises || $user_has_disabled_remises)){ //si il a des remises activees ou si il n'a aucune remise
 				?>
-				<?php if($user_id){ //si il est connecte
+				<?php if($user_id>0){ //si il est connecte
 					?>
 						<button class="btn-remise btn-remise-style"  type="submit" name="submit_demande_remise">Appliquer ma remise</button>
 					<?php }else{?>
